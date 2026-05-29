@@ -1,0 +1,6 @@
+experiment,chunking_strategy,retrieval_method,reranking,metadata_filter,faithfulness,answer_relevancy,context_precision,context_recall,notes
+exp01_naive_rag,fixed_500_tokens,semantic_only,none,none,,,,, baseline
+exp02_clause_chunking,clause_boundary,semantic_only,none,none,,,,,
+exp03_hybrid_search,clause_boundary,bm25_semantic_rrf,none,none,,,,,
+exp04_reranking,clause_boundary,bm25_semantic_rrf,cohere,none,,,,,
+exp05_metadata_filter,clause_boundary,bm25_semantic_rrf,cohere,authority_clause,,,,,
