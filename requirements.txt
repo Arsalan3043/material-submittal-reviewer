@@ -13,7 +13,7 @@ langgraph>=0.1.0,<0.2.0
 langsmith>=0.1.50,<0.2.0
 
 # Vector Database
-chromadb>=0.4.0,<0.6.0
+chromadb>=1.0.0,<2.0.0
 
 # Reranking
 cohere>=5.0.0,<6.0.0
