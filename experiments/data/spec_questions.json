@@ -1,1 +1,302 @@
-[]
+[
+  {
+    "id": "Q001",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "pipes",
+    "spec_clause": "21.2.2.1",
+    "relevant_clause": "21.2.2.1",
+    "question": "What is the standard ring stiffness required for the pipes?",
+    "ground_truth": "Pipes shall be of standard ring stiffness 4000 N/SQM or 8000"
+  },
+  {
+    "id": "Q002",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "concrete",
+    "spec_clause": "unknown",
+    "relevant_clause": "5",
+    "question": "What are the permitted tolerances for the degree of workability of concrete?",
+    "ground_truth": "permitted tolerances shall be in accordance with BS 5328"
+  },
+  {
+    "id": "Q003",
+    "authority": "ADM",
+    "network": "road",
+    "material_type": "geotextile",
+    "spec_clause": "unknown",
+    "relevant_clause": "Table 2-10",
+    "question": "What are the geotextile property requirements for separation and soil stabilization?",
+    "ground_truth": "Weight: 180 g/m2 minimum for separation, 200 g/m2 minimum for soil stabilization; Thickness: 1.7 mm minimum"
+  },
+  {
+    "id": "Q004",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "geotextile",
+    "spec_clause": "unknown",
+    "relevant_clause": "Table 25-3",
+    "question": "What are the minimum physical and mechanical properties required for the geotextile?",
+    "ground_truth": "Weight: 140 g/m2 (EN 965), Thickness: 1.2 mm (2kPa EN 964-1), Static puncture (CBR-test): 1500 N (EN/ISO 12236), Elongation: 50%, Wide-width tensile test (Strip-test, 200mm) Longitudinal direction: 8.0 kN/m (EN/ISO 10319)"
+  },
+  {
+    "id": "Q005",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "pipeline",
+    "spec_clause": "unknown",
+    "relevant_clause": "O",
+    "question": "What is the maximum allowable water loss during pressure testing of the pipeline?",
+    "ground_truth": "A maximum water loss of 3 liters per 1000m lengths per 25mm nominal bore per 24 hours shall be considered acceptable."
+  },
+  {
+    "id": "Q006",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "small_wiring_cable",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What are the standards and minimum conductor sizes for small wiring cables used in lighting and power circuits?",
+    "ground_truth": "Small wiring cable for use on lighting and small power shall be single core PVC insulated conform to BS 6004 and BS 6346, 600 / 1000 Volts, having a minimum conductor size of 2.5 mm² for lighting circuits and 4.0 mm² for power circuits."
+  },
+  {
+    "id": "Q007",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "soil",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the test method for determining the California Bearing Ratio of laboratory-compacted soils?",
+    "ground_truth": "ASTM D 1883 - 94 - Test Method for CBR (California Bearing Ratio). Laboratory-Compacted Soils."
+  },
+  {
+    "id": "Q008",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "non-pressure pipeline",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the maximum allowable leakage for the pipe under test?",
+    "ground_truth": "The leakage, quantity of water added, shall not exceed 0.5 x pipe diameter (m) x length of pipe under test (m) expressed in litres."
+  },
+  {
+    "id": "Q009",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "valve",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "Do the valves comply with the pressure tests, test procedures, and acceptance criteria as per EN 12266-2?",
+    "ground_truth": "Testing of valves - Part 1: Pressure tests, test procedures and acceptance criteria - Mandatory requirements EN 12266-2"
+  },
+  {
+    "id": "Q010",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "reinforcement",
+    "spec_clause": "unknown",
+    "relevant_clause": "D",
+    "question": "What is the required strength of the coupled bar in both tension and compression?",
+    "ground_truth": "The strength of the coupled bar in both tension and compression must exceed 125 percent of the yield strength of the bar (1.15fy) for grade 250 and 500A and 500B reinforcement or 95 percent of the ultimate actual tensile strength of the reinforcement bars."
+  },
+  {
+    "id": "Q011",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "emitter",
+    "spec_clause": "unknown",
+    "relevant_clause": "iv",
+    "question": "What is the maximum allowable coefficient of manufacturing variation for the emitter?",
+    "ground_truth": "The coefficient of manufacturing variation shall be less than 0.03."
+  },
+  {
+    "id": "Q012",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "soil and rock",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What test methods are required for soil and rock analysis?",
+    "ground_truth": "Grain Size Analysis: in accordance with ASTM D 422 AASHTO T 88. Specific Gravity and Bulk Density: in accordance with AASHTO T 180. Compaction Test: Standard Proctor to ASTM D 698. Compaction Test: Modified Proctor to ASTM D 1557. Unconfined Compression Test for cohesive soils: in accordance with ASTM D 2116 AASHTO T 208. Tri-axial Compression Test for rock: in accordance with AASHTO T 226. Natural Moisture Content: in accordance with ASTM D 2216 AASHTO T 265."
+  },
+  {
+    "id": "Q013",
+    "authority": "ADM",
+    "network": "road",
+    "material_type": "aggregate_base_course",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What are the sieve passing requirements for the aggregate base courses?",
+    "ground_truth": "Passing sieves 4.75mm (No. 4) to 19mm (No. 3/4”) ± 5%, Passing sieves 425μm (No. 40) to 2mm (No. 10) ± 4%, Passing 75μm (No. 200) ± 2%"
+  },
+  {
+    "id": "Q014",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "steel reinforcement",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What are the physical properties required for the steel reinforcement?",
+    "ground_truth": "Tensile strength > 250N/mm2, Modulus of elasticity 190-200 kN/mm2, Coefficient of thermal expansion 9 X 10-6 0C"
+  },
+  {
+    "id": "Q015",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "wiring_cable",
+    "spec_clause": "7.4",
+    "relevant_clause": "7.4",
+    "question": "Do the PVC insulated wiring cables comply with BS 6004 and BS 6346 and are they 600/1000V grade with a cross-sectional area not less than 1.5mm²?",
+    "ground_truth": "PVC insulated wiring cables shall comply with BS 6004 and BS 6346 and be 600/1000V grade. The cable used shall not be less than 1.5mm² cross-sectional area."
+  },
+  {
+    "id": "Q016",
+    "authority": "ADM",
+    "network": "road",
+    "material_type": "XLPE insulation",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the normal operating temperature requirement for the XLPE insulation?",
+    "ground_truth": "Normal Operating Temperature : 80 Deg C"
+  },
+  {
+    "id": "Q017",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "coating",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the required frequency for conducting adhesion tests on coated surfaces?",
+    "ground_truth": "At least one adhesion test shall be conducted for every 100m2 of coated surface."
+  },
+  {
+    "id": "Q018",
+    "authority": "ADM",
+    "network": "road",
+    "material_type": "cable",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the required overall length for cables of size 70 – 120 Sq.mm?",
+    "ground_truth": "900 mm"
+  },
+  {
+    "id": "Q019",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "waterproof_membrane",
+    "spec_clause": "unknown",
+    "relevant_clause": "Table 9.2-5",
+    "question": "What are the waterproof membrane requirements for nominal thickness?",
+    "ground_truth": "4 mm (for single layer) 6mm (for double layer)"
+  },
+  {
+    "id": "Q020",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "valve",
+    "spec_clause": "2.8",
+    "relevant_clause": "2.8 B",
+    "question": "What is the maximum allowable pressure drop through the pressure reducing valve under full flow?",
+    "ground_truth": "The pressure drop through the valve shall not exceed 0.15 bar under full flow."
+  },
+  {
+    "id": "Q021",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "drain_pipe",
+    "spec_clause": "unknown",
+    "relevant_clause": "B",
+    "question": "What is the maximum allowable variation from true slope for the drain pipe installation?",
+    "ground_truth": "maximum variation from true slope of the 10 % of the inside diameter of the drain pipe, and in no case should the misalignment exceed 0.03 meter"
+  },
+  {
+    "id": "Q022",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "geotextile",
+    "spec_clause": "Table 23.2-2",
+    "relevant_clause": "Table 23.2-2",
+    "question": "What are the minimum requirements for geotextile weight and thickness?",
+    "ground_truth": "Weight: 140 g/m2 (EN 965), Thickness: 1.2 mm (2kPa EN 964-1)"
+  },
+  {
+    "id": "Q023",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "submersible direct-coupled pumps",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the minimum efficiency required for submersible direct-coupled pumps?",
+    "ground_truth": "The optimum efficiency of the submersible direct-coupled pumps pump shall not be less than 70%"
+  },
+  {
+    "id": "Q024",
+    "authority": "ADM",
+    "network": "road",
+    "material_type": "bituminous_material",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the range of application amounts and pressure for the bituminous material?",
+    "ground_truth": "ranging from 0.15 to 5.0 kg/m2 and with a range of pressure from 441 to 1,324 kN/m2"
+  },
+  {
+    "id": "Q025",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "cable",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "Does the PVC insulated and sheathed galvanised steel wire armour cable conform to BS 6346?",
+    "ground_truth": "PVC insulated and sheathed galvanised steel wire armour cable with an overall PVC sheath (PVC/SWA/PVC) shall conform to BS 6346."
+  },
+  {
+    "id": "Q026",
+    "authority": "ADM",
+    "network": "road",
+    "material_type": "PVC",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the minimum thickness required for the extruded red PVC?",
+    "ground_truth": "The minimum thickness at any point shall be not less than 2.8mm."
+  },
+  {
+    "id": "Q027",
+    "authority": "ADM",
+    "network": "irrigation",
+    "material_type": "concrete",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "What is the minimum density requirement for the material?",
+    "ground_truth": "Minimum Kg/m3 2400"
+  },
+  {
+    "id": "Q028",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "joint",
+    "spec_clause": "unknown",
+    "relevant_clause": "unknown",
+    "question": "Do the joints conform to the performance requirements of section 07 of BS/DIN EN 14364?",
+    "ground_truth": "Joint performance shall be according to section 07 of BS/DIN EN 14364; in general."
+  },
+  {
+    "id": "Q029",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "PE Material",
+    "spec_clause": "21.2.1.2",
+    "relevant_clause": "21.2.1.2",
+    "question": "What is the minimum hydrostatic strength requirement for the material at 80°C?",
+    "ground_truth": "≥ 1000 hours at 5.0 MPa"
+  },
+  {
+    "id": "Q030",
+    "authority": "ADM",
+    "network": "storm_water",
+    "material_type": "graded aggregate",
+    "spec_clause": "Table 21-6",
+    "relevant_clause": "Table 21-6",
+    "question": "What is the grading requirement for graded aggregate with a sieve size of 20.00 mm?",
+    "ground_truth": "35 – 70"
+  }
+]
