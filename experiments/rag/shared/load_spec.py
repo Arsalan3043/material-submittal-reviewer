@@ -61,6 +61,12 @@ _CLAUSE_RE = re.compile(r"^(\d+\.\d+(?:\.\d+)*)\s", re.MULTILINE)
 EMBED_BATCH_SIZE = 100
 CHROMA_BATCH_SIZE = 500  # ChromaDB Cloud max batch size is 1000; use 500 to stay safe
 
+# text-embedding-3-small hard limit is 8192 tokens (~32k chars at 4 chars/token).
+# Truncate at 28000 chars to stay safely under that limit.
+MAX_EMBED_CHARS = 28000
+# Clause chunks larger than this are split into sub-chunks to keep them embeddable.
+MAX_CLAUSE_CHARS = 6000
+
 
 # Local ChromaDB path for experiments (unlimited, no quota, fast re-indexing)
 # Production uses ChromaDB Cloud — see scripts/setup_chromadb.py
@@ -69,7 +75,7 @@ CHROMA_LOCAL_PATH = "data/chromadb"
 
 # -- ChromaDB -----------------------------------------------------------------
 
-def _get_collection(local: bool = True) -> chromadb.Collection:
+def _get_collection(local: bool = True, collection_name: str = COLLECTION_NAME) -> chromadb.Collection:
     if local:
         client = chromadb.PersistentClient(path=CHROMA_LOCAL_PATH)
     else:
@@ -80,7 +86,7 @@ def _get_collection(local: bool = True) -> chromadb.Collection:
             database=os.environ["CHROMA_DATABASE"],
             headers={"x-chroma-token": os.environ["CHROMA_API_KEY"]},
         )
-    return client.get_or_create_collection(name=COLLECTION_NAME)
+    return client.get_or_create_collection(name=collection_name)
 
 
 # -- PDF extraction -----------------------------------------------------------
@@ -135,8 +141,24 @@ def _chunk_by_clause(pages: list[dict]) -> list[dict]:
     for idx, (start, clause_num) in enumerate(positions):
         end = positions[idx + 1][0] if idx + 1 < len(positions) else len(full_text)
         text = full_text[start:end].strip()
-        if len(text) > 80:  # skip tiny fragments
+        if len(text) <= 80:  # skip tiny fragments
+            continue
+        if len(text) <= MAX_CLAUSE_CHARS:
             chunks.append({"text": text, "chunk_idx": idx, "clause": clause_num})
+        else:
+            # Clause is too long — split into overlapping sub-chunks
+            sub_start = 0
+            sub_idx = 0
+            while sub_start < len(text):
+                sub_text = text[sub_start : sub_start + MAX_CLAUSE_CHARS].strip()
+                if sub_text:
+                    chunks.append({
+                        "text": sub_text,
+                        "chunk_idx": idx * 10000 + sub_idx,
+                        "clause": clause_num,
+                    })
+                sub_start += MAX_CLAUSE_CHARS - 200  # 200-char overlap between sub-chunks
+                sub_idx += 1
 
     return chunks
 
@@ -145,15 +167,17 @@ def _chunk_by_clause(pages: list[dict]) -> list[dict]:
 
 def _embed(texts: list[str], client: OpenAI) -> list[list[float]]:
     """Embed texts in batches; returns one embedding per text."""
+    # Truncate as a hard safety net — _chunk_by_clause should prevent this in practice
+    safe_texts = [t[:MAX_EMBED_CHARS] for t in texts]
     embeddings: list[list[float]] = []
-    for i in range(0, len(texts), EMBED_BATCH_SIZE):
-        batch = texts[i : i + EMBED_BATCH_SIZE]
+    for i in range(0, len(safe_texts), EMBED_BATCH_SIZE):
+        batch = safe_texts[i : i + EMBED_BATCH_SIZE]
         response = client.embeddings.create(
             model="text-embedding-3-small",
             input=batch,
         )
         embeddings.extend([r.embedding for r in response.data])
-        print(f"  Embedded {min(i + EMBED_BATCH_SIZE, len(texts))}/{len(texts)} chunks")
+        print(f"  Embedded {min(i + EMBED_BATCH_SIZE, len(safe_texts))}/{len(safe_texts)} chunks")
     return embeddings
 
 
@@ -172,15 +196,18 @@ def load_adm_specs(
     chunk_overlap: int = 50,
     overwrite: bool = False,
     local: bool = True,
+    collection_name: str = COLLECTION_NAME,
 ) -> dict[str, int]:
     """
-    Load all ADM spec PDFs into adm_specifications ChromaDB collection.
+    Load all ADM spec PDFs into a ChromaDB collection.
 
     Args:
         chunking_strategy: "fixed" (exp01 baseline) or "clause" (exp02+)
         chunk_size:        Characters per chunk — fixed strategy only
         chunk_overlap:     Overlap between chunks — fixed strategy only
         overwrite:         Delete existing chunks for each network before loading
+        local:             Use local PersistentClient (True) or ChromaDB Cloud (False)
+        collection_name:   Target collection — use different names per experiment
 
     Returns:
         {network: chunks_added}
@@ -189,7 +216,7 @@ def load_adm_specs(
     if not pdf_files:
         raise FileNotFoundError(f"No PDFs found in {SPECS_DIR.resolve()}")
 
-    collection = _get_collection(local=local)
+    collection = _get_collection(local=local, collection_name=collection_name)
     openai_client = OpenAI()
     results: dict[str, int] = {}
 

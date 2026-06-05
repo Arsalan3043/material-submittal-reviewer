@@ -1,6 +1,6 @@
 experiment,chunking_strategy,retrieval_method,reranking,metadata_filter,faithfulness,answer_relevancy,context_precision,context_recall,notes
 exp01_naive_rag,fixed_500_tokens,semantic_only,none,none,0.9199,0.9278,0.8595,0.8600,baseline
-exp02_clause_chunking,clause_boundary,semantic_only,none,none,,,,,
-exp03_hybrid_search,clause_boundary,bm25_semantic_rrf,none,none,,,,,
-exp04_reranking,clause_boundary,bm25_semantic_rrf,cohere,none,,,,,
-exp05_metadata_filter,clause_boundary,bm25_semantic_rrf,cohere,authority_clause,,,,,
+exp02_clause_chunking,clause_boundary,semantic_only,none,none,0.5990,0.7100,0.3067,0.3900,worse than baseline — clause chunks too large for focused retrieval
+exp03_hybrid_search,fixed_500_tokens,bm25_semantic_rrf,none,none,,,,,
+exp04_reranking,fixed_500_tokens,bm25_semantic_rrf,cohere,none,,,,,
+exp05_metadata_filter,fixed_500_tokens,bm25_semantic_rrf,cohere,authority_clause,,,,,
