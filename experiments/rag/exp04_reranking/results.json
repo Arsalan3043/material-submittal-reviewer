@@ -1,7 +1,7 @@
 {
   "experiment": "exp04_reranking",
-  "faithfulness": null,
-  "answer_relevancy": null,
-  "context_precision": null,
-  "context_recall": null
+  "faithfulness": 0.9333,
+  "answer_relevancy": 0.8967,
+  "context_precision": 0.7,
+  "context_recall": 0.88
 }
