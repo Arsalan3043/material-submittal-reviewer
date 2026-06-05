@@ -24,6 +24,7 @@ Usage:
 
 from __future__ import annotations
 
+import inspect
 import json
 import os
 from typing import Callable
@@ -156,11 +157,14 @@ def run_ragas_evaluation(
         "context_recall": 0.0,
     }
 
+    # Detect if retrieval_fn accepts a second argument (item metadata for exp05+)
+    _retrieval_accepts_item = len(inspect.signature(retrieval_fn).parameters) >= 2
+
     for i, item in enumerate(questions, 1):
         q = item["question"]
         gt = item["ground_truth"]
 
-        contexts = retrieval_fn(q)
+        contexts = retrieval_fn(q, item) if _retrieval_accepts_item else retrieval_fn(q)
         answer = generation_fn(q, contexts)
 
         f_score = _faithfulness(q, answer, contexts)
