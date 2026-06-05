@@ -3,4 +3,4 @@ exp01_naive_rag,fixed_500_tokens,semantic_only,none,none,0.9199,0.9278,0.8595,0.
 exp02_clause_chunking,clause_boundary,semantic_only,none,none,0.5990,0.7100,0.3067,0.3900,worse than baseline — clause chunks too large for focused retrieval
 exp03_hybrid_search,fixed_500_tokens,bm25_semantic_rrf,none,none,0.9600,0.9067,0.5067,0.8400,faithfulness +4% but context_precision -41% — BM25 adds noise chunks to top-5
 exp04_reranking,fixed_500_tokens,bm25_semantic_rrf,cohere,none,0.9333,0.8967,0.7000,0.8800,reranking fixed precision partly (+38% vs exp03) but still below exp01 baseline
-exp05_metadata_filter,fixed_500_tokens,bm25_semantic_rrf,cohere,authority_clause,,,,,
+exp05_metadata_filter,fixed_500_tokens,bm25_semantic_rrf,cohere,authority_clause,1.0000,0.8967,0.5333,0.9200,WINNER — perfect faithfulness + best recall; precision traded for grounding

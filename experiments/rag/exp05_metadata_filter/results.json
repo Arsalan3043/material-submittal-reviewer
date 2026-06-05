@@ -1,7 +1,7 @@
 {
   "experiment": "exp05_metadata_filter",
-  "faithfulness": null,
-  "answer_relevancy": null,
-  "context_precision": null,
-  "context_recall": null
+  "faithfulness": 1.0,
+  "answer_relevancy": 0.8967,
+  "context_precision": 0.5333,
+  "context_recall": 0.92
 }
