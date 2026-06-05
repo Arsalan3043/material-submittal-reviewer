@@ -1,7 +1,7 @@
 {
   "experiment": "exp02_clause_chunking",
-  "faithfulness": null,
-  "answer_relevancy": null,
-  "context_precision": null,
-  "context_recall": null
+  "faithfulness": 0.599,
+  "answer_relevancy": 0.71,
+  "context_precision": 0.3067,
+  "context_recall": 0.39
 }
