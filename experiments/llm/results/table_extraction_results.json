@@ -1,0 +1,377 @@
+{
+  "model": "gpt-4o-mini",
+  "total_pages_tested": 3,
+  "pages_with_rows": 1,
+  "extraction_rate": 0.3333,
+  "pages_with_full_cols": 1,
+  "column_detection_rate": 0.3333,
+  "ground_truth_evaluation": {
+    "gt_rows": 9,
+    "extracted_rows": 9,
+    "rows_matched": 9,
+    "row_match_rate": 1.0,
+    "avg_field_scores": {
+      "specified": 0.646,
+      "proposed": 0.641,
+      "measured": 0.556,
+      "remarks": 1.0
+    },
+    "overall_score": 0.711,
+    "per_row": [
+      {
+        "parameter": "Width",
+        "matched": true,
+        "matched_to": "width",
+        "overlap_on_param": 1.0,
+        "field_scores": {
+          "specified": 1.0,
+          "proposed": 1.0,
+          "measured": 1.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Tensile Strength",
+        "matched": true,
+        "matched_to": "tensile strength longitudinal",
+        "overlap_on_param": 0.67,
+        "field_scores": {
+          "specified": 0.17,
+          "proposed": 0.5,
+          "measured": 0.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Elongation at break",
+        "matched": true,
+        "matched_to": "elongation at break (pe)",
+        "overlap_on_param": 0.75,
+        "field_scores": {
+          "specified": 0.14,
+          "proposed": 0.25,
+          "measured": 0.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Tear Strength",
+        "matched": true,
+        "matched_to": "tear strength",
+        "overlap_on_param": 1.0,
+        "field_scores": {
+          "specified": 0.67,
+          "proposed": 0.38,
+          "measured": 0.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Thickness",
+        "matched": true,
+        "matched_to": "thickness",
+        "overlap_on_param": 1.0,
+        "field_scores": {
+          "specified": 1.0,
+          "proposed": 1.0,
+          "measured": 1.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Length of Roll",
+        "matched": true,
+        "matched_to": "length of roll",
+        "overlap_on_param": 1.0,
+        "field_scores": {
+          "specified": 1.0,
+          "proposed": 1.0,
+          "measured": 1.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Color",
+        "matched": true,
+        "matched_to": "color",
+        "overlap_on_param": 1.0,
+        "field_scores": {
+          "specified": 1.0,
+          "proposed": 1.0,
+          "measured": 0.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Structure",
+        "matched": true,
+        "matched_to": "structure",
+        "overlap_on_param": 1.0,
+        "field_scores": {
+          "specified": 0.67,
+          "proposed": 0.44,
+          "measured": 1.0,
+          "remarks": 1.0
+        }
+      },
+      {
+        "parameter": "Text / Marking",
+        "matched": true,
+        "matched_to": "text",
+        "overlap_on_param": 0.33,
+        "field_scores": {
+          "specified": 0.17,
+          "proposed": 0.2,
+          "measured": 1.0,
+          "remarks": 1.0
+        }
+      }
+    ]
+  },
+  "page_results": [
+    {
+      "submittal": "submittal_02",
+      "page": 1,
+      "description": "Cover/separator page \u2014 expect 0 rows",
+      "method": "ocr_llm",
+      "row_count": 0,
+      "has_header": false,
+      "is_continuation": false,
+      "column_headers_raw": [],
+      "all_columns_present": false,
+      "notes": "The page does not contain a comparison table; it appears to be a cover page or introductory text.",
+      "rows": [],
+      "ground_truth_eval": null
+    },
+    {
+      "submittal": "submittal_02",
+      "page": 2,
+      "description": "Rotated/garbled scan \u2014 expect poor OCR, 0 or partial rows",
+      "method": "ocr_llm",
+      "row_count": 0,
+      "has_header": false,
+      "is_continuation": false,
+      "column_headers_raw": [],
+      "all_columns_present": false,
+      "notes": "The text is too garbled to extract reliable data. No discernible table or column headers were found.",
+      "rows": [],
+      "ground_truth_eval": null
+    },
+    {
+      "submittal": "submittal_02",
+      "page": 3,
+      "description": "Clean comparison table page 1/2 \u2014 ground truth verified",
+      "method": "ocr_llm",
+      "row_count": 9,
+      "has_header": true,
+      "is_continuation": false,
+      "column_headers_raw": [
+        "Properties",
+        "Specified",
+        "Proposed",
+        "Measured",
+        "Remarks"
+      ],
+      "all_columns_present": true,
+      "notes": "Data extracted successfully from the comparison table.",
+      "rows": [
+        {
+          "parameter": "Width",
+          "specified": "150MM",
+          "proposed": "150MM",
+          "deviation": "",
+          "measured": "150MM",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Tensile Strength Longitudinal",
+          "specified": "140 kg/cm\u00b2",
+          "proposed": "120 kg/cm\u00b2 Transverse 352 kg/cm\u00b2",
+          "deviation": "",
+          "measured": "397 kg/cm\u00b2 (39 N/mm\u00b2) Longitudinal",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Elongation at break (PE)",
+          "specified": "Longitudinal Elongation 400 %",
+          "proposed": "Longitudinal 300%, Transverse Elongation 500 %",
+          "deviation": "",
+          "measured": "706 % Longitudinal 840 % Transverse",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Tear Strength",
+          "specified": "220 gf Longitudinal 260 gf",
+          "proposed": "Transverse 2090 gf (20.5 N)",
+          "deviation": "",
+          "measured": "247 gf (24.3 N) Longitudinal",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Thickness",
+          "specified": "150 microns",
+          "proposed": "150 microns",
+          "deviation": "",
+          "measured": "",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Length of Roll",
+          "specified": "250 meter",
+          "proposed": "250 meter",
+          "deviation": "",
+          "measured": "",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Color",
+          "specified": "Yellow",
+          "proposed": "Yellow",
+          "deviation": "",
+          "measured": "",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Structure",
+          "specified": "Marking tape shall be laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment.",
+          "proposed": "Marking tape shall be laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment.",
+          "deviation": "",
+          "measured": "",
+          "remarks": "Comply"
+        },
+        {
+          "parameter": "Text",
+          "specified": "marked bi-lingual (Arabic/English) CAUTION \u2014",
+          "proposed": "marked bi-lingual (Arabic/English) CAUTION \u2014",
+          "deviation": "",
+          "measured": "",
+          "remarks": "Comply"
+        }
+      ],
+      "ground_truth_eval": {
+        "gt_rows": 9,
+        "extracted_rows": 9,
+        "rows_matched": 9,
+        "row_match_rate": 1.0,
+        "avg_field_scores": {
+          "specified": 0.646,
+          "proposed": 0.641,
+          "measured": 0.556,
+          "remarks": 1.0
+        },
+        "overall_score": 0.711,
+        "per_row": [
+          {
+            "parameter": "Width",
+            "matched": true,
+            "matched_to": "width",
+            "overlap_on_param": 1.0,
+            "field_scores": {
+              "specified": 1.0,
+              "proposed": 1.0,
+              "measured": 1.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Tensile Strength",
+            "matched": true,
+            "matched_to": "tensile strength longitudinal",
+            "overlap_on_param": 0.67,
+            "field_scores": {
+              "specified": 0.17,
+              "proposed": 0.5,
+              "measured": 0.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Elongation at break",
+            "matched": true,
+            "matched_to": "elongation at break (pe)",
+            "overlap_on_param": 0.75,
+            "field_scores": {
+              "specified": 0.14,
+              "proposed": 0.25,
+              "measured": 0.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Tear Strength",
+            "matched": true,
+            "matched_to": "tear strength",
+            "overlap_on_param": 1.0,
+            "field_scores": {
+              "specified": 0.67,
+              "proposed": 0.38,
+              "measured": 0.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Thickness",
+            "matched": true,
+            "matched_to": "thickness",
+            "overlap_on_param": 1.0,
+            "field_scores": {
+              "specified": 1.0,
+              "proposed": 1.0,
+              "measured": 1.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Length of Roll",
+            "matched": true,
+            "matched_to": "length of roll",
+            "overlap_on_param": 1.0,
+            "field_scores": {
+              "specified": 1.0,
+              "proposed": 1.0,
+              "measured": 1.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Color",
+            "matched": true,
+            "matched_to": "color",
+            "overlap_on_param": 1.0,
+            "field_scores": {
+              "specified": 1.0,
+              "proposed": 1.0,
+              "measured": 0.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Structure",
+            "matched": true,
+            "matched_to": "structure",
+            "overlap_on_param": 1.0,
+            "field_scores": {
+              "specified": 0.67,
+              "proposed": 0.44,
+              "measured": 1.0,
+              "remarks": 1.0
+            }
+          },
+          {
+            "parameter": "Text / Marking",
+            "matched": true,
+            "matched_to": "text",
+            "overlap_on_param": 0.33,
+            "field_scores": {
+              "specified": 0.17,
+              "proposed": 0.2,
+              "measured": 1.0,
+              "remarks": 1.0
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "data_constraints_note": "submittal_03 comparison table skipped \u2014 PDF xref corruption makes 20/22 pages unreadable. submittal_01 contains no standard comparison table. Test set constrained to submittal_02's 3 pages."
+}
