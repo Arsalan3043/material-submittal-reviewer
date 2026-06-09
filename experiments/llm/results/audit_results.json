@@ -1,0 +1,360 @@
+{
+  "model": "gpt-4o-mini",
+  "material": "Detectable Warning Tape (Kangaroo Plastics ME LLC)",
+  "total_cases": 10,
+  "error_cases": 7,
+  "detected": 7,
+  "detection_rate": 1.0,
+  "clean_cases": 3,
+  "false_positives": 3,
+  "false_positive_rate": 1.0,
+  "target_met": true,
+  "results": [
+    {
+      "id": "T01",
+      "description": "Width \u2014 all values correct and consistent (expect PASS)",
+      "has_error": false,
+      "was_flagged": true,
+      "correct_call": false,
+      "overall_status": "warning",
+      "findings": [
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation declared despite proposed value differing from specified value.",
+          "expected": "Deviation should be declared if proposed value is the same as specified value.",
+          "found": "No deviation declared."
+        }
+      ],
+      "notes": "The proposed value meets the specification, but the lack of a declared deviation is a minor inconsistency.",
+      "expected_checks": []
+    },
+    {
+      "id": "T02",
+      "description": "Width \u2014 specified value in table says 100mm, but spec requires 150mm minimum (CRITICAL)",
+      "has_error": true,
+      "was_flagged": true,
+      "correct_call": true,
+      "overall_status": "critical",
+      "findings": [
+        {
+          "check_type": "specified_check",
+          "severity": "critical",
+          "finding": "The specified value in the table is incorrect as it states 100mm minimum, while the specification requires a minimum of 150mm.",
+          "expected": "150mm minimum",
+          "found": "100mm minimum"
+        },
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation declared despite the proposed value differing from the specified value.",
+          "expected": "Deviation should be declared.",
+          "found": "None declared"
+        },
+        {
+          "check_type": "compliance_check",
+          "severity": "critical",
+          "finding": "The compliance claim is inaccurate as the proposed value does not meet the specification minimum requirement.",
+          "expected": "Comply with minimum 150mm width",
+          "found": "Comply"
+        }
+      ],
+      "notes": "The proposed width of 150mm meets the specification, but the specified value in the table is incorrect, leading to compliance issues.",
+      "expected_checks": [
+        "specified_check"
+      ]
+    },
+    {
+      "id": "T03",
+      "description": "Width \u2014 proposed 130mm is below 150mm minimum; compliance claim 'Comply' is wrong (CRITICAL)",
+      "has_error": true,
+      "was_flagged": true,
+      "correct_call": true,
+      "overall_status": "critical",
+      "findings": [
+        {
+          "check_type": "specified_check",
+          "severity": "critical",
+          "finding": "The specified value of 150mm minimum is not met.",
+          "expected": "150mm minimum",
+          "found": "130mm"
+        },
+        {
+          "check_type": "proposed_check",
+          "severity": "critical",
+          "finding": "The proposed value of 130mm does not meet the specification minimum.",
+          "expected": "150mm minimum",
+          "found": "130mm"
+        },
+        {
+          "check_type": "measured_check",
+          "severity": "critical",
+          "finding": "The measured value of 130mm differs from the required minimum of 150mm.",
+          "expected": "150mm minimum",
+          "found": "130mm"
+        },
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation declared for the proposed value which is below the specified minimum.",
+          "expected": "Deviation should be declared",
+          "found": "None declared"
+        },
+        {
+          "check_type": "compliance_check",
+          "severity": "critical",
+          "finding": "The remarks state 'Comply' but the proposed value does not meet the specification.",
+          "expected": "Comply with 150mm minimum",
+          "found": "Comply"
+        }
+      ],
+      "notes": "The proposed width is below the minimum requirement, and there is no deviation declared, which is critical for compliance.",
+      "expected_checks": [
+        "proposed_check",
+        "compliance_check"
+      ]
+    },
+    {
+      "id": "T04",
+      "description": "Thickness \u2014 proposed 120 microns differs from specified 150 microns, but no deviation declared (WARNING)",
+      "has_error": true,
+      "was_flagged": true,
+      "correct_call": true,
+      "overall_status": "critical",
+      "findings": [
+        {
+          "check_type": "specified_check",
+          "severity": "critical",
+          "finding": "The specified value of 150 microns is not met by the proposed value.",
+          "expected": "150 microns minimum",
+          "found": "120 microns"
+        },
+        {
+          "check_type": "proposed_check",
+          "severity": "critical",
+          "finding": "The proposed value of 120 microns does not meet the specification minimum of 150 microns.",
+          "expected": "150 microns minimum",
+          "found": "120 microns"
+        },
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation declared for the proposed value differing from the specified value.",
+          "expected": "Deviation should be declared",
+          "found": "None declared"
+        },
+        {
+          "check_type": "compliance_check",
+          "severity": "critical",
+          "finding": "The remarks state 'Comply' but the proposed value does not meet the specification.",
+          "expected": "Comply with specification",
+          "found": "Comply"
+        }
+      ],
+      "notes": "The proposed thickness is below the minimum requirement, leading to multiple critical issues.",
+      "expected_checks": [
+        "deviation_check"
+      ]
+    },
+    {
+      "id": "T05",
+      "description": "Elongation \u2014 table says measured 700%, but test report records 550% MD (CRITICAL)",
+      "has_error": true,
+      "was_flagged": true,
+      "correct_call": true,
+      "overall_status": "warning",
+      "findings": [
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation declared for the proposed value which differs from the specified value.",
+          "expected": "Deviation should be declared since proposed value (550%) exceeds specified minimum (400%).",
+          "found": "No deviation declared."
+        },
+        {
+          "check_type": "compliance_check",
+          "severity": "warning",
+          "finding": "The remarks state 'Comply' but the proposed value does not meet the datasheet requirement for TM (500%).",
+          "expected": "Proposed value should comply with both specification and datasheet requirements.",
+          "found": "Proposed value (550%) exceeds the datasheet's TM requirement (500%)."
+        }
+      ],
+      "notes": "The measured value (700%) is acceptable as it exceeds both the specified minimum and the proposed value.",
+      "expected_checks": [
+        "measured_check"
+      ]
+    },
+    {
+      "id": "T06",
+      "description": "Colour \u2014 proposed Blue does not match specified Yellow; remarks say 'Comply' incorrectly (CRITICAL)",
+      "has_error": true,
+      "was_flagged": true,
+      "correct_call": true,
+      "overall_status": "critical",
+      "findings": [
+        {
+          "check_type": "specified_check",
+          "severity": "critical",
+          "finding": "The specified color is Yellow, but the proposed color is Blue, which is not compliant with the specification.",
+          "expected": "Yellow",
+          "found": "Blue"
+        },
+        {
+          "check_type": "proposed_check",
+          "severity": "critical",
+          "finding": "The proposed value (Blue) contradicts the manufacturer's datasheet which states the standard product color is Yellow.",
+          "expected": "Yellow",
+          "found": "Blue"
+        },
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation was declared for the proposed color change from Yellow to Blue.",
+          "expected": "Deviation should be declared.",
+          "found": "None declared"
+        },
+        {
+          "check_type": "compliance_check",
+          "severity": "critical",
+          "finding": "The remarks state 'Comply', but the proposed value (Blue) does not meet the specification requirement for color.",
+          "expected": "Comply with Yellow",
+          "found": "Comply"
+        }
+      ],
+      "notes": "The proposed color is not compliant with the specification, and there is a lack of declaration for the deviation, which is critical for compliance.",
+      "expected_checks": [
+        "proposed_check",
+        "compliance_check"
+      ]
+    },
+    {
+      "id": "T07",
+      "description": "Roll Length \u2014 proposed 300m is not available per datasheet; standard is 250m only (CRITICAL)",
+      "has_error": true,
+      "was_flagged": true,
+      "correct_call": true,
+      "overall_status": "critical",
+      "findings": [
+        {
+          "check_type": "specified_check",
+          "severity": "critical",
+          "finding": "The specified value is correct, but the proposed value exceeds the maximum allowable length as per the datasheet.",
+          "expected": "250 meters minimum",
+          "found": "300 meters"
+        },
+        {
+          "check_type": "proposed_check",
+          "severity": "critical",
+          "finding": "The proposed value of 300 meters contradicts the datasheet which states that only standard 250 meter rolls are manufactured.",
+          "expected": "Value must be 250 meters",
+          "found": "300 meters"
+        },
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation was declared for the proposed value which differs from the specified value.",
+          "expected": "Deviation should be declared",
+          "found": "None declared"
+        },
+        {
+          "check_type": "compliance_check",
+          "severity": "critical",
+          "finding": "The remarks state 'Comply' but the proposed value does not meet the specification.",
+          "expected": "Comply with 250 meters",
+          "found": "Comply"
+        }
+      ],
+      "notes": "The proposed length exceeds the standard roll length available, which is a critical issue for compliance.",
+      "expected_checks": [
+        "proposed_check"
+      ]
+    },
+    {
+      "id": "T08",
+      "description": "Tensile Strength \u2014 proposed and measured values exceed specification minimum (expect PASS)",
+      "has_error": false,
+      "was_flagged": true,
+      "correct_call": false,
+      "overall_status": "warning",
+      "findings": [
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation declared for the proposed value which differs from the specified value.",
+          "expected": "Deviation should be declared since proposed value (158 kg/cm\u00b2) exceeds specified minimum (140 kg/cm\u00b2).",
+          "found": "No deviation declared."
+        }
+      ],
+      "notes": "The proposed value meets the specification and the measured value is consistent with the test report. However, the lack of a declared deviation is a concern.",
+      "expected_checks": []
+    },
+    {
+      "id": "T09",
+      "description": "Tear Strength (TD) \u2014 deviation declared as '10% below specification' but actual deviation is 23% (WARNING)",
+      "has_error": true,
+      "was_flagged": true,
+      "correct_call": true,
+      "overall_status": "critical",
+      "findings": [
+        {
+          "check_type": "specified_check",
+          "severity": "critical",
+          "finding": "The specified value of 260 gf minimum is not met.",
+          "expected": "260 gf minimum",
+          "found": "200 gf"
+        },
+        {
+          "check_type": "proposed_check",
+          "severity": "critical",
+          "finding": "The proposed value of 200 gf does not meet the specification minimum of 260 gf.",
+          "expected": "\u2265 260 gf",
+          "found": "200 gf"
+        },
+        {
+          "check_type": "measured_check",
+          "severity": "warning",
+          "finding": "The measured value of 200 gf is consistent with the test report but does not meet the specification.",
+          "expected": "\u2265 260 gf",
+          "found": "200 gf"
+        },
+        {
+          "check_type": "deviation_check",
+          "severity": "critical",
+          "finding": "The deviation of 10% below specification is not acceptable as it does not meet the minimum requirement.",
+          "expected": "No deviation below minimum specification",
+          "found": "10% below specification"
+        },
+        {
+          "check_type": "compliance_check",
+          "severity": "critical",
+          "finding": "The remarks state 'Comply with approved deviation' which is inaccurate as the proposed value does not meet the specification.",
+          "expected": "Comply with specification",
+          "found": "Comply with approved deviation"
+        }
+      ],
+      "notes": "The proposed tear strength value is significantly below the required minimum, leading to multiple critical findings.",
+      "expected_checks": [
+        "deviation_check"
+      ]
+    },
+    {
+      "id": "T10",
+      "description": "Chemical Resistance \u2014 all values consistent with spec, datasheet, and test report (expect PASS)",
+      "has_error": false,
+      "was_flagged": true,
+      "correct_call": false,
+      "overall_status": "warning",
+      "findings": [
+        {
+          "check_type": "deviation_check",
+          "severity": "warning",
+          "finding": "No deviation declared despite the proposed value differing from the specified value.",
+          "expected": "No effect at pH 2.5 to 11.0 soil conditions.",
+          "found": "Resistant to acids and alkalis; no effect in standard soil chemicals."
+        }
+      ],
+      "notes": "The proposed value suggests a broader resistance than specified, which may not align with the exact requirements of the specification.",
+      "expected_checks": []
+    }
+  ]
+}
