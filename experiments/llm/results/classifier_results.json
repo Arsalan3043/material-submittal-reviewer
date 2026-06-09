@@ -1,0 +1,503 @@
+{
+  "model": "gpt-4o-mini",
+  "clean_classification_accuracy": 0.8846,
+  "mismatch_detection_accuracy": 1.0,
+  "separator_pages_found": 15,
+  "scenarios": [
+    {
+      "scenario": "clean_classification",
+      "accuracy": 0.8846,
+      "correct": 23,
+      "total": 26,
+      "results": [
+        {
+          "submittal": "submittal_02",
+          "filename": "0_Cover page.pdf",
+          "ground_truth": "cover_page",
+          "predicted": "cover_page",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains identifying information such as project name, contractor, consultant, and submittal reference number without technical data.",
+          "key_indicators": [
+            "PROJECT : Construction of Infrastructure & Utilities Works",
+            "SUBMITTAL REFERENCE: [RHINF1-NPC-IR-MAT-0002_00"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "10_Others.pdf",
+          "ground_truth": "others",
+          "predicted": "others",
+          "confidence": "medium",
+          "correct": true,
+          "reasoning": "The document contains a company profile and information about manufacturing capabilities but does not fit into any specific category for construction material submittals.",
+          "key_indicators": [
+            "Kangaroo Plastics",
+            "ISO 9001:2008 certified"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "1_Material Source Declaration form.pdf",
+          "ground_truth": "msdf",
+          "predicted": "msdf",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document is identified as a Material Source Declaration Form, which is a formal project or authority form.",
+          "key_indicators": [
+            "Material Source Declaration Form",
+            "Department Of Urban Planning and Municipalities"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "2.1_BOQ.pdf",
+          "ground_truth": "boq",
+          "predicted": "boq",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains a table with item descriptions, units, and quantities, which is characteristic of a Bill of Quantities.",
+          "key_indicators": [
+            "ITEM ITEM DESCRIPTION",
+            "unit | quantity | RATE | AMOUNT"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "2.2_Drawings.pdf",
+          "ground_truth": "drawing",
+          "predicted": "drawing",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains engineering drawings with graphical content, dimensions, and references to specific details and sections.",
+          "key_indicators": [
+            "PROJECT : Construction of Infrastructure & Utilities Works",
+            "Scale 120 >"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "2_Copies of Relevant parts of Specs.pdf",
+          "ground_truth": "specification_copy",
+          "predicted": "specification_copy",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains dense technical text with specific clause references and detailed material performance requirements.",
+          "key_indicators": [
+            "IRRIGATION SYSTEMS - TECHNICAL SPECIFICATIONS VOLUME III",
+            "24.3.3 Detectable U"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "3_Technical Comparison.pdf",
+          "ground_truth": "comparison_table",
+          "predicted": "comparison_table",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains a technical comparison structured around specified and proposed materials, indicating it is a comparison table.",
+          "key_indicators": [
+            "Technical Comparison",
+            "Specified / Proposed / Deviation or Compliance"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "4_Manufacturer's Technical Data - Original Catalogues.pdf",
+          "ground_truth": "technical_datasheet",
+          "predicted": "technical_datasheet",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains detailed product specifications, technical properties, and performance data typical of a manufacturer's product datasheet.",
+          "key_indicators": [
+            "Technical Data Sheet",
+            "Tensile Strength"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "5_Recent Test Reports - Certificates.pdf",
+          "ground_truth": "test_report",
+          "predicted": "test_report",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains detailed test results, including test methods, numerical values, and descriptions of physical and chemical properties.",
+          "key_indicators": [
+            "Test Method",
+            "Tensile Strength",
+            "Chemical Resistance"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "6_Departmet of Economic Development (Registration).pdf",
+          "ground_truth": "ded_registration",
+          "predicted": "ded_registration",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains detailed information about a company's registration with the Department of Economic Development, including license number and trade name.",
+          "key_indicators": [
+            "Department of Economic Development",
+            "License No : CN-1031357"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "7_Manufacturer - Suppliers Guarantee.pdf",
+          "ground_truth": "manufacturer_guarantee",
+          "predicted": "manufacturer_guarantee",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document is a guarantee letter from the manufacturer confirming product quality and performance for a specified period.",
+          "key_indicators": [
+            "We hereby confirm you that Detectable Warning Tape supplied by Kangaroo Plastics ME LLC",
+            "warrant 60 months (05 Years) of normal service life"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "8_Previous Approvals.pdf",
+          "ground_truth": "previous_approval",
+          "predicted": "maf",
+          "confidence": "high",
+          "correct": false,
+          "reasoning": "The document is a Material Approval Form with structured fields for project and material details.",
+          "key_indicators": [
+            "Material Approval Form",
+            "Application No: 202000504936"
+          ]
+        },
+        {
+          "submittal": "submittal_02",
+          "filename": "9_Applicators Method Statement.pdf",
+          "ground_truth": "method_statement",
+          "predicted": "method_statement",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document outlines a step-by-step installation procedure for detectable warning tape, which is characteristic of a method statement.",
+          "key_indicators": [
+            "Detectable Warning Tape Installation Instruction",
+            "Step-by-step installation procedure"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "0. Cover Page.pdf",
+          "ground_truth": "cover_page",
+          "predicted": "cover_page",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains identifying information such as project name, contractor, and submittal reference number without technical data.",
+          "key_indicators": [
+            "MATERIAL SUBMITTAL",
+            "SUBMITTAL REFERENCE: RHINF1-NPC-STW-MAT-0010_01"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "1. Material Source Declaration Form ( MSDF ).pdf",
+          "ground_truth": "msdf",
+          "predicted": "msdf",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document is identified as a Material Source Declaration Form due to its formal structure and inclusion of material origin, manufacturer details, and project-specific information.",
+          "key_indicators": [
+            "Material Source Declaration Form",
+            "Manufacturer/ Source: India"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "10. Others.pdf",
+          "ground_truth": "others",
+          "predicted": "cover_page",
+          "confidence": "high",
+          "correct": false,
+          "reasoning": "The document contains identifying information such as project name, supplier details, and contact information without any technical data.",
+          "key_indicators": [
+            "Construction of Infrastructure & Utilities Works",
+            "Supplier\u2019s (M/s. Gebal) Company Profile & ISO Certificate"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "2. Copies of Relevant Parts of Specs..pdf",
+          "ground_truth": "specification_copy",
+          "predicted": "specification_copy",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains dense technical text with clause numbers and material performance requirements.",
+          "key_indicators": [
+            "STORMWATER & SUBSOIL DRAINAGE SYSTEMS VOLUME IV- TECHNICAL SPECIFICATIONS",
+            "Minimum ten years of manufacturing & supply record for GRP composite manhole frames & covers in GCC countries."
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "2.1 BOQ.pdf",
+          "ground_truth": "boq",
+          "predicted": "boq",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains a table with columns for item description, unit, and quantity, which are characteristic of a Bill of Quantities.",
+          "key_indicators": [
+            "ITEM ITEM DESCRIPTION CESMMS",
+            "unr |quantiry} RATE amount"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "2.2 Drawings.pdf",
+          "ground_truth": "drawing",
+          "predicted": "drawing",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains sparse text and graphical elements typical of engineering drawings, including project name and references to construction details.",
+          "key_indicators": [
+            "Construction of Infrastructure & Utilities Works",
+            "TYPICAL WALL PIPE OPENING"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "3. Technical Comparison.pdf",
+          "ground_truth": "comparison_table",
+          "predicted": "comparison_table",
+          "confidence": "medium",
+          "correct": true,
+          "reasoning": "The document mentions a technical comparison, which suggests it may contain structured information comparing specified and proposed materials.",
+          "key_indicators": [
+            "Technical Comparison",
+            "specified vs proposed"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "4. Manufacturer's Technical Data Original Catalogues.pdf",
+          "ground_truth": "technical_datasheet",
+          "predicted": "technical_datasheet",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains manufacturer product details and specifications, indicating it is a technical datasheet.",
+          "key_indicators": [
+            "Manufacturer\u2019s Technical Data",
+            "Technical Data Sheet"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "5. Recent Test Reports Certificates.pdf",
+          "ground_truth": "test_report",
+          "predicted": "test_report",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains detailed test results, including test method codes, numerical test results, and information about the testing laboratory.",
+          "key_indicators": [
+            "LOAD TEST ON GULLY TOPS AND MANHOLE TOPS",
+            "BS EN 124-1:2015"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "6. Department of Economic Development  ( Registration ).pdf",
+          "ground_truth": "ded_registration",
+          "predicted": "ded_registration",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document contains detailed information about a commercial license, including license number, trade name, and activities, which are characteristic of a company registration certificate.",
+          "key_indicators": [
+            "License No : CN-1015065",
+            "Trade Name : GEBAL TRADING & IMPORT CO. - LLC"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "7. Manuafcturer Suppliers Guarantee ( as per Contract ).pdf",
+          "ground_truth": "manufacturer_guarantee",
+          "predicted": "manufacturer_guarantee",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document is a warranty letter from the manufacturer guaranteeing product quality and performance for a stated period.",
+          "key_indicators": [
+            "warrants all of its Municipal Construction Castings",
+            "for a period of 10 years from the date of manufacturing"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "8. Previous Approvals.pdf",
+          "ground_truth": "previous_approval",
+          "predicted": "maf",
+          "confidence": "high",
+          "correct": false,
+          "reasoning": "The document is a Material Approval Form with structured fields including application number, project details, contractor, consultant, and material description.",
+          "key_indicators": [
+            "Material Approval Form",
+            "Application No: 202300501586"
+          ]
+        },
+        {
+          "submittal": "submittal_03",
+          "filename": "9. Applicator's Method Statement.pdf",
+          "ground_truth": "method_statement",
+          "predicted": "method_statement",
+          "confidence": "high",
+          "correct": true,
+          "reasoning": "The document outlines a step-by-step installation procedure for epoxy coating, including scope and application steps.",
+          "key_indicators": [
+            "Applicator\u2019s Method Statement",
+            "Scope of Work"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "separator_detection",
+      "pdf": "ACM60690248-BNY-JV-2A-RD-MAT-0214 Prime Coat Medium Curing Type MC-70 Grade for Road Works, Union International Bitumen.pdf",
+      "total_pages": 69,
+      "separator_count": 15,
+      "content_pages": 54,
+      "separators": [
+        {
+          "page": 5,
+          "word_count": 12,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                10. M"
+        },
+        {
+          "page": 11,
+          "word_count": 9,
+          "text": "STANDARD CONSTRUCTION SPECIFICATIONS  PART 1 (ROADS) (TR-542-1) QCC-V1 Copy"
+        },
+        {
+          "page": 13,
+          "word_count": 17,
+          "text": "STANDARD CONSTRUCTION SPECIFICATIONS  PART 1  ROADS  CHAPTER 3 - PAVEMENT  DOCUM"
+        },
+        {
+          "page": 17,
+          "word_count": 9,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        },
+        {
+          "page": 19,
+          "word_count": 9,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        },
+        {
+          "page": 22,
+          "word_count": 11,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        },
+        {
+          "page": 27,
+          "word_count": 8,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        },
+        {
+          "page": 32,
+          "word_count": 9,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                6.App"
+        },
+        {
+          "page": 34,
+          "word_count": 7,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        },
+        {
+          "page": 36,
+          "word_count": 11,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                8.Oth"
+        },
+        {
+          "page": 48,
+          "word_count": 12,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                10. M"
+        },
+        {
+          "page": 53,
+          "word_count": 8,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        },
+        {
+          "page": 56,
+          "word_count": 20,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        },
+        {
+          "page": 60,
+          "word_count": 11,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                14.Ma"
+        },
+        {
+          "page": 67,
+          "word_count": 9,
+          "text": "Authority  Employer  Engineer Lead  /Consultant  Contractor                     "
+        }
+      ]
+    },
+    {
+      "scenario": "mismatch_detection",
+      "accuracy": 1.0,
+      "correct": 4,
+      "total": 4,
+      "results": [
+        {
+          "description": "BOQ placed in the Specification section",
+          "declared_label": "Copies of Relevant Specifications",
+          "expected_type": "boq",
+          "detected_type": "boq",
+          "confidence": "high",
+          "correct": true,
+          "mismatch_flagged": true,
+          "reasoning": "The document contains a table with item descriptions, units, and quantities, which is characteristic of a Bill of Quantities.",
+          "key_indicators": [
+            "ITEM ITEM DESCRIPTION",
+            "unit | quantity | RATE | AMOUNT"
+          ]
+        },
+        {
+          "description": "Test report placed in Technical Datasheet section",
+          "declared_label": "Manufacturer's Technical Data",
+          "expected_type": "test_report",
+          "detected_type": "test_report",
+          "confidence": "high",
+          "correct": true,
+          "mismatch_flagged": true,
+          "reasoning": "The document contains detailed test results, methods, and numerical values related to a specific product.",
+          "key_indicators": [
+            "Test Method",
+            "Tensile Strength"
+          ]
+        },
+        {
+          "description": "DED registration placed in Guarantee section",
+          "declared_label": "Manufacturer Guarantee",
+          "expected_type": "ded_registration",
+          "detected_type": "ded_registration",
+          "confidence": "high",
+          "correct": true,
+          "mismatch_flagged": true,
+          "reasoning": "The document contains detailed information about a company's registration, including trade name, license number, and economic activities, which are characteristic of a Department of Economic Development registration certificate.",
+          "key_indicators": [
+            "License No ; CN-1031357",
+            "Trade Name : KANGAROO PLASTICS MIDDLE EAST - LL C - ABU DHABI BRANCH"
+          ]
+        },
+        {
+          "description": "Method statement placed in Previous Approvals section",
+          "declared_label": "Previous Approvals",
+          "expected_type": "method_statement",
+          "detected_type": "method_statement",
+          "confidence": "high",
+          "correct": true,
+          "mismatch_flagged": true,
+          "reasoning": "The document outlines a step-by-step installation procedure for detectable warning tape, which is characteristic of a method statement.",
+          "key_indicators": [
+            "Detectable Warning Tape Installation Instruction",
+            "Step-by-step installation procedure"
+          ]
+        }
+      ]
+    }
+  ]
+}
