@@ -6,7 +6,7 @@ from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
 from src.models.submittal import ClassifiedDocument, DocType
-from src.parsers.pdf_parser import extract_text_from_bytes
+from src.parsers.pdf_parser import extract_text_from_bytes, get_page_count
 
 # Proven in Phase 2 Experiment A: gpt-4o-mini achieves 96.2% effective accuracy.
 _MODEL = "gpt-4o-mini"
@@ -155,7 +155,7 @@ def classify_uploaded_file(
     Handles OCR fallback internally via pdf_parser.
     """
     text = extract_text_from_bytes(content, max_pages=max_pages)
-    page_count = _get_page_count(content)
+    page_count = get_page_count(content)
 
     result = classify_document(text, declared_label=declared_label)
 
@@ -183,14 +183,6 @@ def classify_uploaded_file(
         declared_label=declared_label,
         mismatch_flagged=mismatch,
     )
-
-
-def _get_page_count(content: bytes) -> int:
-    import fitz
-    doc = fitz.open(stream=content, filetype="pdf")
-    count = doc.page_count
-    doc.close()
-    return count
 
 
 # Maps declared section labels (from UI or filename) to expected DocType.

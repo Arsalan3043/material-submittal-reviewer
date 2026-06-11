@@ -44,6 +44,11 @@ class AuthorityProfile(ABC):
         """Whether this authority requires non-toxicity certificates."""
         return False
 
+    @property
+    def extra_requirements(self) -> list[str]:
+        """Authority-specific requirements beyond the standard index (e.g. AVL, non-toxicity)."""
+        return []
+
     @abstractmethod
     def get_max_doc_age_days(self, doc_type: DocType) -> int | None:
         """

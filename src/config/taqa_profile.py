@@ -29,9 +29,5 @@ class TAQAProfile(ADMProfile):
             "Non-toxicity certificates required (must be included in test reports)",
         ]
 
-    @property
-    def chroma_collection_name(self) -> str:
-        return "taqa_specifications"
-
 
 TAQA = TAQAProfile()

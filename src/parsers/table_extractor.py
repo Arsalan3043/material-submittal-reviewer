@@ -168,7 +168,7 @@ def extract_table_page(content: bytes, page_num: int) -> TablePageResult:
     ocr_text = _ocr_page_bytes(content, page_num).strip()
     if ocr_text:
         result = _extract_with_llm(ocr_text)
-        if result.rows or result.notes:
+        if result.rows:
             return result
 
     # Step 2: pdfplumber (opportunistic for digital PDFs)
