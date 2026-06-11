@@ -1,1 +1,207 @@
-<!-- Report HTML template — rendered by WeasyPrint to produce final PDF -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Material Submittal Review Report</title>
+<style>
+  @page {
+    margin: 20mm 15mm;
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 9pt; color: #666; }
+  }
+  body        { font-family: Arial, sans-serif; font-size: 10pt; color: #1a1a1a; line-height: 1.4; }
+  h1          { font-size: 16pt; color: #003366; border-bottom: 2px solid #003366; padding-bottom: 4px; }
+  h2          { font-size: 12pt; color: #003366; margin-top: 20px; margin-bottom: 6px; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
+  .meta-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; margin-bottom: 16px; }
+  .meta-item  { font-size: 9pt; }
+  .meta-label { font-weight: bold; color: #555; }
+  .badge      { display: inline-block; padding: 3px 10px; border-radius: 3px; font-weight: bold; font-size: 10pt; }
+  .APPROVE    { background: #d4edda; color: #155724; }
+  .CONDITIONAL{ background: #fff3cd; color: #856404; }
+  .RESUBMIT   { background: #f8d7da; color: #721c24; }
+  .summary-box{ border-left: 4px solid #003366; padding: 8px 12px; background: #f0f4ff; margin-bottom: 16px; font-size: 10pt; }
+  table       { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 9pt; }
+  th          { background: #003366; color: #fff; padding: 5px 7px; text-align: left; }
+  td          { border: 1px solid #ddd; padding: 4px 7px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f7f7f7; }
+  .sev-critical{ color: #c00; font-weight: bold; }
+  .sev-warning { color: #b8860b; font-weight: bold; }
+  .sev-pass    { color: #2a7a2a; }
+  .bool-true   { color: #2a7a2a; }
+  .bool-false  { color: #c00; font-weight: bold; }
+  .missing-list{ color: #c00; font-weight: bold; }
+  .counts     { font-size: 10pt; margin-bottom: 14px; }
+  .counts span{ margin-right: 20px; }
+  .no-findings{ color: #666; font-style: italic; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<h1>Material Submittal Review Report</h1>
+
+<div class="meta-grid">
+  <div class="meta-item"><span class="meta-label">Submittal ID:</span> {{ report.submittal_id }}</div>
+  <div class="meta-item"><span class="meta-label">Review Date:</span> {{ report.review_date }}</div>
+  <div class="meta-item"><span class="meta-label">Authority:</span> {{ report.authority }}</div>
+  <div class="meta-item"><span class="meta-label">Spec Clause:</span> {{ report.spec_clause }}</div>
+  <div class="meta-item"><span class="meta-label">Material:</span> {{ report.material_description }}</div>
+  <div class="meta-item">
+    <span class="meta-label">Recommendation:</span>
+    <span class="badge {{ report.overall_recommendation }}">{{ report.overall_recommendation }}</span>
+  </div>
+</div>
+
+<div class="counts">
+  <span class="sev-critical">&#9679; Critical: {{ report.critical_count }}</span>
+  <span class="sev-warning">&#9679; Warnings: {{ report.warning_count }}</span>
+</div>
+
+{% if report.missing_documents %}
+<div>
+  <strong class="missing-list">Missing documents:</strong>
+  <span class="missing-list">{{ report.missing_documents | join(", ") }}</span>
+</div>
+{% endif %}
+
+<div class="summary-box">{{ report.summary_comments }}</div>
+
+<!-- ── COMPLETENESS ──────────────────────────────────────────────── -->
+<h2>Stage 1 — Completeness Check</h2>
+{% if report.completeness_findings %}
+<table>
+  <tr><th>Document</th><th>Description</th><th>Severity</th><th>Action Required</th></tr>
+  {% for f in report.completeness_findings %}
+  <tr>
+    <td>{{ f.document }}</td>
+    <td>{{ f.description }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+    <td>{{ f.action_required }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="no-findings">No completeness findings.</p>{% endif %}
+
+<!-- ── BOQ & DRAWING ─────────────────────────────────────────────── -->
+<h2>Stage 3 — BOQ &amp; Drawing Check</h2>
+{% if report.boq_drawing_findings %}
+<table>
+  <tr><th>Document</th><th>Description</th><th>Severity</th><th>Action Required</th></tr>
+  {% for f in report.boq_drawing_findings %}
+  <tr>
+    <td>{{ f.document }}</td>
+    <td>{{ f.description }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+    <td>{{ f.action_required }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="no-findings">No BOQ/drawing findings.</p>{% endif %}
+
+<!-- ── SPEC VERIFICATION ─────────────────────────────────────────── -->
+<h2>Stage 4 — Specification Verification</h2>
+{% if report.spec_verification_findings %}
+<table>
+  <tr><th>Document</th><th>Description</th><th>Severity</th><th>Action Required</th></tr>
+  {% for f in report.spec_verification_findings %}
+  <tr>
+    <td>{{ f.document }}</td>
+    <td>{{ f.description }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+    <td>{{ f.action_required }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="no-findings">No specification verification findings.</p>{% endif %}
+
+<!-- ── VALIDITY ──────────────────────────────────────────────────── -->
+<h2>Stage 5 — Validity &amp; Date Checks</h2>
+{% if report.validity_findings %}
+<table>
+  <tr><th>Document</th><th>Description</th><th>Severity</th><th>Action Required</th></tr>
+  {% for f in report.validity_findings %}
+  <tr>
+    <td>{{ f.document }}</td>
+    <td>{{ f.description }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+    <td>{{ f.action_required }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="no-findings">No validity findings.</p>{% endif %}
+
+<!-- ── AVL CHECK (TAQA only) ─────────────────────────────────────── -->
+{% if report.avl_findings %}
+<h2>Stage 6 — AVL Check (TAQA)</h2>
+<table>
+  <tr><th>Document</th><th>Description</th><th>Severity</th><th>Action Required</th></tr>
+  {% for f in report.avl_findings %}
+  <tr>
+    <td>{{ f.document }}</td>
+    <td>{{ f.description }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+    <td>{{ f.action_required }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<!-- ── COMPARISON TABLE AUDIT ────────────────────────────────────── -->
+<h2>Stage 8 — Comparison Table Audit</h2>
+{% if report.table_audit_findings %}
+<table>
+  <tr>
+    <th>Parameter</th><th>Specified</th><th>Proposed</th><th>Deviation</th>
+    <th>Measured</th><th>Spec OK</th><th>Proposed Verified</th>
+    <th>Measured Verified</th><th>Deviation Accurate</th><th>Finding</th><th>Severity</th>
+  </tr>
+  {% for f in report.table_audit_findings %}
+  <tr>
+    <td>{{ f.parameter }}</td>
+    <td>{{ f.specified_value }}</td>
+    <td>{{ f.proposed_value }}</td>
+    <td>{{ f.deviation_declared or "—" }}</td>
+    <td>{{ f.measured_value or "—" }}</td>
+    <td class="bool-{{ f.specified_correct | lower }}">{{ "Yes" if f.specified_correct else "No" }}</td>
+    <td class="bool-{{ f.proposed_verified | lower }}">{{ "Yes" if f.proposed_verified else "No" }}</td>
+    <td class="bool-{{ f.measured_verified | lower }}">{{ "Yes" if f.measured_verified else "No" }}</td>
+    <td class="bool-{{ f.deviation_accurate | lower }}">{{ "Yes" if f.deviation_accurate else "No" }}</td>
+    <td>{{ f.finding }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="no-findings">No comparison table findings (table not found or empty).</p>{% endif %}
+
+<!-- ── CONSISTENCY ───────────────────────────────────────────────── -->
+<h2>Stage 9 — Consistency Check</h2>
+{% if report.consistency_findings %}
+<table>
+  <tr><th>Document</th><th>Description</th><th>Severity</th><th>Action Required</th></tr>
+  {% for f in report.consistency_findings %}
+  <tr>
+    <td>{{ f.document }}</td>
+    <td>{{ f.description }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+    <td>{{ f.action_required }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p class="no-findings">No consistency findings.</p>{% endif %}
+
+<!-- ── OTHERS ────────────────────────────────────────────────────── -->
+{% if report.others_findings %}
+<h2>Other Documents</h2>
+<table>
+  <tr><th>Document</th><th>Description</th><th>Severity</th><th>Action Required</th></tr>
+  {% for f in report.others_findings %}
+  <tr>
+    <td>{{ f.document }}</td>
+    <td>{{ f.description }}</td>
+    <td class="sev-{{ f.severity }}">{{ f.severity | severity_label }}</td>
+    <td>{{ f.action_required }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+</body>
+</html>
