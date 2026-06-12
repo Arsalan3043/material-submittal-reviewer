@@ -17,6 +17,11 @@ from src.parsers.pdf_parser import _OCR_ZOOM
 _MODEL = "gpt-4o-mini"
 _MAX_OCR_CHARS = 4000
 
+# Pages where OCR returns fewer than this many characters are blank, image-only,
+# or pure graphical pages with no table content. Sending them to the LLM wastes
+# one API call per page and the LLM will always return empty rows anyway.
+_MIN_OCR_CHARS_FOR_LLM = 80
+
 _client: OpenAI | None = None
 
 
@@ -163,15 +168,19 @@ def extract_table_page(content: bytes, page_num: int) -> TablePageResult:
     """
     Primary: OCR → LLM.  Fallback: pdfplumber if OCR returns nothing.
     OCR-first because all real UAE submittals are scanned (Experiment B, Decision 1).
+
+    Pages with fewer than _MIN_OCR_CHARS_FOR_LLM characters after OCR are skipped
+    entirely — they are blank, graphical, or image-only pages that will always
+    return empty rows. Skipping avoids one wasted LLM call per such page.
     """
     # Step 1: OCR (primary for scanned PDFs)
     ocr_text = _ocr_page_bytes(content, page_num).strip()
-    if ocr_text:
+    if len(ocr_text) >= _MIN_OCR_CHARS_FOR_LLM:
         result = _extract_with_llm(ocr_text)
         if result.rows:
             return result
 
-    # Step 2: pdfplumber (opportunistic for digital PDFs)
+    # Step 2: pdfplumber (opportunistic for digital PDFs, or when OCR was thin)
     raw_rows = _try_pdfplumber(content, page_num)
     if raw_rows:
         raw_text = "\n".join(" | ".join(cell for cell in row) for row in raw_rows)
