@@ -24,13 +24,19 @@ def rerank(question: str, candidates: list[str]) -> list[str]:
     Rerank candidate chunks using Cohere cross-encoder.
     Returns the top TOP_N most relevant documents.
     Input: RRF top-20 candidates. Output: top-5 for generation context.
+
+    Skips the API call when candidates already fit within TOP_N — reranking
+    a list that is the same size or smaller than the output window changes
+    nothing and wastes one Cohere call.
     """
     if not candidates:
         return []
+    if len(candidates) <= TOP_N:
+        return candidates
     response = _cohere().rerank(
         query=question,
         documents=candidates,
-        top_n=min(TOP_N, len(candidates)),
+        top_n=TOP_N,
         model=_RERANK_MODEL,
     )
     return [candidates[r.index] for r in response.results]
