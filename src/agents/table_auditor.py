@@ -181,11 +181,7 @@ def table_auditor_node(state: SubmittalReviewState) -> SubmittalReviewState:
     # Retrieve supporting contexts once — shared across all rows
     spec_context = ""
     if spec_clause:
-        raw = assemble_spec_context(
-            question=f"Material property requirements for clause {spec_clause}",
-            clause_ref=spec_clause,
-            authority=authority,
-        )
+        raw = assemble_spec_context(clause_ref=spec_clause, authority=authority)
         spec_context = "" if raw == EMPTY_CONTEXT_SENTINEL else raw
 
     datasheet_text = _get_text_for_type(DocType.TECHNICAL_DATASHEET, classified, file_contents)

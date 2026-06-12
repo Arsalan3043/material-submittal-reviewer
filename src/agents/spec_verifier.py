@@ -77,11 +77,7 @@ def spec_verifier_node(state: SubmittalReviewState) -> SubmittalReviewState:
         return {**state, "spec_verification_findings": findings}
 
     # Retrieve authority spec context for this clause
-    spec_context = assemble_spec_context(
-        question=f"What are the requirements for specification clause {spec_clause}?",
-        clause_ref=spec_clause,
-        authority=authority,
-    )
+    spec_context = assemble_spec_context(clause_ref=spec_clause, authority=authority)
 
     if spec_context == EMPTY_CONTEXT_SENTINEL:
         findings.append(Finding(
