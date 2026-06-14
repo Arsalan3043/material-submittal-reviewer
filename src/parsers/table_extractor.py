@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import fitz
 import pytesseract
@@ -17,10 +16,11 @@ from src.parsers.pdf_parser import _OCR_ZOOM
 _MODEL = "gpt-4o-mini"
 _MAX_OCR_CHARS = 4000
 
-# Pages where OCR returns fewer than this many characters are blank, image-only,
-# or pure graphical pages with no table content. Sending them to the LLM wastes
-# one API call per page and the LLM will always return empty rows anyway.
-_MIN_OCR_CHARS_FOR_LLM = 80
+# Pages where OCR returns fewer than this many words are blank, image-only, or pure
+# graphical pages with no table content. Word count is more reliable than character
+# count because Tesseract noise produces random characters but rarely coherent words.
+# A real table row like "pH | 6-8 | 7.2 | Pass" is already 4 words, so 5 is safe.
+_MIN_OCR_WORDS_FOR_LLM = 5
 
 _client: OpenAI | None = None
 
@@ -169,13 +169,13 @@ def extract_table_page(content: bytes, page_num: int) -> TablePageResult:
     Primary: OCR → LLM.  Fallback: pdfplumber if OCR returns nothing.
     OCR-first because all real UAE submittals are scanned (Experiment B, Decision 1).
 
-    Pages with fewer than _MIN_OCR_CHARS_FOR_LLM characters after OCR are skipped
+    Pages where OCR returns fewer than _MIN_OCR_WORDS_FOR_LLM words are skipped
     entirely — they are blank, graphical, or image-only pages that will always
     return empty rows. Skipping avoids one wasted LLM call per such page.
     """
     # Step 1: OCR (primary for scanned PDFs)
     ocr_text = _ocr_page_bytes(content, page_num).strip()
-    if len(ocr_text) >= _MIN_OCR_CHARS_FOR_LLM:
+    if len(ocr_text.split()) >= _MIN_OCR_WORDS_FOR_LLM:
         result = _extract_with_llm(ocr_text)
         if result.rows:
             return result
