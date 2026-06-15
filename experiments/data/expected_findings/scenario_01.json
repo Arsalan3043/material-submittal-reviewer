@@ -1,0 +1,21 @@
+{
+  "scenario_id": 1,
+  "description": "Complete correct submittal — all 10 index items present, all dates valid, table values match spec",
+  "authority": "ADM",
+  "submittal_folder": "submittal_01",
+  "needs_pdf_data": false,
+  "expected": {
+    "overall_recommendation": "APPROVE",
+    "max_critical_count": 0,
+    "max_warning_count": 3,
+    "missing_documents": [],
+    "all_stages_must_complete": true,
+    "required_findings": [],
+    "forbidden_findings": [
+      {
+        "severity": "critical",
+        "reason": "A complete correct submittal must have zero critical findings"
+      }
+    ]
+  }
+}

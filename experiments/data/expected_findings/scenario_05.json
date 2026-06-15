@@ -1,0 +1,32 @@
+{
+  "scenario_id": 5,
+  "description": "Multiple combined issues — missing document + expired certificate + wrong table value — ALL must be found, none missed",
+  "authority": "ADM",
+  "submittal_folder": "submittal_05",
+  "needs_pdf_data": true,
+  "skip_reason": "submittal_05 folder is empty — add ADM submittal PDFs with at least 3 distinct known issues across different stages to enable this scenario",
+  "expected": {
+    "overall_recommendation": "RESUBMIT",
+    "min_critical_count": 3,
+    "all_stages_must_complete": true,
+    "required_findings": [
+      {
+        "stage": "completeness",
+        "severity": "critical",
+        "description_contains": "missing",
+        "count_at_least": 1
+      },
+      {
+        "stage": "validity",
+        "severity": "critical",
+        "count_at_least": 1
+      },
+      {
+        "stage": "table_audit",
+        "severity": "critical",
+        "count_at_least": 1
+      }
+    ],
+    "forbidden_findings": []
+  }
+}

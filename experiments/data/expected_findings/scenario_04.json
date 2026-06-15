@@ -1,0 +1,28 @@
+{
+  "scenario_id": 4,
+  "description": "TAQA submittal where manufacturer is NOT on the Approved Vendor List — AVL finding must be recorded but full review must still complete",
+  "authority": "TAQA",
+  "submittal_folder": "submittal_04",
+  "needs_pdf_data": true,
+  "skip_reason": "submittal_04 folder is empty — add TAQA submittal PDFs with a manufacturer absent from the AVL to enable this scenario",
+  "expected": {
+    "overall_recommendation": null,
+    "all_stages_must_complete": true,
+    "avl_check_must_run": true,
+    "required_findings": [
+      {
+        "stage": "avl_check",
+        "severity": "critical",
+        "description_contains": "Approved Vendor List",
+        "count_at_least": 1
+      }
+    ],
+    "forbidden_findings": [
+      {
+        "stage": "avl_check",
+        "description_contains": "pipeline stopped",
+        "reason": "AVL failure must never stop the review — all remaining stages must still run"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "scenario_id": 2,
+  "description": "Missing 2 required index documents — completeness agent must flag both, pipeline must not stop early",
+  "authority": "ADM",
+  "submittal_folder": "submittal_02",
+  "needs_pdf_data": false,
+  "expected": {
+    "overall_recommendation": "RESUBMIT",
+    "min_critical_count": 2,
+    "all_stages_must_complete": true,
+    "required_findings": [
+      {
+        "stage": "completeness",
+        "severity": "critical",
+        "description_contains": "missing",
+        "count_at_least": 2
+      }
+    ],
+    "forbidden_findings": []
+  }
+}
