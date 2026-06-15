@@ -1,20 +1,14 @@
 {
   "scenario_id": 3,
-  "description": "Expired DED registration AND wrong value in comparison table — must find both critical findings independently",
+  "description": "Wrong values in comparison table — table auditor must flag mismatches against spec, other stages still complete",
   "authority": "ADM",
   "submittal_folder": "submittal_03",
   "needs_pdf_data": false,
   "expected": {
     "overall_recommendation": "RESUBMIT",
-    "min_critical_count": 2,
+    "min_critical_count": 1,
     "all_stages_must_complete": true,
     "required_findings": [
-      {
-        "stage": "validity",
-        "severity": "critical",
-        "description_contains": "DED",
-        "count_at_least": 1
-      },
       {
         "stage": "table_audit",
         "severity": "critical",

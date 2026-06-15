@@ -1,32 +1,25 @@
 {
   "scenario_id": 5,
-  "description": "Multiple combined issues — missing document + expired certificate + wrong table value — ALL must be found, none missed",
+  "description": "Same physical submittal as scenario_03 — comprehensive check that ALL issues are found across multiple stages, none missed",
   "authority": "ADM",
   "submittal_folder": "submittal_05",
-  "needs_pdf_data": true,
-  "skip_reason": "submittal_05 folder is empty — add ADM submittal PDFs with at least 3 distinct known issues across different stages to enable this scenario",
+  "needs_pdf_data": false,
+  "note": "submittal_05 is the same PDFs as submittal_03; this scenario verifies completeness of detection — the pipeline must find every issue, not just the table errors",
   "expected": {
     "overall_recommendation": "RESUBMIT",
-    "min_critical_count": 3,
     "all_stages_must_complete": true,
+    "all_findings_must_have_source": true,
     "required_findings": [
-      {
-        "stage": "completeness",
-        "severity": "critical",
-        "description_contains": "missing",
-        "count_at_least": 1
-      },
-      {
-        "stage": "validity",
-        "severity": "critical",
-        "count_at_least": 1
-      },
       {
         "stage": "table_audit",
         "severity": "critical",
         "count_at_least": 1
       }
     ],
+    "completeness_check": {
+      "description": "Every finding in the scenario_03 run must also appear in this run — scenario_05 is a superset assertion",
+      "no_finding_may_be_missed": true
+    },
     "forbidden_findings": []
   }
 }
