@@ -55,6 +55,8 @@ def _build_bm25_for_network(
     data = col.get(where={"network": network}, include=["documents"])
     ids: list[str] = data["ids"]
     docs: list[str] = data["documents"]
+    if not ids:
+        return BM25Okapi([["placeholder"]]), ids, docs
     tokenized = [d.lower().split() for d in docs]
     bm25 = BM25Okapi(tokenized)
     return bm25, ids, docs
@@ -87,32 +89,47 @@ def retrieve_candidates(
     Network-filtered BM25 + semantic → RRF top-20 candidates.
     Returns documents (not IDs) for the reranker.
     Faithfulness = 1.0 and best recall achieved with this configuration (exp05).
+    Returns empty list if the collection is empty or does not exist.
     """
-    col = _get_collection(collection_name)
+    try:
+        col = _get_collection(collection_name)
+    except Exception:
+        return []
+
     network = query.network
 
-    # Per-network BM25
+    # Per-network BM25 — skip entirely if collection has no documents for this network
     bm25, net_ids, net_docs = _build_bm25_for_network(collection_name, network)
     id_to_doc = dict(zip(net_ids, net_docs))
-    query_tokens = query.question.lower().split()
-    scores = bm25.get_scores(query_tokens)
-    top_bm25_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:BM25_CANDIDATES]
-    bm25_top_ids = [net_ids[i] for i in top_bm25_indices]
+
+    if net_ids:
+        query_tokens = query.question.lower().split()
+        scores = bm25.get_scores(query_tokens)
+        top_bm25_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:BM25_CANDIDATES]
+        bm25_top_ids = [net_ids[i] for i in top_bm25_indices]
+    else:
+        bm25_top_ids = []
 
     # Network-filtered semantic search
-    embedding = (
-        _openai()
-        .embeddings.create(model=EMBED_MODEL, input=[query.question])
-        .data[0]
-        .embedding
-    )
-    sem_result = col.query(
-        query_embeddings=[embedding],
-        n_results=SEMANTIC_CANDIDATES,
-        where=query.metadata_filter,
-        include=[],
-    )
-    semantic_ids: list[str] = sem_result["ids"][0]
+    try:
+        embedding = (
+            _openai()
+            .embeddings.create(model=EMBED_MODEL, input=[query.question])
+            .data[0]
+            .embedding
+        )
+        sem_result = col.query(
+            query_embeddings=[embedding],
+            n_results=SEMANTIC_CANDIDATES,
+            where=query.metadata_filter,
+            include=[],
+        )
+        semantic_ids: list[str] = sem_result["ids"][0]
+    except Exception:
+        semantic_ids = []
+
+    if not bm25_top_ids and not semantic_ids:
+        return []
 
     # RRF fusion
     fused_ids = _rrf_combine(semantic_ids, bm25_top_ids)[:RRF_CANDIDATES]
