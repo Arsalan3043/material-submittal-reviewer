@@ -35,10 +35,21 @@ Identify the document type from its text content. Return JSON only — no extra 
 Document types and their distinguishing features:
 
 cover_page
-  Submittal title page. Contains: material name, submittal reference number,
-  specification clause reference (e.g. Clause 07100), contractor name,
-  consultant name, manufacturer name and address, supplier name and address.
-  No technical data — purely identifying/routing information.
+  The contractor's own transmittal/cover sheet — the FIRST page of a submittal
+  package. It is created by the contractor or consultant, NOT by the authority.
+  Key indicators (any one is sufficient):
+  - Distribution columns listing project roles: EMPLOYER / PMC / ENGINEER / CONTRACTOR
+  - From / To / cc routing fields showing who sent and who receives copies
+  - "NEW SUBMITTAL" or "RESUBMITTAL" with a submittal reference number
+  - Enclosures checklist (BOQ Pages / Specification Pages / Drawings / Catalogues...)
+  - "MATERIAL SUBMITTAL" title with Specification Clause Ref. and B.O.Q. Ref. fields
+  This page is the contractor's OWN form. It MAY include a simple STATUS section
+  (Approved / Approved as Noted / Revise & Re-submit / Rejected) where the
+  CONSULTANT or ENGINEER signs — this is a Resident Engineer review section, NOT
+  an official authority form.
+  IMPORTANT: If the document has EMPLOYER/PMC/ENGINEER/CONTRACTOR routing columns
+  OR an enclosures checklist OR "NEW SUBMITTAL" reference, classify as cover_page
+  even if it also contains a STATUS section.
 
 msdf
   Material Source Declaration Form. Formal project or authority form.
@@ -93,9 +104,17 @@ method_statement
   safety precautions, quality control checks.
 
 maf
-  Material Approval Form. Official form with structured fields:
-  material description, contractor reference, consultant reference,
-  approval status box (Approved / Conditionally Approved / Rejected / Resubmit).
+  Material Approval Form. The OFFICIAL form issued or used by a government
+  authority (e.g. Abu Dhabi Municipality, ADM, TAQA, DED).
+  REQUIRED distinguishing features — ALL must be present:
+  - Official government authority name or logo (e.g. "Department of Urban Planning
+    and Municipalities", "Abu Dhabi City Municipality", "بلدية مدينة أبوظبي")
+  - Often bilingual Arabic/English
+  - Authority-specific reference numbers and official stamps
+  - Approval status options (Approved / Conditionally Approved / Rejected / Resubmit)
+  IMPORTANT: A contractor-created transmittal form (with EMPLOYER/PMC/ENGINEER/
+  CONTRACTOR routing columns or enclosures checklist) is NEVER a maf even if it
+  has a STATUS section — classify that as cover_page instead.
 
 others
   Does not fit any category above.

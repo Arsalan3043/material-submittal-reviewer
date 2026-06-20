@@ -1,0 +1,62 @@
+{
+  "scenario_id": 1,
+  "run_at": "2026-06-17T19:00:15.430205",
+  "passed": true,
+  "failures": [],
+  "report": {
+    "submittal_id": "SCENARIO_01",
+    "authority": "ADM",
+    "material_description": "Ductile Iron  Cover & Frame ( 600x600mm C/o Class D400 Top Entry Grating, 750mm C/o Class D400, 900mm C/o Class D400)",
+    "spec_clause": "ADM Specs Div -02 Section  02607",
+    "review_date": "2026-06-17",
+    "completeness_findings": [],
+    "boq_drawing_findings": [],
+    "spec_verification_findings": [
+      {
+        "stage": "spec_verification",
+        "document": "spec_database",
+        "description": "Clause ADM Specs Div -02 Section  02607 was not found in the authority specification database. Verification skipped.",
+        "severity": "warning",
+        "action_required": "Verify clause reference is correct. Ensure authority spec has been indexed."
+      }
+    ],
+    "validity_findings": [
+      {
+        "stage": "validity_checks",
+        "document": "all",
+        "description": "No dated documents found to verify (DED, test reports, guarantee).",
+        "severity": "warning",
+        "action_required": "Ensure all required dated documents are included in the submittal."
+      }
+    ],
+    "avl_findings": [],
+    "statement_findings": [],
+    "table_audit_findings": [],
+    "consistency_findings": [
+      {
+        "stage": "consistency_check",
+        "document": "all",
+        "description": "Manufacturer and supplier names are consistent across all submitted documents.",
+        "severity": "pass",
+        "action_required": "No action required."
+      }
+    ],
+    "others_findings": [],
+    "critical_count": 0,
+    "warning_count": 2,
+    "missing_documents": [],
+    "overall_recommendation": "APPROVE",
+    "summary_comments": "The overall status of the submittal is approved. There are no critical issues identified; however, two warnings have been noted that require the contractor's attention. The contractor must address the warnings as per the specifications outlined in ADM Specs Div -02 Section 02607."
+  },
+  "finding_counts": {
+    "completeness": 0,
+    "boq_drawing": 0,
+    "spec_verification": 1,
+    "validity": 1,
+    "avl": 0,
+    "statement": 0,
+    "table_audit": 0,
+    "consistency": 1,
+    "others": 0
+  }
+}
