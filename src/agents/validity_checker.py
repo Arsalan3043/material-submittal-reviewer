@@ -4,8 +4,8 @@ from langsmith import traceable
 
 from src.agents.state import SubmittalReviewState
 from src.models.findings import Finding, Severity
-from src.models.submittal import ClassifiedDocument, DocType
-from src.parsers.pdf_parser import extract_text_from_bytes
+from src.models.knowledge_store import load_store
+from src.models.submittal import DocType
 from src.rules.date_checker import (
     check_ded_registration,
     check_guarantee,
@@ -22,29 +22,20 @@ def validity_checker_node(state: SubmittalReviewState) -> SubmittalReviewState:
     Checks: DED registration, test reports, guarantee period.
     All findings are recorded; review always continues regardless of outcome.
     """
-    classified: dict[str, dict] = state.get("classified_documents", {})
-    file_contents: dict[str, bytes] = state.get("file_contents", {})
-
+    store = load_store(state["knowledge_store_id"])
     findings: list[dict] = []
 
-    for filename, doc_dict in classified.items():
-        doc = ClassifiedDocument.model_validate(doc_dict)
-        content = file_contents.get(filename, b"")
-        if not content:
-            continue
-
-        text = extract_text_from_bytes(content, max_pages=3)
-
-        if doc.doc_type == DocType.DED_REGISTRATION:
-            result = check_ded_registration(text, filename)
+    for section in store.sections:
+        if section.doc_type == DocType.DED_REGISTRATION:
+            result = check_ded_registration(section.text, section.filename)
             findings.append(result.model_dump())
 
-        elif doc.doc_type == DocType.TEST_REPORT:
-            result = check_test_report(text, filename)
+        elif section.doc_type == DocType.TEST_REPORT:
+            result = check_test_report(section.text, section.filename)
             findings.append(result.model_dump())
 
-        elif doc.doc_type == DocType.MANUFACTURER_GUARANTEE:
-            result = check_guarantee(text, filename)
+        elif section.doc_type == DocType.MANUFACTURER_GUARANTEE:
+            result = check_guarantee(section.text, section.filename)
             findings.append(result.model_dump())
 
     if not findings:
