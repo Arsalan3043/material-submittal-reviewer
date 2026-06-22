@@ -226,7 +226,7 @@ data/chromadb/
 # Spec PDFs — large binaries, potentially proprietary. Stored locally only.
 # Once indexed into ChromaDB Cloud, the pipeline does not need these files.
 # After MVP: move to S3 and update load_adm_spec.py to read from there.
-data/specs/
+data/
 
 # SQLite review history (local dev database)
 *.sqlite3

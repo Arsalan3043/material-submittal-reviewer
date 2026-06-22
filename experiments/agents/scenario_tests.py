@@ -54,6 +54,8 @@ def _load_submittal_files(folder: str) -> dict[str, bytes]:
     return files
 
 
+_SCENARIO_REVIEW_DATE = "2024-12-01"  # Fixed date so validity checks don't depend on when the test runs
+
 def _run_pipeline(authority: str, submittal_id: str, file_contents: dict[str, bytes]) -> dict:
     graph = compile_review_graph()
     initial_state: dict = {
@@ -61,6 +63,7 @@ def _run_pipeline(authority: str, submittal_id: str, file_contents: dict[str, by
         "submittal_id": submittal_id,
         "file_contents": file_contents,
         "declared_labels": {fn: None for fn in file_contents},
+        "review_date": _SCENARIO_REVIEW_DATE,
     }
     return graph.invoke(initial_state)
 

@@ -13,6 +13,7 @@ from src.parsers.table_extractor import TableRow
 from src.rag.query.context_assembler import EMPTY_CONTEXT_SENTINEL, assemble_spec_context
 
 _MODEL = "gpt-4o-mini"
+_BATCH_SIZE = 25  # Max rows per LLM call — keeps JSON response within reliable output limits
 
 _client: OpenAI | None = None
 
@@ -163,7 +164,10 @@ def table_auditor_node(state: SubmittalReviewState) -> SubmittalReviewState:
     datasheet_text = store.get_text(DocType.TECHNICAL_DATASHEET)
     test_text = store.get_text(DocType.TEST_REPORT)
 
-    # Single LLM call for all rows
-    findings = _audit_all_rows(table_rows, spec_context, datasheet_text, test_text)
+    # Audit rows in batches — large tables exceed reliable LLM JSON output size
+    findings: list[TableRowFinding] = []
+    for i in range(0, len(table_rows), _BATCH_SIZE):
+        batch = table_rows[i : i + _BATCH_SIZE]
+        findings.extend(_audit_all_rows(batch, spec_context, datasheet_text, test_text))
 
     return {**state, "table_audit_findings": [f.model_dump() for f in findings]}

@@ -1,0 +1,263 @@
+{
+  "scenario_id": 2,
+  "run_at": "2026-06-22T12:14:02.531779",
+  "passed": true,
+  "failures": [],
+  "report": {
+    "submittal_id": "SCENARIO_02",
+    "authority": "ADM",
+    "material_description": "Detectable Warning Tape ( 150mm Width) for Irrigation Network",
+    "spec_clause": "ADM Specs Div -02 -Section 02800",
+    "review_date": "2026-06-22",
+    "completeness_findings": [
+      {
+        "stage": "completeness_check",
+        "document": "Submittal package",
+        "description": "Missing required document: Material Approval Form (MAF).",
+        "severity": "critical",
+        "action_required": "Include Material Approval Form (MAF) in resubmission."
+      },
+      {
+        "stage": "completeness_check",
+        "document": "Submittal package",
+        "description": "Missing required document: Material Source Declaration Form (MSDF).",
+        "severity": "critical",
+        "action_required": "Include Material Source Declaration Form (MSDF) in resubmission."
+      }
+    ],
+    "boq_drawing_findings": [],
+    "spec_verification_findings": [
+      {
+        "stage": "spec_verification",
+        "document": "spec_database",
+        "description": "Clause ADM Specs Div -02 -Section 02800 was not found in the authority specification database. Verification skipped.",
+        "severity": "warning",
+        "action_required": "Verify clause reference is correct. Ensure authority spec has been indexed."
+      }
+    ],
+    "validity_findings": [
+      {
+        "stage": "validity_check",
+        "document": "6_Departmet of Economic Development (Registration).pdf",
+        "description": "DED registration expired on 2024-04-04.",
+        "severity": "critical",
+        "action_required": "Submit a current, valid DED registration certificate."
+      }
+    ],
+    "avl_findings": [],
+    "statement_findings": [],
+    "table_audit_findings": [
+      {
+        "parameter": "Detectable Underground Warning Tape",
+        "specified_value": "Marking tape is laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes shall remain legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
+        "proposed_value": "Marking tape is laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes are remained legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
+        "deviation_declared": "",
+        "measured_value": "",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed marking tape meets the specified requirements for construction and legibility.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Tape Width and Marking",
+        "specified_value": "The tape shall be not less than 150mm wide and shall have the phrase \u201cCAUTION - IRRIGATION PIPELINE AND CONTROL CABLES\u201d in English and Arabic stamped in black letters and repeated at maximum intervals of two meters. Tape shall be terminated inside valve boxes to allow clipping of detector equipment to the tape. The tape shall be laid 300mm above pipeline.",
+        "proposed_value": "The tape is not less than 150mm wide and shall have the phrase \u201cCAUTION \u2014 IRRIGATION PIPELINE AND CONTROL CABLES\u201d in English and Arabic stamped in black letters and repeated at maximum intervals of two meters. Tapes are terminated inside valve boxes to allow clipping of detector equipment to the tape. The tape shall be laid 300mm above pipeline.",
+        "deviation_declared": "",
+        "measured_value": "",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed tape width and marking comply with the specified requirements.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Width",
+        "specified_value": "150MM",
+        "proposed_value": "150MM",
+        "deviation_declared": "",
+        "measured_value": "150MM",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed width is compliant with the specified requirement.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Tensile Strength Longitudinal",
+        "specified_value": "140 kg/cm\u00b2",
+        "proposed_value": "120 kg/cm\u00b2 Transverse",
+        "deviation_declared": "",
+        "measured_value": "352 kg/cm\u00b2 (34 N/mm\u00b2)",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": false,
+        "missing_from_spec": false,
+        "finding": "The proposed tensile strength is below the specified minimum requirement.",
+        "severity": "critical"
+      },
+      {
+        "parameter": "Elongation at break (PE)",
+        "specified_value": "Longitudinal Elongation 400 %",
+        "proposed_value": "706 % Longitudinal",
+        "deviation_declared": "",
+        "measured_value": "300%, Transverse Elongation 500 %",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": false,
+        "missing_from_spec": false,
+        "finding": "The proposed elongation exceeds the specified requirement, indicating a deviation.",
+        "severity": "warning"
+      },
+      {
+        "parameter": "Tear Strength",
+        "specified_value": "220 gf Longitudinal",
+        "proposed_value": "247 gf (24.3N) Longitudinal",
+        "deviation_declared": "",
+        "measured_value": "260 gf Transverse",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed tear strength exceeds the specified requirement.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Thickness",
+        "specified_value": "150 microns",
+        "proposed_value": "150 microns",
+        "deviation_declared": "",
+        "measured_value": "",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed thickness complies with the specified requirement.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Length of Roll",
+        "specified_value": "250 meter",
+        "proposed_value": "250 meter",
+        "deviation_declared": "",
+        "measured_value": "",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed length of roll complies with the specified requirement.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Color",
+        "specified_value": "Yellow",
+        "proposed_value": "Yellow",
+        "deviation_declared": "",
+        "measured_value": "",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed color complies with the specified requirement.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Marking tape shall be laminated",
+        "specified_value": "polyethylene and Aluminium foil construction capable of detection by low output generator equipment",
+        "proposed_value": "polyethylene and Aluminium foil construction capable of detection by low output generator equipment",
+        "deviation_declared": "",
+        "measured_value": "",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed marking tape construction complies with the specified requirement.",
+        "severity": "pass"
+      },
+      {
+        "parameter": "Text",
+        "specified_value": "marked bi-lingual (Arabic/English) CAUTION \u2014",
+        "proposed_value": "marked bi-lingual (Arabic/English) CAUTION \u2014",
+        "deviation_declared": "",
+        "measured_value": "",
+        "specified_correct": true,
+        "proposed_verified": true,
+        "measured_verified": true,
+        "deviation_accurate": true,
+        "missing_from_spec": false,
+        "finding": "The proposed text marking complies with the specified requirement.",
+        "severity": "pass"
+      }
+    ],
+    "consistency_findings": [
+      {
+        "stage": "consistency_check",
+        "document": "0_Cover page.pdf",
+        "description": "Manufacturer name 'Kangraoo Plastics Middle East' (from cover page) may not match what appears in '0_Cover page.pdf'.",
+        "severity": "warning",
+        "action_required": "Verify manufacturer name is consistent across all documents."
+      },
+      {
+        "stage": "consistency_check",
+        "document": "4_Manufacturer's Technical Data - Original Catalogues.pdf",
+        "description": "Manufacturer name 'Kangraoo Plastics Middle East' (from cover page) may not match what appears in '4_Manufacturer's Technical Data - Original Catalogues.pdf'.",
+        "severity": "warning",
+        "action_required": "Verify manufacturer name is consistent across all documents."
+      },
+      {
+        "stage": "consistency_check",
+        "document": "5_Recent Test Reports - Certificates.pdf",
+        "description": "Manufacturer name 'Kangraoo Plastics Middle East' (from cover page) may not match what appears in '5_Recent Test Reports - Certificates.pdf'.",
+        "severity": "warning",
+        "action_required": "Verify manufacturer name is consistent across all documents."
+      },
+      {
+        "stage": "consistency_check",
+        "document": "7_Manufacturer - Suppliers Guarantee.pdf",
+        "description": "Manufacturer name 'Kangraoo Plastics Middle East' (from cover page) may not match what appears in '7_Manufacturer - Suppliers Guarantee.pdf'.",
+        "severity": "warning",
+        "action_required": "Verify manufacturer name is consistent across all documents."
+      },
+      {
+        "stage": "consistency_check",
+        "document": "cover_page",
+        "description": "Supplier name not found on cover page. Cannot perform consistency check.",
+        "severity": "warning",
+        "action_required": "Ensure supplier name is clearly stated on the cover page."
+      }
+    ],
+    "others_findings": [],
+    "critical_count": 4,
+    "warning_count": 7,
+    "missing_documents": [
+      "Material Approval Form (MAF)",
+      "Material Source Declaration Form (MSDF)"
+    ],
+    "overall_recommendation": "RESUBMIT",
+    "summary_comments": "The overall status of the submittal is 'Resubmit' due to critical issues identified. The most significant issues include the absence of the Material Approval Form (MAF) and Material Source Declaration Form (MSDF), an expired DED registration, and a proposed tensile strength that does not meet the specified minimum requirement. The contractor is required to address these deficiencies and provide the necessary documentation for resubmission."
+  },
+  "finding_counts": {
+    "completeness": 2,
+    "boq_drawing": 0,
+    "spec_verification": 1,
+    "validity": 1,
+    "avl": 0,
+    "statement": 0,
+    "table_audit": 11,
+    "consistency": 5,
+    "others": 0
+  }
+}

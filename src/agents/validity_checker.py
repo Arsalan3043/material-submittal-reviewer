@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from langsmith import traceable
 
 from src.agents.state import SubmittalReviewState
@@ -23,20 +24,21 @@ def validity_checker_node(state: SubmittalReviewState) -> SubmittalReviewState:
     All findings are recorded; review always continues regardless of outcome.
     """
     store = load_store(state["knowledge_store_id"])
+
+    raw_date = state.get("review_date")
+    today: date | None = date.fromisoformat(raw_date) if raw_date else None
+
     findings: list[dict] = []
 
     for section in store.sections:
         if section.doc_type == DocType.DED_REGISTRATION:
-            result = check_ded_registration(section.text, section.filename)
-            findings.append(result.model_dump())
+            findings.extend(f.model_dump() for f in check_ded_registration(section.text, section.filename, today=today))
 
         elif section.doc_type == DocType.TEST_REPORT:
-            result = check_test_report(section.text, section.filename)
-            findings.append(result.model_dump())
+            findings.extend(f.model_dump() for f in check_test_report(section.text, section.filename, today=today))
 
         elif section.doc_type == DocType.MANUFACTURER_GUARANTEE:
-            result = check_guarantee(section.text, section.filename)
-            findings.append(result.model_dump())
+            findings.extend(f.model_dump() for f in check_guarantee(section.text, section.filename))
 
     if not findings:
         findings.append(Finding(
