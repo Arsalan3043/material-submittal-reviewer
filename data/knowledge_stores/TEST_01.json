@@ -1,0 +1,35 @@
+{
+  "submittal_id": "TEST_01",
+  "authority": "ADM",
+  "material_description": "",
+  "spec_clause": "",
+  "manufacturer_name": "",
+  "manufacturer_address": "",
+  "supplier_name": "",
+  "supplier_address": "",
+  "sections": [
+    {
+      "doc_type": "cover_page",
+      "text": "Material: Ductile Iron Cover",
+      "pages": [
+        1
+      ],
+      "confidence": "high",
+      "filename": "cover.pdf",
+      "declared_label": null,
+      "mismatch_flagged": false
+    },
+    {
+      "doc_type": "ded_registration",
+      "text": "License No: 12345 Expiry: 2025-09-23",
+      "pages": [
+        55
+      ],
+      "confidence": "high",
+      "filename": "bundled[ded_registration:p55]",
+      "declared_label": null,
+      "mismatch_flagged": false
+    }
+  ],
+  "table_rows": []
+}
