@@ -7,8 +7,9 @@ from openai import OpenAI
 
 from src.agents.state import SubmittalReviewState
 from src.models.findings import Severity, TableRowFinding
-from src.models.submittal import ClassifiedDocument, DocType
-from src.parsers.table_extractor import TableRow, extract_all_table_rows
+from src.models.knowledge_store import load_store
+from src.models.submittal import DocType
+from src.parsers.table_extractor import TableRow
 from src.rag.query.context_assembler import EMPTY_CONTEXT_SENTINEL, assemble_spec_context
 
 _MODEL = "gpt-4o-mini"
@@ -134,58 +135,33 @@ def _audit_all_rows(
     return results
 
 
-def _get_text_for_type(
-    doc_type: DocType,
-    classified: dict[str, dict],
-    file_contents: dict[str, bytes],
-) -> str:
-    from src.parsers.pdf_parser import extract_text_from_bytes
-    for filename, doc_dict in classified.items():
-        doc = ClassifiedDocument.model_validate(doc_dict)
-        if doc.doc_type == doc_type:
-            content = file_contents.get(filename, b"")
-            if content:
-                return extract_text_from_bytes(content, max_pages=5)
-    return ""
-
-
 @traceable(name="table_auditor_agent")
 def table_auditor_node(state: SubmittalReviewState) -> SubmittalReviewState:
     """
     Agent 4 — Table Auditor (highest value agent).
 
-    All rows are audited in a single batched LLM call (was: 1 call per row).
+    Table rows were pre-parsed by doc_processor (pdfplumber + LLM, done once).
+    This node reads structured rows directly from the knowledge store — no PDF bytes.
+    All rows are audited in a single batched LLM call.
     Shared context (spec, datasheet, test report) is retrieved once and reused.
     """
+    store = load_store(state["knowledge_store_id"])
     authority: str = state.get("authority", "ADM")
-    spec_clause: str = state.get("spec_clause", "")
-    classified: dict[str, dict] = state.get("classified_documents", {})
-    file_contents: dict[str, bytes] = state.get("file_contents", {})
 
-    # Find and extract the comparison table
-    table_rows: list[TableRow] = []
-    for filename, doc_dict in classified.items():
-        doc = ClassifiedDocument.model_validate(doc_dict)
-        if doc.doc_type == DocType.COMPARISON_TABLE:
-            content = file_contents.get(filename, b"")
-            if content:
-                table_rows = extract_all_table_rows(content)
-            break
-
-    # Skip rows with empty parameter (header continuation rows etc.)
-    table_rows = [r for r in table_rows if r.parameter.strip()]
+    # Rows pre-parsed by doc_processor — reconstruct TableRow objects from stored dicts
+    table_rows: list[TableRow] = [TableRow.model_validate(r) for r in store.table_rows]
 
     if not table_rows:
         return {**state, "table_audit_findings": []}
 
     # Retrieve supporting contexts once — shared across all rows
     spec_context = ""
-    if spec_clause:
-        raw = assemble_spec_context(clause_ref=spec_clause, authority=authority)
+    if store.spec_clause:
+        raw = assemble_spec_context(clause_ref=store.spec_clause, authority=authority)
         spec_context = "" if raw == EMPTY_CONTEXT_SENTINEL else raw
 
-    datasheet_text = _get_text_for_type(DocType.TECHNICAL_DATASHEET, classified, file_contents)
-    test_text = _get_text_for_type(DocType.TEST_REPORT, classified, file_contents)
+    datasheet_text = store.get_text(DocType.TECHNICAL_DATASHEET)
+    test_text = store.get_text(DocType.TEST_REPORT)
 
     # Single LLM call for all rows
     findings = _audit_all_rows(table_rows, spec_context, datasheet_text, test_text)
