@@ -4,8 +4,8 @@ from langsmith import traceable
 
 from src.agents.state import SubmittalReviewState
 from src.models.findings import Finding, Severity
-from src.models.submittal import ClassifiedDocument, DocType
-from src.parsers.pdf_parser import extract_text_from_bytes
+from src.models.knowledge_store import load_store
+from src.models.submittal import DocType
 from src.rules.name_matcher import (
     check_manufacturer_consistency,
     check_supplier_consistency,
@@ -29,22 +29,6 @@ _SUPPLIER_BEARING_TYPES = frozenset([
 ])
 
 
-def _extract_names_from_docs(
-    classified: dict[str, dict],
-    file_contents: dict[str, bytes],
-    doc_types: frozenset[DocType],
-) -> dict[str, str]:
-    """Return {filename: first_1000_chars} for all docs of the given types."""
-    texts: dict[str, str] = {}
-    for filename, doc_dict in classified.items():
-        doc = ClassifiedDocument.model_validate(doc_dict)
-        if doc.doc_type in doc_types:
-            content = file_contents.get(filename, b"")
-            if content:
-                texts[filename] = extract_text_from_bytes(content, max_pages=2)[:1000]
-    return texts
-
-
 @traceable(name="consistency_checker_agent")
 def consistency_checker_node(state: SubmittalReviewState) -> SubmittalReviewState:
     """
@@ -54,15 +38,18 @@ def consistency_checker_node(state: SubmittalReviewState) -> SubmittalReviewStat
     consistent across all documents. Uses rapidfuzz fuzzy matching (rules-based).
     Ambiguous cases are flagged as warnings for human review.
     """
-    classified: dict[str, dict] = state.get("classified_documents", {})
-    file_contents: dict[str, bytes] = state.get("file_contents", {})
-    manufacturer_name: str = state.get("manufacturer_name", "")
-    supplier_name: str = state.get("supplier_name", "")
+    store = load_store(state["knowledge_store_id"])
+    manufacturer_name: str = store.manufacturer_name
+    supplier_name: str = store.supplier_name
 
     findings: list[dict] = []
 
     # Manufacturer name consistency across all relevant documents
-    manufacturer_texts = _extract_names_from_docs(classified, file_contents, _NAME_BEARING_TYPES)
+    manufacturer_texts = {
+        s.filename: s.text[:1000]
+        for s in store.sections
+        if s.doc_type in _NAME_BEARING_TYPES
+    }
     if manufacturer_name and manufacturer_texts:
         mfr_findings = check_manufacturer_consistency(manufacturer_name, manufacturer_texts)
         findings.extend(f.model_dump() for f in mfr_findings)
@@ -76,7 +63,11 @@ def consistency_checker_node(state: SubmittalReviewState) -> SubmittalReviewStat
         ).model_dump())
 
     # Supplier name consistency across supplier-bearing documents
-    supplier_texts = _extract_names_from_docs(classified, file_contents, _SUPPLIER_BEARING_TYPES)
+    supplier_texts = {
+        s.filename: s.text[:1000]
+        for s in store.sections
+        if s.doc_type in _SUPPLIER_BEARING_TYPES
+    }
     if supplier_name and supplier_texts:
         sup_findings = check_supplier_consistency(supplier_name, supplier_texts)
         findings.extend(f.model_dump() for f in sup_findings)
