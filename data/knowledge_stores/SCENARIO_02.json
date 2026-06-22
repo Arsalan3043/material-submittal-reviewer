@@ -171,7 +171,7 @@
     {
       "parameter": "Detectable Underground Warning Tape",
       "specified": "Marking tape is laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes shall remain legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
-      "proposed": "Marking tape is laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes are remained legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
+      "proposed": "Marking tape shall be laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes are remained legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
       "deviation": "",
       "measured": "",
       "remarks": "Comply"
@@ -205,7 +205,7 @@
       "specified": "Longitudinal Elongation 400 %",
       "proposed": "706 % Longitudinal",
       "deviation": "",
-      "measured": "300%, Transverse Elongation 500 %",
+      "measured": "300% Transverse",
       "remarks": "Comply"
     },
     {

@@ -4,6 +4,7 @@ import json
 
 import fitz
 from langsmith import traceable
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 
 from src.agents.state import SubmittalReviewState
@@ -20,6 +21,23 @@ from src.parsers.table_extractor import extract_all_table_rows
 
 _MODEL = "gpt-4o-mini"
 _MAX_COVER_CHARS = 3000
+
+# ── Staging store — keeps PDF bytes outside LangGraph state ──────────────────
+# Caller deposits bytes here before invoking the graph; doc_processor pops them.
+# This ensures LangGraph state (and therefore LangSmith traces) never contain bytes.
+_staging: dict[str, tuple[dict[str, bytes], dict[str, str | None]]] = {}
+
+
+def stage_files(
+    submittal_id: str,
+    file_contents: dict[str, bytes],
+    declared_labels: dict[str, str | None] | None = None,
+) -> None:
+    """
+    Deposit PDF bytes for a submittal before invoking the review graph.
+    doc_processor_node reads and removes them; state never carries bytes.
+    """
+    _staging[submittal_id] = (file_contents, declared_labels or {})
 
 # Single-file submittals with more pages than this are treated as bundled packages.
 _BUNDLED_THRESHOLD = 20
@@ -46,7 +64,7 @@ _client: OpenAI | None = None
 def _openai() -> OpenAI:
     global _client
     if _client is None:
-        _client = OpenAI()
+        _client = wrap_openai(OpenAI())
     return _client
 
 
@@ -253,7 +271,6 @@ def _build_bundled_sections(
 
 # ── Main agent node ───────────────────────────────────────────────────────────
 
-@traceable(name="doc_processor_agent")
 def doc_processor_node(state: SubmittalReviewState) -> SubmittalReviewState:
     """
     Agent 1 — Knowledge Builder.
@@ -267,10 +284,11 @@ def doc_processor_node(state: SubmittalReviewState) -> SubmittalReviewState:
     All downstream agents work from the knowledge store (text strings only).
     This keeps LangGraph state and LangSmith traces tiny.
     """
-    file_contents: dict[str, bytes] = state.get("file_contents", {})
-    declared_labels: dict[str, str | None] = state.get("declared_labels", {})
     submittal_id: str = state.get("submittal_id", "unknown")
     authority: str = state.get("authority", "ADM")
+
+    # Pop bytes from staging — they were never in LangGraph state.
+    file_contents, declared_labels = _staging.pop(submittal_id, ({}, {}))
     num_files = len(file_contents)
 
     store = SubmittalKnowledgeStore(submittal_id=submittal_id, authority=authority)
@@ -353,8 +371,4 @@ def doc_processor_node(state: SubmittalReviewState) -> SubmittalReviewState:
     # ── Persist knowledge store and return ────────────────────────────────
     knowledge_store_id = store.save()
 
-    # Strip file_contents from state — bytes are fully consumed here.
-    # All downstream agents read from the knowledge store file.
-    new_state = {k: v for k, v in state.items() if k != "file_contents"}
-    new_state["knowledge_store_id"] = knowledge_store_id
-    return new_state
+    return {**state, "knowledge_store_id": knowledge_store_id}

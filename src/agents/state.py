@@ -14,14 +14,11 @@ class SubmittalReviewState(TypedDict, total=False):
     All keys use total=False so nodes can write only the fields they own.
     """
 
-    # ── Inputs (consumed by doc_processor, not forwarded past it) ─────────
+    # ── Inputs ────────────────────────────────────────────────────────────
     authority: str                      # "ADM" or "TAQA"
     submittal_id: str
     review_date: str                    # ISO date string e.g. "2025-01-01"; defaults to today if absent
-    # {filename: bytes} — raw PDF bytes, removed from state after doc_processor
-    file_contents: dict[str, bytes]
-    # {filename: declared_label | None}  — label from upload UI section header
-    declared_labels: dict[str, str | None]
+    # PDF bytes are staged via stage_files() before graph invocation — never in state.
 
     # ── Knowledge layer (Agent 1 output) ──────────────────────────────────
     # File path to the SubmittalKnowledgeStore JSON on disk.

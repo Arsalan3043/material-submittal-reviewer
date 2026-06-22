@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 
 import chromadb
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 from rank_bm25 import BM25Okapi
 
@@ -26,7 +27,7 @@ _chroma_client: chromadb.PersistentClient | None = None
 def _openai() -> OpenAI:
     global _openai_client
     if _openai_client is None:
-        _openai_client = OpenAI()
+        _openai_client = wrap_openai(OpenAI())
     return _openai_client
 
 
