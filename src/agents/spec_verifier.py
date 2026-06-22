@@ -7,8 +7,8 @@ from openai import OpenAI
 
 from src.agents.state import SubmittalReviewState
 from src.models.findings import Finding, Severity
-from src.models.submittal import ClassifiedDocument, DocType
-from src.parsers.pdf_parser import extract_text_from_bytes
+from src.models.knowledge_store import load_store
+from src.models.submittal import DocType
 from src.rag.query.context_assembler import EMPTY_CONTEXT_SENTINEL, assemble_spec_context
 
 _MODEL = "gpt-4o-mini"
@@ -60,9 +60,8 @@ def spec_verifier_node(state: SubmittalReviewState) -> SubmittalReviewState:
     then compares the submitted specification (Index 2) against it.
     """
     authority: str = state.get("authority", "ADM")
-    spec_clause: str = state.get("spec_clause", "")
-    classified: dict[str, dict] = state.get("classified_documents", {})
-    file_contents: dict[str, bytes] = state.get("file_contents", {})
+    store = load_store(state["knowledge_store_id"])
+    spec_clause: str = store.spec_clause
 
     findings: list[dict] = []
 
@@ -89,15 +88,8 @@ def spec_verifier_node(state: SubmittalReviewState) -> SubmittalReviewState:
         ).model_dump())
         return {**state, "spec_verification_findings": findings}
 
-    # Find the submitted specification copy (Index 2)
-    spec_copy_text = ""
-    for filename, doc_dict in classified.items():
-        doc = ClassifiedDocument.model_validate(doc_dict)
-        if doc.doc_type == DocType.SPECIFICATION_COPY:
-            content = file_contents.get(filename, b"")
-            if content:
-                spec_copy_text = extract_text_from_bytes(content, max_pages=10)
-            break
+    # Find the submitted specification copy (Index 2) — already extracted by doc_processor
+    spec_copy_text = store.get_text(DocType.SPECIFICATION_COPY)
 
     if not spec_copy_text:
         findings.append(Finding(
