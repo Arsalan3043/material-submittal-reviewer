@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 
+import fitz
 from langsmith import traceable
 from openai import OpenAI
 
 from src.agents.state import SubmittalReviewState
+from src.models.knowledge_store import DocumentSection, SubmittalKnowledgeStore
 from src.models.submittal import ClassifiedDocument, DocType
 from src.parsers.classifier import classify_document, classify_uploaded_file
 from src.parsers.pdf_parser import (
@@ -14,6 +16,7 @@ from src.parsers.pdf_parser import (
     get_page_count,
     is_separator_page,
 )
+from src.parsers.table_extractor import extract_all_table_rows
 
 _MODEL = "gpt-4o-mini"
 _MAX_COVER_CHARS = 3000
@@ -25,12 +28,17 @@ _BUNDLED_THRESHOLD = 20
 _MIN_SEPARATORS = 2
 
 # Option B: sample interval and window size for sparse sampling fallback.
-# Step=3 ensures sections as short as 1-2 pages are sampled at least once.
+# Step=3 + Window=3 covers every page once, catching adjacent 1-page sections
+# (e.g. DED on p55 and guarantee on p57 with a separator between them).
 _SAMPLE_STEP = 3
-_SAMPLE_WINDOW = 3  # pages of context per sample point
+_SAMPLE_WINDOW = 3
 
-# Option B: stop scanning after this many consecutive steps with no new doc type.
+# Stop scanning after this many consecutive steps with no new doc type.
 _EARLY_STOP_STEPS = 5
+
+# Maximum pages to extract per section — prevents runaway extraction into the
+# next section when separator pages are not detected (sparse-sampling path).
+_MAX_SECTION_PAGES = 20
 
 _client: OpenAI | None = None
 
@@ -80,43 +88,46 @@ def _extract_cover_page(text: str) -> dict:
         }
 
 
-def _make_virtual_doc(
-    filename: str,
-    page: int,
-    text: str,
-    result,
-) -> dict:
-    """Build a ClassifiedDocument dict for a virtual section inside a bundled PDF."""
-    virtual_fn = f"{filename}[{result.doc_type.value}:p{page + 1}]"
-    return ClassifiedDocument(
-        filename=virtual_fn,
-        doc_type=result.doc_type,
-        confidence=result.confidence,
-        reasoning=result.reasoning,
-        key_indicators=result.key_indicators,
-        text_preview=text[:500],
-        page_count=1,
-        declared_label=None,
-        mismatch_flagged=False,
-    ).model_dump()
+def _extract_pages_as_bytes(content: bytes, page_indices: list[int]) -> bytes:
+    """Extract specific pages (0-indexed) from a PDF and return as new PDF bytes."""
+    src = fitz.open(stream=content, filetype="pdf")
+    out = fitz.open()
+    for p in page_indices:
+        if 0 <= p < src.page_count:
+            out.insert_pdf(src, from_page=p, to_page=p)
+    result = out.tobytes()
+    src.close()
+    out.close()
+    return result
 
 
-def _classify_page_window(content: bytes, start: int, page_count: int) -> tuple[str, str]:
+def _extract_section_text(
+    content: bytes,
+    start: int,
+    page_count: int,
+    sep_set: set[int],
+) -> tuple[str, list[int]]:
     """
-    Extract up to _SAMPLE_WINDOW pages starting at `start` and return (combined_text, first_page_text).
-    Used by both Option A and Option B.
+    Extract text forward from `start` (0-indexed) until a section boundary.
+    Stops at the first of:
+      - a page in sep_set (known separator from Option A),
+      - a page detected as a separator by is_separator_page(),
+      - _MAX_SECTION_PAGES pages reached.
+    Returns (combined_text, 1-indexed page list).
     """
-    texts = []
-    for p in range(start, min(start + _SAMPLE_WINDOW, page_count)):
-        t = extract_page_text_from_bytes(content, p)
-        if t.strip():
-            texts.append(t)
-    combined = "\n".join(texts)
-    first = texts[0] if texts else ""
-    return combined, first
+    texts: list[str] = []
+    pages: list[int] = []
+    for p in range(start, min(start + _MAX_SECTION_PAGES, page_count)):
+        page_text = extract_page_text_from_bytes(content, p)
+        if p != start and (p in sep_set or is_separator_page(page_text)):
+            break
+        if page_text.strip():
+            texts.append(page_text)
+            pages.append(p + 1)   # 1-indexed
+    return "\n\n".join(texts), pages
 
 
-# ── Option A: separator-based splitting ───────────────────────────────────────
+# ── Option A: separator-based splitting ──────────────────────────────────────
 
 def _find_separator_pages(content: bytes, page_count: int) -> list[int]:
     """Return 0-indexed page numbers that are UAE routing-slip / separator pages."""
@@ -126,19 +137,18 @@ def _find_separator_pages(content: bytes, page_count: int) -> list[int]:
     ]
 
 
-def _classify_by_separators(
+def _build_sections_by_separators(
     filename: str,
     content: bytes,
     separator_pages: list[int],
     page_count: int,
-) -> tuple[dict[str, dict], str]:
+) -> tuple[list[DocumentSection], str]:
     """
-    Classify the first content page of each section defined by separator pages.
-    Section 0 starts at page 0 (if page 0 is not itself a separator).
-    Each subsequent section starts one page after its separator.
+    Option A: classify the first content page of each section defined by separator
+    pages, then extract the full section text up to the next separator boundary.
     """
     sep_set = set(separator_pages)
-    # First content page of each section
+
     section_starts: list[int] = []
     if 0 not in sep_set:
         section_starts.append(0)
@@ -147,40 +157,47 @@ def _classify_by_separators(
         if nxt < page_count and nxt not in sep_set:
             section_starts.append(nxt)
 
-    sections: dict[str, dict] = {}
+    sections: list[DocumentSection] = []
     seen_types: set[DocType] = set()
     cover_text = ""
 
     for start in section_starts:
-        text = extract_page_text_from_bytes(content, start)
-        if not text.strip():
+        first_text = extract_page_text_from_bytes(content, start)
+        if not first_text.strip():
             continue
-        result = classify_document(text)
+        result = classify_document(first_text)
         if result.doc_type not in seen_types and result.confidence in ("high", "medium"):
             seen_types.add(result.doc_type)
-            sections[f"{filename}[{result.doc_type.value}:p{start + 1}]"] = _make_virtual_doc(
-                filename, start, text, result
-            )
+            section_text, pages = _extract_section_text(content, start, page_count, sep_set)
+            sections.append(DocumentSection(
+                doc_type=result.doc_type,
+                text=section_text,
+                pages=pages,
+                confidence=result.confidence,
+                filename=f"{filename}[{result.doc_type.value}:p{start + 1}]",
+            ))
             if result.doc_type == DocType.COVER_PAGE and not cover_text:
-                cover_text = text
+                cover_text = section_text
 
     return sections, cover_text
 
 
 # ── Option B: sparse sampling with early stop ─────────────────────────────────
 
-def _classify_by_sparse_sampling(
+def _build_sections_by_sparse_sampling(
     filename: str,
     content: bytes,
     page_count: int,
-) -> tuple[dict[str, dict], str]:
+    sep_set: set[int],
+) -> tuple[list[DocumentSection], str]:
     """
-    Sample every _SAMPLE_STEP pages, classifying each page in the window
-    individually so adjacent documents of different types (e.g. DED on p55,
-    guarantee on p57) are both captured in the same step.
-    Stop after _EARLY_STOP_STEPS consecutive steps that yield no new doc type.
+    Option B: classify each page in a sampling window individually, then extract
+    the full section text until the next detected boundary.
+
+    sep_set is passed as boundary hints even when too few to trigger Option A.
+    Separator pages within windows are skipped before classification.
     """
-    sections: dict[str, dict] = {}
+    sections: list[DocumentSection] = []
     seen_types: set[DocType] = set()
     cover_text = ""
     consecutive_no_new = 0
@@ -189,18 +206,23 @@ def _classify_by_sparse_sampling(
         found_new_this_step = False
 
         for p in range(start, min(start + _SAMPLE_WINDOW, page_count)):
-            text = extract_page_text_from_bytes(content, p)
-            if not text.strip():
+            page_text = extract_page_text_from_bytes(content, p)
+            if not page_text.strip() or is_separator_page(page_text):
                 continue
-            result = classify_document(text)
+            result = classify_document(page_text)
             if result.doc_type not in seen_types and result.confidence in ("high", "medium"):
                 seen_types.add(result.doc_type)
                 found_new_this_step = True
-                sections[f"{filename}[{result.doc_type.value}:p{p + 1}]"] = _make_virtual_doc(
-                    filename, p, text, result
-                )
+                section_text, pages = _extract_section_text(content, p, page_count, sep_set)
+                sections.append(DocumentSection(
+                    doc_type=result.doc_type,
+                    text=section_text,
+                    pages=pages,
+                    confidence=result.confidence,
+                    filename=f"{filename}[{result.doc_type.value}:p{p + 1}]",
+                ))
                 if result.doc_type == DocType.COVER_PAGE and not cover_text:
-                    cover_text = text
+                    cover_text = section_text
 
         if found_new_this_step:
             consecutive_no_new = 0
@@ -214,21 +236,19 @@ def _classify_by_sparse_sampling(
 
 # ── Option C: hybrid entry point ──────────────────────────────────────────────
 
-def _classify_bundled_pdf(
+def _build_bundled_sections(
     filename: str,
     content: bytes,
     page_count: int,
-) -> tuple[dict[str, dict], str]:
+) -> tuple[list[DocumentSection], str]:
     """
-    Hybrid (Option C):
-    1. Scan all pages for UAE separator/routing-slip pages — no LLM cost.
-    2. If >= _MIN_SEPARATORS found → Option A (classify first page per section).
-    3. Otherwise → Option B (sparse sampling every 10 pages, early stop).
+    Option C: scan for separators first (free), route to A if enough found,
+    otherwise fall back to B passing separator hints for boundary detection.
     """
     separator_pages = _find_separator_pages(content, page_count)
     if len(separator_pages) >= _MIN_SEPARATORS:
-        return _classify_by_separators(filename, content, separator_pages, page_count)
-    return _classify_by_sparse_sampling(filename, content, page_count)
+        return _build_sections_by_separators(filename, content, separator_pages, page_count)
+    return _build_sections_by_sparse_sampling(filename, content, page_count, set(separator_pages))
 
 
 # ── Main agent node ───────────────────────────────────────────────────────────
@@ -236,28 +256,26 @@ def _classify_bundled_pdf(
 @traceable(name="doc_processor_agent")
 def doc_processor_node(state: SubmittalReviewState) -> SubmittalReviewState:
     """
-    Agent 1 — Document Processor.
+    Agent 1 — Knowledge Builder.
 
-    Handles two upload formats:
-    - Individual files: one PDF per index item (standard path, one classify call per file).
-    - Bundled PDF: entire submittal as one large PDF — detected by single file + high
-      page count, then split using Option C hybrid (separator scan → sparse sampling).
+    Reads file_contents ONCE, classifies all documents, extracts full section text
+    bounded by section boundaries, pre-parses comparison table rows, and extracts
+    cover page metadata. Writes the result as a SubmittalKnowledgeStore JSON file
+    and returns state with knowledge_store_id (a file path string).
 
-    Writes classified_documents and cover page fields to shared state.
+    file_contents is NOT forwarded past this node — PDF bytes are consumed here.
+    All downstream agents work from the knowledge store (text strings only).
+    This keeps LangGraph state and LangSmith traces tiny.
     """
     file_contents: dict[str, bytes] = state.get("file_contents", {})
     declared_labels: dict[str, str | None] = state.get("declared_labels", {})
+    submittal_id: str = state.get("submittal_id", "unknown")
+    authority: str = state.get("authority", "ADM")
     num_files = len(file_contents)
 
-    classified: dict[str, dict] = {}
-    cover_data: dict = {
-        "material_description": "",
-        "spec_clause": "",
-        "manufacturer_name": "",
-        "manufacturer_address": "",
-        "supplier_name": "",
-        "supplier_address": "",
-    }
+    store = SubmittalKnowledgeStore(submittal_id=submittal_id, authority=authority)
+    cover_text = ""
+    comparison_table_bytes: bytes | None = None
 
     for filename, content in file_contents.items():
         declared_label = declared_labels.get(filename)
@@ -265,14 +283,21 @@ def doc_processor_node(state: SubmittalReviewState) -> SubmittalReviewState:
 
         if num_files == 1 and page_count >= _BUNDLED_THRESHOLD:
             # ── Bundled submittal path ────────────────────────────────────────
-            sections, cover_text = _classify_bundled_pdf(filename, content, page_count)
-            classified.update(sections)
-            if cover_text:
-                cover_data = _extract_cover_page(cover_text)
+            sections, ct = _build_bundled_sections(filename, content, page_count)
+            store.sections.extend(sections)
+            if ct and not cover_text:
+                cover_text = ct
+            # Extract comparison table pages as a sub-PDF for upfront row parsing.
+            for s in sections:
+                if s.doc_type == DocType.COMPARISON_TABLE and comparison_table_bytes is None:
+                    comparison_table_bytes = _extract_pages_as_bytes(
+                        content, [p - 1 for p in s.pages]
+                    )
+
         else:
             # ── Individual file path ──────────────────────────────────────────
             try:
-                doc: ClassifiedDocument = classify_uploaded_file(
+                doc = classify_uploaded_file(
                     filename=filename,
                     content=content,
                     declared_label=declared_label,
@@ -289,19 +314,47 @@ def doc_processor_node(state: SubmittalReviewState) -> SubmittalReviewState:
                     declared_label=declared_label,
                     mismatch_flagged=False,
                 )
-            classified[filename] = doc.model_dump()
 
-            if doc.doc_type == DocType.COVER_PAGE:
-                text = extract_text_from_bytes(content, max_pages=2)
-                cover_data = _extract_cover_page(text)
+            # Extract full text — classify_uploaded_file only reads 2 pages.
+            full_text = extract_text_from_bytes(content, max_pages=None)
+            store.sections.append(DocumentSection(
+                doc_type=doc.doc_type,
+                text=full_text,
+                pages=list(range(1, page_count + 1)),
+                confidence=doc.confidence,
+                filename=filename,
+                declared_label=declared_label,
+                mismatch_flagged=doc.mismatch_flagged,
+            ))
 
-    updates: SubmittalReviewState = {
-        "classified_documents": classified,
-        "material_description": cover_data.get("material_description", ""),
-        "spec_clause": cover_data.get("spec_clause", ""),
-        "manufacturer_name": cover_data.get("manufacturer_name", ""),
-        "manufacturer_address": cover_data.get("manufacturer_address", ""),
-        "supplier_name": cover_data.get("supplier_name", ""),
-        "supplier_address": cover_data.get("supplier_address", ""),
-    }
-    return {**state, **updates}
+            if doc.doc_type == DocType.COVER_PAGE and not cover_text:
+                cover_text = full_text[:_MAX_COVER_CHARS]
+            if doc.doc_type == DocType.COMPARISON_TABLE and comparison_table_bytes is None:
+                comparison_table_bytes = content
+
+    # ── Extract cover page metadata ────────────────────────────────────────
+    if cover_text:
+        cover_data = _extract_cover_page(cover_text)
+        store.material_description = cover_data.get("material_description", "")
+        store.spec_clause          = cover_data.get("spec_clause", "")
+        store.manufacturer_name    = cover_data.get("manufacturer_name", "")
+        store.manufacturer_address = cover_data.get("manufacturer_address", "")
+        store.supplier_name        = cover_data.get("supplier_name", "")
+        store.supplier_address     = cover_data.get("supplier_address", "")
+
+    # ── Pre-parse comparison table rows (pdfplumber + LLM, done once here) ─
+    if comparison_table_bytes is not None:
+        try:
+            rows = extract_all_table_rows(comparison_table_bytes)
+            store.table_rows = [r.model_dump() for r in rows if r.parameter.strip()]
+        except Exception:
+            store.table_rows = []
+
+    # ── Persist knowledge store and return ────────────────────────────────
+    knowledge_store_id = store.save()
+
+    # Strip file_contents from state — bytes are fully consumed here.
+    # All downstream agents read from the knowledge store file.
+    new_state = {k: v for k, v in state.items() if k != "file_contents"}
+    new_state["knowledge_store_id"] = knowledge_store_id
+    return new_state

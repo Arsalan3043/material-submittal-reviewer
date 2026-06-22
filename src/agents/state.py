@@ -14,25 +14,19 @@ class SubmittalReviewState(TypedDict, total=False):
     All keys use total=False so nodes can write only the fields they own.
     """
 
-    # ── Inputs ────────────────────────────────────────────────────────────
+    # ── Inputs (consumed by doc_processor, not forwarded past it) ─────────
     authority: str                      # "ADM" or "TAQA"
     submittal_id: str
-    # {filename: bytes}
+    # {filename: bytes} — raw PDF bytes, removed from state after doc_processor
     file_contents: dict[str, bytes]
     # {filename: declared_label | None}  — label from upload UI section header
     declared_labels: dict[str, str | None]
 
-    # ── Cover page extraction (Agent 1 output) ────────────────────────────
-    material_description: str
-    spec_clause: str
-    manufacturer_name: str
-    manufacturer_address: str
-    supplier_name: str
-    supplier_address: str
-
-    # ── Classification (Agent 1 output) ──────────────────────────────────
-    # {filename: ClassifiedDocument.model_dump()}
-    classified_documents: dict[str, dict]
+    # ── Knowledge layer (Agent 1 output) ──────────────────────────────────
+    # File path to the SubmittalKnowledgeStore JSON on disk.
+    # Replaces classified_documents + all cover page fields.
+    # State carries only this string (~100 chars) — no PDF bytes, no large dicts.
+    knowledge_store_id: str
 
     # ── Per-stage findings (each stored as list[Finding.model_dump()]) ────
     completeness_findings: list[dict]
