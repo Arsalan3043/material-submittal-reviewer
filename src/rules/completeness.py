@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from src.config.base_profile import AuthorityProfile
 from src.models.findings import Finding, Severity
-from src.models.submittal import ClassifiedDocument, DocType
+from src.models.knowledge_store import DocumentSection
+from src.models.submittal import DocType
 
 _STAGE = "completeness_check"
 
@@ -26,11 +27,12 @@ _DOCTYPE_LABELS: dict[DocType, str] = {
 
 
 def check_completeness(
-    classified_docs: dict[str, ClassifiedDocument],
+    present_types: set[DocType],
+    mismatches: list[DocumentSection],
     profile: AuthorityProfile,
 ) -> tuple[list[Finding], list[str]]:
     """
-    Compare classified documents against the authority's required list.
+    Compare present doc types against the authority's required list.
     Returns (findings, missing_document_labels).
 
     Rules from Experiment A:
@@ -38,19 +40,18 @@ def check_completeness(
     - others section has no expected type — never flagged as wrong or missing.
     - Review always continues regardless of missing documents (CLAUDE.md rule).
     """
-    present_types: set[DocType] = {doc.doc_type for doc in classified_docs.values()}
-
     # maf and previous_approval are interchangeable for Index 8 (UAE convention)
-    if DocType.MAF in present_types:
-        present_types.add(DocType.PREVIOUS_APPROVAL)
-    if DocType.PREVIOUS_APPROVAL in present_types:
-        present_types.add(DocType.MAF)
+    effective = set(present_types)
+    if DocType.MAF in effective:
+        effective.add(DocType.PREVIOUS_APPROVAL)
+    if DocType.PREVIOUS_APPROVAL in effective:
+        effective.add(DocType.MAF)
 
     findings: list[Finding] = []
     missing_labels: list[str] = []
 
     for required_type in profile.required_doc_types:
-        if required_type not in present_types:
+        if required_type not in effective:
             label = _DOCTYPE_LABELS.get(required_type, required_type.value)
             missing_labels.append(label)
             findings.append(Finding(
@@ -63,17 +64,16 @@ def check_completeness(
 
     # Flag documents placed in the wrong section (mismatch_flagged = True),
     # except for the known maf/previous_approval Index 8 convention.
-    for doc in classified_docs.values():
-        if doc.mismatch_flagged:
-            findings.append(Finding(
-                stage=_STAGE,
-                document=doc.filename,
-                description=(
-                    f"Wrong document type in section '{doc.declared_label}': "
-                    f"expected section content but found {doc.doc_type.value}."
-                ),
-                severity=Severity.WARNING,
-                action_required=f"Move {doc.filename} to the correct section.",
-            ))
+    for section in mismatches:
+        findings.append(Finding(
+            stage=_STAGE,
+            document=section.filename,
+            description=(
+                f"Wrong document type in section '{section.declared_label}': "
+                f"expected section content but found {section.doc_type.value}."
+            ),
+            severity=Severity.WARNING,
+            action_required=f"Move {section.filename} to the correct section.",
+        ))
 
     return findings, missing_labels
