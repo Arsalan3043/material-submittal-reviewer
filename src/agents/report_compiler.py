@@ -8,6 +8,7 @@ from openai import OpenAI
 
 from src.agents.state import SubmittalReviewState
 from src.models.findings import Finding, ReviewReport, Severity, TableRowFinding
+from src.models.knowledge_store import load_store
 
 _MODEL = "gpt-4o-mini"
 
@@ -70,6 +71,7 @@ def report_compiler_node(state: SubmittalReviewState) -> SubmittalReviewState:
     recommendation, generates professional summary comments, and builds the
     final ReviewReport.
     """
+    store = load_store(state["knowledge_store_id"])
     completeness  = _to_findings(state.get("completeness_findings", []))
     boq_drawing   = _to_findings(state.get("boq_drawing_findings", []))
     spec_verif    = _to_findings(state.get("spec_verification_findings", []))
@@ -98,8 +100,8 @@ def report_compiler_node(state: SubmittalReviewState) -> SubmittalReviewState:
 
     digest = (
         f"Authority: {state.get('authority', 'ADM')}\n"
-        f"Material: {state.get('material_description', 'unknown')}\n"
-        f"Clause: {state.get('spec_clause', 'unknown')}\n"
+        f"Material: {store.material_description or 'unknown'}\n"
+        f"Clause: {store.spec_clause or 'unknown'}\n"
         f"Recommendation: {recommendation}\n"
         f"Critical issues ({critical_count}): {'; '.join(critical_descriptions) or 'None'}\n"
         f"Warnings: {warning_count}\n"
@@ -125,8 +127,8 @@ def report_compiler_node(state: SubmittalReviewState) -> SubmittalReviewState:
     report = ReviewReport(
         submittal_id=state.get("submittal_id", ""),
         authority=state.get("authority", "ADM"),
-        material_description=state.get("material_description", ""),
-        spec_clause=state.get("spec_clause", ""),
+        material_description=store.material_description,
+        spec_clause=store.spec_clause,
         review_date=date.today().isoformat(),
         completeness_findings=completeness,
         boq_drawing_findings=boq_drawing,
