@@ -1,6 +1,6 @@
 {
   "scenario_id": 2,
-  "run_at": "2026-06-22T12:14:02.531779",
+  "run_at": "2026-06-22T16:35:32.811024",
   "passed": true,
   "failures": [],
   "report": {
@@ -50,7 +50,7 @@
       {
         "parameter": "Detectable Underground Warning Tape",
         "specified_value": "Marking tape is laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes shall remain legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
-        "proposed_value": "Marking tape is laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes are remained legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
+        "proposed_value": "Marking tape shall be laminated polyethylene and Aluminium foil construction capable of detection by low output generator equipment. Tapes are remained legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive.",
         "deviation_declared": "",
         "measured_value": "",
         "specified_correct": true,
@@ -58,7 +58,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed marking tape meets the specified requirements for construction and legibility.",
+        "finding": "The proposed marking tape meets the specified requirements for construction and detection.",
         "severity": "pass"
       },
       {
@@ -86,7 +86,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed width is compliant with the specified requirement.",
+        "finding": "The proposed width matches the specified width.",
         "severity": "pass"
       },
       {
@@ -96,11 +96,11 @@
         "deviation_declared": "",
         "measured_value": "352 kg/cm\u00b2 (34 N/mm\u00b2)",
         "specified_correct": true,
-        "proposed_verified": true,
+        "proposed_verified": false,
         "measured_verified": true,
         "deviation_accurate": false,
         "missing_from_spec": false,
-        "finding": "The proposed tensile strength is below the specified minimum requirement.",
+        "finding": "The proposed tensile strength is below the specified minimum.",
         "severity": "critical"
       },
       {
@@ -108,14 +108,14 @@
         "specified_value": "Longitudinal Elongation 400 %",
         "proposed_value": "706 % Longitudinal",
         "deviation_declared": "",
-        "measured_value": "300%, Transverse Elongation 500 %",
+        "measured_value": "300% Transverse",
         "specified_correct": true,
-        "proposed_verified": true,
+        "proposed_verified": false,
         "measured_verified": true,
         "deviation_accurate": false,
         "missing_from_spec": false,
-        "finding": "The proposed elongation exceeds the specified requirement, indicating a deviation.",
-        "severity": "warning"
+        "finding": "The proposed elongation at break exceeds the specified maximum.",
+        "severity": "critical"
       },
       {
         "parameter": "Tear Strength",
@@ -128,7 +128,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed tear strength exceeds the specified requirement.",
+        "finding": "The proposed tear strength exceeds the specified minimum.",
         "severity": "pass"
       },
       {
@@ -142,7 +142,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed thickness complies with the specified requirement.",
+        "finding": "The proposed thickness matches the specified thickness.",
         "severity": "pass"
       },
       {
@@ -156,7 +156,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed length of roll complies with the specified requirement.",
+        "finding": "The proposed length of roll matches the specified length.",
         "severity": "pass"
       },
       {
@@ -170,7 +170,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed color complies with the specified requirement.",
+        "finding": "The proposed color matches the specified color.",
         "severity": "pass"
       },
       {
@@ -184,7 +184,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed marking tape construction complies with the specified requirement.",
+        "finding": "The proposed marking tape construction complies with the specified requirements.",
         "severity": "pass"
       },
       {
@@ -198,7 +198,7 @@
         "measured_verified": true,
         "deviation_accurate": true,
         "missing_from_spec": false,
-        "finding": "The proposed text marking complies with the specified requirement.",
+        "finding": "The proposed text marking complies with the specified requirements.",
         "severity": "pass"
       }
     ],
@@ -240,14 +240,14 @@
       }
     ],
     "others_findings": [],
-    "critical_count": 4,
-    "warning_count": 7,
+    "critical_count": 5,
+    "warning_count": 6,
     "missing_documents": [
       "Material Approval Form (MAF)",
       "Material Source Declaration Form (MSDF)"
     ],
     "overall_recommendation": "RESUBMIT",
-    "summary_comments": "The overall status of the submittal is 'Resubmit' due to critical issues identified. The most significant issues include the absence of the Material Approval Form (MAF) and Material Source Declaration Form (MSDF), an expired DED registration, and a proposed tensile strength that does not meet the specified minimum requirement. The contractor is required to address these deficiencies and provide the necessary documentation for resubmission."
+    "summary_comments": "The overall status of the submittal is 'Resubmit' due to critical issues identified. The most significant issues include the absence of the Material Approval Form (MAF) and Material Source Declaration Form (MSDF), as well as non-compliance with specified tensile strength and elongation at break requirements. The contractor is required to address these deficiencies and provide the necessary documentation for resubmission."
   },
   "finding_counts": {
     "completeness": 2,

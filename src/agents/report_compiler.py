@@ -4,6 +4,7 @@ import json
 from datetime import date
 
 from langsmith import traceable
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 
 from src.agents.state import SubmittalReviewState
@@ -18,7 +19,7 @@ _client: OpenAI | None = None
 def _openai() -> OpenAI:
     global _client
     if _client is None:
-        _client = OpenAI()
+        _client = wrap_openai(OpenAI())
     return _client
 
 

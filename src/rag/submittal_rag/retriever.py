@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import chromadb
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 
 _LOCAL_CHROMA_PATH = "data/chromadb"
@@ -14,7 +15,7 @@ _chroma_client: chromadb.PersistentClient | None = None
 def _openai() -> OpenAI:
     global _openai_client
     if _openai_client is None:
-        _openai_client = OpenAI()
+        _openai_client = wrap_openai(OpenAI())
     return _openai_client
 
 

@@ -26,6 +26,7 @@ import pytest
 # Make src importable when running from the repo root
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from src.agents.doc_processor import stage_files  # noqa: E402
 from src.agents.orchestrator import compile_review_graph  # noqa: E402
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -58,11 +59,11 @@ _SCENARIO_REVIEW_DATE = "2024-12-01"  # Fixed date so validity checks don't depe
 
 def _run_pipeline(authority: str, submittal_id: str, file_contents: dict[str, bytes]) -> dict:
     graph = compile_review_graph()
+    # Deposit bytes outside LangGraph state so LangSmith traces never contain PDF bytes.
+    stage_files(submittal_id, file_contents, {fn: None for fn in file_contents})
     initial_state: dict = {
         "authority": authority,
         "submittal_id": submittal_id,
-        "file_contents": file_contents,
-        "declared_labels": {fn: None for fn in file_contents},
         "review_date": _SCENARIO_REVIEW_DATE,
     }
     return graph.invoke(initial_state)

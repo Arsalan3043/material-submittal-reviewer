@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
@@ -18,7 +19,7 @@ _client: OpenAI | None = None
 def _openai() -> OpenAI:
     global _client
     if _client is None:
-        _client = OpenAI()
+        _client = wrap_openai(OpenAI())
     return _client
 
 
