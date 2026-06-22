@@ -10,7 +10,7 @@ from src.agents.spec_verifier import spec_verifier_node
 from src.agents.state import SubmittalReviewState
 from src.agents.table_auditor import table_auditor_node
 from src.agents.validity_checker import validity_checker_node
-from src.models.submittal import ClassifiedDocument
+from src.models.knowledge_store import load_store
 from src.rules.completeness import check_completeness
 from src.config import get_authority_profile
 
@@ -19,11 +19,10 @@ def _completeness_node(state: SubmittalReviewState) -> SubmittalReviewState:
     """Inline node: completeness check runs between doc_processor and spec_verifier."""
     authority = state.get("authority", "ADM")
     profile = get_authority_profile(authority)
-    classified = {
-        fn: ClassifiedDocument.model_validate(d)
-        for fn, d in state.get("classified_documents", {}).items()
-    }
-    findings, missing = check_completeness(classified, profile)
+    store = load_store(state["knowledge_store_id"])
+    findings, missing = check_completeness(
+        store.get_present_types(), store.get_mismatches(), profile
+    )
     return {
         **state,
         "completeness_findings": [f.model_dump() for f in findings],
