@@ -5,8 +5,8 @@ from rapidfuzz import fuzz
 
 from src.agents.state import SubmittalReviewState
 from src.models.findings import Finding, Severity
-from src.models.submittal import ClassifiedDocument, DocType
-from src.parsers.pdf_parser import extract_text_from_bytes
+from src.models.knowledge_store import load_store
+from src.models.submittal import DocType
 
 _FUZZY_THRESHOLD = 85
 
@@ -35,9 +35,8 @@ def avl_checker_node(state: SubmittalReviewState) -> SubmittalReviewState:
     if authority != "TAQA":
         return {**state, "avl_findings": findings}
 
-    manufacturer_name: str = state.get("manufacturer_name", "")
-    classified: dict[str, dict] = state.get("classified_documents", {})
-    file_contents: dict[str, bytes] = state.get("file_contents", {})
+    store = load_store(state["knowledge_store_id"])
+    manufacturer_name: str = store.manufacturer_name
 
     if not manufacturer_name:
         findings.append(Finding(
@@ -49,20 +48,15 @@ def avl_checker_node(state: SubmittalReviewState) -> SubmittalReviewState:
         ).model_dump())
         return {**state, "avl_findings": findings}
 
-    # Find the AVL document in the submittal (classified as OTHERS or PREVIOUS_APPROVAL)
+    # Find the AVL document — may be classified as PREVIOUS_APPROVAL or OTHERS
     avl_text = ""
     avl_filename = ""
-    for filename, doc_dict in classified.items():
-        doc = ClassifiedDocument.model_validate(doc_dict)
-        # AVL may be uploaded under PREVIOUS_APPROVAL or OTHERS section
-        if doc.doc_type in (DocType.PREVIOUS_APPROVAL, DocType.OTHERS):
-            content = file_contents.get(filename, b"")
-            if content:
-                text = extract_text_from_bytes(content, max_pages=20)
-                if "approved vendor" in text.lower() or "vendor list" in text.lower():
-                    avl_text = text
-                    avl_filename = filename
-                    break
+    for section in store.sections:
+        if section.doc_type in (DocType.PREVIOUS_APPROVAL, DocType.OTHERS):
+            if "approved vendor" in section.text.lower() or "vendor list" in section.text.lower():
+                avl_text = section.text
+                avl_filename = section.filename
+                break
 
     if not avl_text:
         findings.append(Finding(
