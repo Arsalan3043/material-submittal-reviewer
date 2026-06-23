@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import chromadb
 
-_LOCAL_CHROMA_PATH = "data/chromadb"
+from src.config.paths import CHROMA_PATH
+
 CHROMA_BATCH_SIZE = 500
 
 _client: chromadb.PersistentClient | None = None
@@ -11,7 +12,7 @@ _client: chromadb.PersistentClient | None = None
 def _chroma() -> chromadb.PersistentClient:
     global _client
     if _client is None:
-        _client = chromadb.PersistentClient(path=_LOCAL_CHROMA_PATH)
+        _client = chromadb.PersistentClient(path=CHROMA_PATH)
     return _client
 
 
