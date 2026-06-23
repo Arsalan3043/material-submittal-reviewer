@@ -7,6 +7,7 @@ import chromadb
 from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 
+from src.config.paths import CHROMA_PATH
 from src.rag.indexing.chunker import SpecChunk, chunk_sections
 from src.rag.indexing.metadata_tagger import tag_chunks
 from src.rag.indexing.pdf_loader import load_spec_pdf
@@ -24,8 +25,6 @@ EMBED_MODEL = "text-embedding-3-small"
 # text-embedding-3-small token limit is 8,192 tokens (~28,000 chars @ ~3.4 chars/token).
 MAX_EMBED_CHARS = 28_000
 
-_LOCAL_CHROMA_PATH = "data/chromadb"
-
 _openai_client: OpenAI | None = None
 _chroma_client: chromadb.PersistentClient | None = None
 
@@ -40,7 +39,7 @@ def _openai() -> OpenAI:
 def _chroma() -> chromadb.PersistentClient:
     global _chroma_client
     if _chroma_client is None:
-        _chroma_client = chromadb.PersistentClient(path=_LOCAL_CHROMA_PATH)
+        _chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
     return _chroma_client
 
 

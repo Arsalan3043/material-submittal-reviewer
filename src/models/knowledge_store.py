@@ -4,10 +4,10 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from src.config.paths import STORE_DIR
 from src.models.submittal import DocType
 
-# All knowledge stores live here; created on first write.
-_STORE_DIR = Path("data/knowledge_stores")
+_STORE_DIR = STORE_DIR
 
 # Module-level cache: each store file is read from disk only once per process,
 # regardless of how many agents call load_store() in the same LangGraph run.

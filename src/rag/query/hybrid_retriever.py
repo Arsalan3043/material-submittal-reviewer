@@ -7,6 +7,7 @@ from langsmith.wrappers import wrap_openai
 from openai import OpenAI
 from rank_bm25 import BM25Okapi
 
+from src.config.paths import CHROMA_PATH
 from src.rag.query.query_constructor import StructuredQuery
 
 # Promoted directly from experiments/rag/exp05_metadata_filter/pipeline.py.
@@ -18,7 +19,6 @@ SEMANTIC_CANDIDATES = 20
 RRF_K = 60
 
 EMBED_MODEL = "text-embedding-3-small"
-_LOCAL_CHROMA_PATH = "data/chromadb"
 
 _openai_client: OpenAI | None = None
 _chroma_client: chromadb.PersistentClient | None = None
@@ -34,7 +34,7 @@ def _openai() -> OpenAI:
 def _chroma() -> chromadb.PersistentClient:
     global _chroma_client
     if _chroma_client is None:
-        _chroma_client = chromadb.PersistentClient(path=_LOCAL_CHROMA_PATH)
+        _chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
     return _chroma_client
 
 

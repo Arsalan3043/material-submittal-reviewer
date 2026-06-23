@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import uuid
+from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DocType(str, Enum):
@@ -21,6 +23,21 @@ class DocType(str, Enum):
     METHOD_STATEMENT       = "method_statement"
     MAF                    = "maf"
     OTHERS                 = "others"
+
+
+class SubmittalMetadata(BaseModel):
+    """
+    Lightweight record created at upload time and stored alongside the review.
+    submittal_id is always a plain UUID — scoping lives here as fields, not in the ID.
+    """
+    submittal_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    authority: str
+    project_name: str = ""
+    material_description: str = ""
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    # Production fields — add when multi-tenancy is needed:
+    # user_id: str | None = None
+    # tenant_id: str | None = None
 
 
 class UploadedFile(BaseModel):
