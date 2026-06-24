@@ -1,3 +1,13 @@
+import sys
+from pathlib import Path
+
+# Add project root to sys.path so `src` is importable when Streamlit launches
+# from app/main.py (Streamlit adds the file's directory, not the project root).
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
+
 import streamlit as st
 
 from src.config.paths import ensure_dirs
