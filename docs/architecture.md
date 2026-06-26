@@ -12,20 +12,23 @@
 4. [Document Classifier](#4-document-classifier)
 5. [RAG Indexing Pipeline](#5-rag-indexing-pipeline)
 6. [RAG Query Pipeline](#6-rag-query-pipeline)
-7. [LangGraph Orchestrator](#7-langgraph-orchestrator)
-8. [Agent 1 — Document Processor](#8-agent-1--document-processor)
-9. [Agent 2 — Spec Verifier](#9-agent-2--spec-verifier)
-10. [Agent 3 — Validity Checker (Rule-Based)](#10-agent-3--validity-checker-rule-based)
-11. [Agent 4 — Table Auditor](#11-agent-4--table-auditor)
-12. [Agent 5 — Consistency Checker (Rule-Based)](#12-agent-5--consistency-checker-rule-based)
-13. [Agent 6 — AVL Checker (TAQA Only)](#13-agent-6--avl-checker-taqa-only)
-14. [Agent 7 — Report Compiler](#14-agent-7--report-compiler)
-15. [Agent 8 — Query Agent (Post-Review Chat)](#15-agent-8--query-agent-post-review-chat)
-16. [Rule-Based Components](#16-rule-based-components)
-17. [Authority Profiles](#17-authority-profiles)
-18. [End-to-End Data Flow](#18-end-to-end-data-flow)
-19. [ChromaDB Storage Structure](#19-chromadb-storage-structure)
-20. [Common Failure Modes and How to Diagnose Them](#20-common-failure-modes-and-how-to-diagnose-them)
+7. [Path Configuration (src/config/paths.py)](#7-path-configuration-srcconfigpathspy)
+8. [File I/O Layer (src/parsers/file_io.py)](#8-file-io-layer-srcparsersfle_iopy)
+9. [LangGraph Orchestrator](#9-langgraph-orchestrator)
+10. [Agent 1 — Document Processor](#10-agent-1--document-processor)
+11. [Agent 2 — Spec Verifier](#11-agent-2--spec-verifier)
+12. [Agent 3 — Validity Checker (Rule-Based)](#12-agent-3--validity-checker-rule-based)
+13. [Agent 4 — Table Auditor](#13-agent-4--table-auditor)
+14. [Agent 5 — Consistency Checker (Rule-Based)](#14-agent-5--consistency-checker-rule-based)
+15. [Agent 6 — AVL Checker (TAQA Only)](#15-agent-6--avl-checker-taqa-only)
+16. [Agent 7 — Report Compiler](#16-agent-7--report-compiler)
+17. [Agent 8 — Query Agent (Post-Review Chat)](#17-agent-8--query-agent-post-review-chat)
+18. [Rule-Based Components](#18-rule-based-components)
+19. [Authority Profiles](#19-authority-profiles)
+20. [Streamlit UI Layer](#20-streamlit-ui-layer)
+21. [End-to-End Data Flow](#21-end-to-end-data-flow)
+22. [ChromaDB Storage Structure](#22-chromadb-storage-structure)
+23. [Common Failure Modes and How to Diagnose Them](#23-common-failure-modes-and-how-to-diagnose-them)
 
 ---
 
@@ -67,27 +70,93 @@ previous_approval, method_statement, maf, others
 ```
 `others` is the catch-all for anything unrecognized.
 
+### `SubmittalMetadata` (`src/models/submittal.py`)
+Created at upload time in the Streamlit UI. Stored in `st.session_state` for the duration of a review session.
+
+```python
+class SubmittalMetadata(BaseModel):
+    submittal_id: str       # plain UUID — opaque identifier, no user scoping baked in
+    authority: str          # "ADM" or "TAQA"
+    project_name: str       # optional, entered by user at upload
+    material_description: str
+    created_at: str         # ISO datetime string
+    # user_id: str | None = None    ← add when multi-tenancy is needed
+    # tenant_id: str | None = None  ← add when multi-tenancy is needed
+```
+
+The `submittal_id` is always a plain UUID. Scoping (user, tenant) lives as explicit fields, not embedded in the key. This means the ID is stable across auth changes and the key never needs migrating when the access control model changes. See `engineering_log.md` Issue 5.3 for the full debate.
+
 ### `ClassifiedDocument` (`src/models/submittal.py`)
-What the classifier returns for each uploaded PDF:
-- `filename` — original filename (or a virtual name like `file.pdf[cover_page:p1]` for bundled PDFs)
+Intermediate output from the classifier for a single file. Used internally by `doc_processor` to detect mismatches before building the knowledge store. Not stored in LangGraph state — only the knowledge store survives past Agent 1.
+
+- `filename` — original filename (or virtual name like `file.pdf[cover_page:p1]` for bundled PDFs)
 - `doc_type` — one of the 14 DocType values
 - `confidence` — "high" | "medium" | "low"
 - `reasoning` — one-sentence explanation from the LLM
 - `key_indicators` — text fragments that led to the classification
-- `text_preview` — first 500 chars of extracted text (used later by name_matcher.py for consistency checks without re-reading the PDF)
+- `text_preview` — first 500 chars; used only by classifier's mismatch detection
 - `mismatch_flagged` — True if the document was uploaded under the wrong index section
 
+### `DocumentSection` (`src/models/knowledge_store.py`)
+One classified document section inside the `SubmittalKnowledgeStore`. Holds the **full extracted text** (not a preview) for that section:
+
+```python
+class DocumentSection(BaseModel):
+    doc_type: DocType
+    text: str               # full extracted text — not truncated
+    pages: list[int]        # 1-indexed page numbers covered
+    confidence: str         # "high" | "medium"
+    filename: str
+    declared_label: str | None
+    mismatch_flagged: bool
+```
+
+For individual-file uploads: one `DocumentSection` per uploaded PDF.
+For bundled-PDF uploads: one `DocumentSection` per identified section within the large PDF.
+
+### `SubmittalKnowledgeStore` (`src/models/knowledge_store.py`)
+The central knowledge object built once by Agent 1 (doc_processor) and read by every downstream agent. State carries only the file path string (`knowledge_store_id`, ~100 chars). No PDF bytes or large dicts live in LangGraph state.
+
+```python
+class SubmittalKnowledgeStore(BaseModel):
+    submittal_id: str
+    authority: str
+
+    # Extracted from cover page by LLM:
+    material_description: str
+    spec_clause: str
+    manufacturer_name: str
+    manufacturer_address: str
+    supplier_name: str
+    supplier_address: str
+
+    # All classified sections (text only):
+    sections: list[DocumentSection]
+
+    # Pre-parsed comparison table rows (list[TableRow.model_dump()]):
+    # doc_processor runs table extraction upfront so table_auditor never needs PDF bytes.
+    table_rows: list[dict]
+```
+
+**Key methods:**
+- `store.get_text(DocType.TECHNICAL_DATASHEET)` — concatenated text for all sections of a given type
+- `store.has_type(DocType.TEST_REPORT)` — True if at least one section of this type exists
+- `store.get_present_types()` — set of all DocTypes found
+- `store.get_mismatches()` — sections where declared label ≠ actual type
+- `store.save()` — writes to `data/knowledge_stores/{submittal_id}.json`, returns path string
+- `load_store(path)` — loads from disk; module-level cache means disk is read at most once per process
+
 ### `SubmittalReviewState` (TypedDict — `src/agents/state.py`)
-The shared state object that flows between all LangGraph nodes. It is a TypedDict (not Pydantic) because LangGraph 0.1.x requires dicts, not Pydantic models, for state. Every Pydantic object stored here is serialized via `.model_dump()` and reconstructed at the point of use via `Model.model_validate()`.
+The shared state object that flows between all LangGraph nodes. TypedDict (not Pydantic) for LangGraph compatibility. Every Pydantic object stored here is serialized via `.model_dump()` and reconstructed at the point of use via `Model.model_validate()`.
+
+**PDF bytes are never in state.** They are deposited in a staging dict before `graph.invoke()` and consumed immediately by the first node. See Section 10 (Agent 1) for the staging pattern.
 
 Key fields and who writes them:
 ```
-file_contents          → Input (from UI), never modified
-declared_labels        → Input (from UI), never modified
-classified_documents   → Agent 1 (doc_processor) writes this
-material_description   → Agent 1 extracts from cover page
-spec_clause            → Agent 1 extracts from cover page
-manufacturer_name      → Agent 1 extracts from cover page
+authority              → Input (set before graph.invoke())
+submittal_id           → Input (set before graph.invoke())
+review_date            → Input (defaults to today)
+knowledge_store_id     → Agent 1 (doc_processor) — file path to SubmittalKnowledgeStore JSON
 completeness_findings  → completeness node (inline, between Agent 1 and Agent 2)
 spec_verif_findings    → Agent 2 (spec_verifier)
 validity_findings      → Agent 3 (validity_checker)
@@ -96,7 +165,11 @@ consistency_findings   → Agent 5 (consistency_checker)
 avl_findings           → Agent 6 (avl_checker) or skip_avl node
 report                 → Agent 7 (report_compiler)
 conversation_history   → handle_query() wrapper (post-review)
+missing_documents      → completeness node
+review_complete        → Agent 7 (report_compiler)
 ```
+
+All cover page fields (`material_description`, `spec_clause`, `manufacturer_name`, etc.) live in `SubmittalKnowledgeStore`, not in state. Agents that need them call `load_store(state["knowledge_store_id"]).spec_clause` etc.
 
 ### `Finding` (`src/models/findings.py`)
 The universal finding format for all non-table stages:
@@ -109,7 +182,7 @@ The universal finding format for all non-table stages:
 ### `TableRowFinding` (`src/models/findings.py`)
 Extended format for comparison table rows:
 - All columns from the extracted table (parameter, specified_value, proposed_value, etc.)
-- Boolean audit flags (specified_correct, proposed_verified, etc.)
+- Boolean audit flags (specified_correct, proposed_verified, measured_verified, deviation_accurate, missing_from_spec)
 - `finding` — one-sentence summary
 - `severity`
 
@@ -267,7 +340,7 @@ Converts each `SpecChunk` into a dict with 8 metadata fields stored alongside th
 ### Step 5 — Indexer (`indexer.py`)
 Orchestrates the full pipeline. Embeds chunks in batches of 500 (ChromaDB add() limit is 1,000 — 500 gives safe margin). Calls `text-embedding-3-small` via OpenAI API. Stores `(id, document, embedding, metadata)` tuples in ChromaDB.
 
-**Important:** The indexer uses `chromadb.PersistentClient(path="data/chromadb")` — local disk storage, not cloud. ChromaDB files live at `data/chromadb/` in the project root.
+Uses `chromadb.PersistentClient(path=CHROMA_PATH)` where `CHROMA_PATH` is imported from `src/config/paths.py`. All ChromaDB data is stored locally on disk — see Section 7 for the path configuration.
 
 ---
 
@@ -334,7 +407,59 @@ If retrieval returns no candidates (clause not in ChromaDB, collection doesn't e
 
 ---
 
-## 7. LangGraph Orchestrator
+## 7. Path Configuration (`src/config/paths.py`)
+
+All local file paths are centralized in one module. Every other module imports from here — no hardcoded path strings elsewhere.
+
+```python
+PROJECT_ROOT: Path = Path(__file__).parent.parent.parent
+DATA_DIR:        Path = PROJECT_ROOT / "data"
+CHROMA_PATH:     str  = str(DATA_DIR / "chromadb")
+STORE_DIR:       Path = DATA_DIR / "knowledge_stores"
+SPECS_DIR:       Path = DATA_DIR / "specs"
+SUBMITTALS_DIR:  Path = DATA_DIR / "submittals"
+
+def ensure_dirs() -> None:
+    """Create all data subdirectories if they don't exist yet."""
+    for d in (STORE_DIR, SPECS_DIR, SUBMITTALS_DIR):
+        d.mkdir(parents=True, exist_ok=True)
+```
+
+`PROJECT_ROOT` is derived from `__file__` (the location of `paths.py` itself), not from `os.getcwd()`. This makes all paths absolute and correct regardless of what directory the process was started from. Streamlit, pytest, and scripts all resolve to the same directories.
+
+`ensure_dirs()` is called once in `app/main.py` at startup so the `data/` subdirectories always exist before any agent tries to write to them.
+
+**Why this matters:** Before centralization, `"data/chromadb"` was hardcoded as a relative string in three separate files. Relative paths are fragile in web applications because the CWD depends on how the process was started. With absolute paths from `__file__`, the same code works from any launch point. See `engineering_log.md` Issue 3.4.
+
+**Production transition:** To switch storage backends (S3, Azure Blob, ChromaDB Cloud), change the constants in this one file. Nothing else in the codebase needs to change.
+
+---
+
+## 8. File I/O Layer (`src/parsers/file_io.py`)
+
+Single choke-point for all file reads and writes. Two functions cover all cases:
+
+```python
+def load_pdf_bytes(path: str | Path) -> bytes:
+    """Read a PDF from local disk. In production, swap body to S3 download."""
+    return Path(path).read_bytes()
+
+def save_upload(dest_dir: str | Path, filename: str, data: bytes) -> Path:
+    """Save bytes from a Streamlit file_uploader to disk. Returns absolute path."""
+    dest = Path(dest_dir)
+    dest.mkdir(parents=True, exist_ok=True)
+    out = dest / filename
+    out.write_bytes(data)
+    return out
+```
+
+`save_upload()` is called from the Streamlit UI (`upload.py` and `spec_manager.py`) to convert in-memory upload bytes into disk files before the pipeline runs. `load_pdf_bytes()` is called anywhere the pipeline needs to read a saved file.
+
+**Production transition:** The production version of `load_pdf_bytes` downloads from S3 instead of reading from disk — one function body to change. `save_upload()` would upload to S3 and return an S3 key. No agent or orchestrator code changes.
+
+---
+
+## 9. LangGraph Orchestrator
 
 **File:** `src/agents/orchestrator.py`
 
@@ -378,19 +503,51 @@ These exist as graph nodes so the pipeline structure is complete — adding impl
 ### The `completeness` node is inline (not a full agent)
 The completeness check is defined directly in `orchestrator.py` as `_completeness_node`. It calls `check_completeness()` from `src/rules/completeness.py`. It is not a separate agent file because it is purely rule-based and has no dependencies on external services.
 
+### Streaming to the UI
+The Streamlit review page calls `graph.stream(initial_state)` rather than `graph.invoke()`. Each event from the stream is `{node_name: state_changes}`. The UI accumulates events with `accumulated.update(node_state)` to build the full final state, and displays a status line for each completed node in real time.
+
 ---
 
-## 8. Agent 1 — Document Processor
+## 10. Agent 1 — Document Processor
 
 **File:** `src/agents/doc_processor.py`
 
-This is the first and most complex agent. It handles two fundamentally different upload formats.
+This is the first and most complex agent, renamed internally to "Knowledge Builder" because its primary output is the `SubmittalKnowledgeStore`, not just a classification result.
+
+### The staging dict pattern
+PDF bytes never enter LangGraph state. Before `graph.invoke()` is called, the UI calls:
+
+```python
+stage_files(submittal_id, file_contents, declared_labels)
+```
+
+This deposits bytes in a module-level dict `_staging`. The first thing `doc_processor_node` does is:
+
+```python
+file_contents, declared_labels = _staging.pop(submittal_id, ({}, {}))
+```
+
+Bytes are consumed here and discarded. Nothing is forwarded. LangGraph state carries only `knowledge_store_id` (a ~100-char string) after this node, not megabytes of binary data. See `engineering_log.md` Issue 3.1 for why this matters (LangSmith trace size, memory).
+
+### What Agent 1 builds
+Agent 1 constructs a `SubmittalKnowledgeStore` from the raw bytes:
+
+1. **Classify and extract text** — for each file, run the classifier, then extract full text (not just 2-page preview)
+2. **Build `DocumentSection` objects** — one per identified document, with full text
+3. **Extract cover page metadata** — one GPT-4o-mini call to get `material_description`, `spec_clause`, `manufacturer_name`, `manufacturer_address`, `supplier_name`, `supplier_address`; written to `store.*`
+4. **Pre-parse comparison table rows** — call `extract_all_table_rows()` on the comparison table PDF upfront; rows stored as `store.table_rows`; downstream `table_auditor` reads these directly without needing any PDF bytes
+5. **Write to disk** — `store.save()` writes `data/knowledge_stores/{submittal_id}.json`
+6. **Return** — `{**state, "knowledge_store_id": "/path/to/{id}.json"}`
+
+This single agent is the only one that ever reads PDF bytes. All downstream agents call `load_store(state["knowledge_store_id"])` to get what they need.
 
 ### Format A: Individual files (multiple PDFs uploaded)
 When more than one PDF is uploaded, or the single PDF has fewer than 20 pages:
-1. For each file: extract text (max 2 pages) → classify → build `ClassifiedDocument`
-2. If `doc_type == COVER_PAGE`: extract all 6 fields from cover page text using GPT-4o-mini
-3. Store everything in state
+1. For each file: extract text (max 2 pages for classification) → classify → build `ClassifiedDocument`
+2. Then extract full text (`max_pages=None`) → build `DocumentSection` with full text
+3. If `doc_type == COVER_PAGE`: use full text for cover page extraction (up to `_MAX_COVER_CHARS = 3000`)
+4. If `doc_type == COMPARISON_TABLE`: keep bytes for upfront table row parsing
+5. Append section to `store.sections`
 
 ### Format B: Bundled PDF (one large PDF containing the whole submittal)
 When exactly one PDF is uploaded AND it has ≥ 20 pages (`_BUNDLED_THRESHOLD = 20`):
@@ -407,6 +564,7 @@ Scan every page using `is_separator_page()` (pure regex, no API calls). Count se
 - Classify only the first content page of each section (1 LLM call per section)
 - Skip duplicate doc_types (once a COVER_PAGE is found, don't classify more COVER_PAGEs)
 - Confidence filter: only keep "high" or "medium" confidence classifications
+- Extract full section text forward until the next separator boundary
 
 **If < 2 separators → Option B (sparse sampling):**
 - Step through the document every 3 pages (`_SAMPLE_STEP = 3`)
@@ -425,15 +583,9 @@ For sections found inside a bundled PDF, a virtual filename is created:
 ```
 This allows the rest of the system to treat them as if they were separate files.
 
-### Cover page extraction
-When a cover page is found, `_extract_cover_page(text)` is called. This is a separate GPT-4o-mini call that extracts 6 fields from the cover page text:
-- `material_description`, `spec_clause`, `manufacturer_name`, `manufacturer_address`, `supplier_name`, `supplier_address`
-
-These 6 fields are stored directly on state and used by ALL downstream agents. If cover page extraction fails (parse error), all 6 fields default to empty strings, and agents that depend on them will generate warnings.
-
 ---
 
-## 9. Agent 2 — Spec Verifier
+## 11. Agent 2 — Spec Verifier
 
 **File:** `src/agents/spec_verifier.py`
 
@@ -441,13 +593,13 @@ These 6 fields are stored directly on state and used by ALL downstream agents. I
 Compares the submitted specification copy (Index 2 — what the contractor includes as their copy of the spec) against the actual authority spec stored in ChromaDB.
 
 ### Execution flow
-1. Read `spec_clause` from state (extracted from cover page by Agent 1)
-2. If empty → generate WARNING finding, return early
-3. Call `assemble_spec_context(clause_ref=spec_clause, authority=authority)` → this triggers the full RAG pipeline (query → BM25+semantic → RRF → rerank → parent fetch)
-4. If returns `EMPTY_CONTEXT_SENTINEL` → generate WARNING ("clause not in database"), return early
-5. Find the `SPECIFICATION_COPY` document in `classified_documents`
-6. If not found → generate CRITICAL finding ("missing Index 2"), return early
-7. Extract text from the spec copy PDF (max 10 pages)
+1. Load knowledge store: `store = load_store(state["knowledge_store_id"])`
+2. Read `store.spec_clause` — extracted from cover page by Agent 1
+3. If empty → generate WARNING finding, return early
+4. Call `assemble_spec_context(clause_ref=store.spec_clause, authority=authority)` → this triggers the full RAG pipeline (query → BM25+semantic → RRF → rerank → parent fetch)
+5. If returns `EMPTY_CONTEXT_SENTINEL` → generate WARNING ("clause not in database"), return early
+6. Get submitted spec text: `store.get_text(DocType.SPECIFICATION_COPY)` — returns full text, not a preview
+7. If empty → generate CRITICAL finding ("missing Index 2"), return early
 8. Send BOTH texts to GPT-4o-mini with prompt: "Find discrepancies between submitted spec and authority spec"
 9. Parse the JSON response into `Finding` objects
 
@@ -462,7 +614,7 @@ Minor formatting differences are explicitly excluded. Only genuine content discr
 
 ---
 
-## 10. Agent 3 — Validity Checker (Rule-Based)
+## 12. Agent 3 — Validity Checker (Rule-Based)
 
 **File:** `src/agents/validity_checker.py`
 **Rules in:** `src/rules/date_checker.py`
@@ -470,10 +622,12 @@ Minor formatting differences are explicitly excluded. Only genuine content discr
 No AI. Pure Python datetime logic.
 
 ### What it checks
-Iterates over all classified documents. For each one:
+Loads the knowledge store and iterates over all sections. For each one:
 - `DED_REGISTRATION` → calls `check_ded_registration()`
 - `TEST_REPORT` → calls `check_test_report()`
 - `MANUFACTURER_GUARANTEE` → calls `check_guarantee()`
+
+The full section text (`section.text`) is used — not a preview. Date extraction runs on the complete document content.
 
 ### Date extraction logic (`date_checker.py`)
 Five regex patterns cover all common date formats in UAE construction docs:
@@ -496,18 +650,25 @@ It cannot read the actual "Expiry Date" field from a certificate that uses an im
 
 ---
 
-## 11. Agent 4 — Table Auditor
+## 13. Agent 4 — Table Auditor
 
 **File:** `src/agents/table_auditor.py`
 **Table extraction in:** `src/parsers/table_extractor.py`
 
 This is the highest-value agent. It audits every row of the comparison table.
 
-### Step 1 — Find the comparison table document
-Searches `classified_documents` for `DocType.COMPARISON_TABLE`. Reads the PDF bytes.
+### Important: table rows are pre-parsed by Agent 1
+Agent 4 does NOT extract table rows from PDF bytes. This work is done upfront by Agent 1 (doc_processor) during its run — `extract_all_table_rows()` is called on the comparison table PDF and the result stored in `store.table_rows`. Agent 4 reads the pre-parsed rows:
 
-### Step 2 — Extract all table rows (`extract_all_table_rows()`)
-For each page in the comparison table PDF:
+```python
+store = load_store(state["knowledge_store_id"])
+table_rows = [TableRow.model_validate(r) for r in store.table_rows]
+```
+
+This design decision (doing extraction upfront in Agent 1) means the table auditor never needs PDF bytes and can focus entirely on the audit logic. See `engineering_log.md` Issue 3.2.
+
+### How table extraction works (done in Agent 1)
+For each page in the comparison table PDF (`src/parsers/table_extractor.py`):
 
 **OCR-first approach** (because UAE submittals are scanned):
 1. OCR the page with Tesseract at 2× zoom
@@ -530,27 +691,28 @@ class TableRow:
 
 The LLM system prompt maps alternative column names (e.g. "As Offered" → proposed, "Test Result" → measured) so the extraction works regardless of how the contractor named their columns.
 
-### Step 3 — Retrieve supporting contexts
-Calls `assemble_spec_context()` once → cached, so no extra API cost if spec_verifier already called it.
-Extracts text from `TECHNICAL_DATASHEET` (Index 4) and `TEST_REPORT` (Index 5) PDFs.
+### What Agent 4 actually does: retrieve contexts and audit
 
-### Step 4 — Single batched audit LLM call
-ALL rows are audited in ONE GPT-4o-mini call. The old approach was 1 call per row — this batched approach reduces N rows from N calls to 1 call.
+1. **Get supporting contexts:**
+   - `assemble_spec_context()` once → cached, so no extra API cost if spec_verifier already called it
+   - `store.get_text(DocType.TECHNICAL_DATASHEET)` — full datasheet text
+   - `store.get_text(DocType.TEST_REPORT)` — full test report text
 
-The prompt sends:
-- Authority spec context (truncated to 2,000 chars)
-- Datasheet context (truncated to 1,500 chars)
-- Test report context (truncated to 1,500 chars)
-- All rows as a numbered text block
+2. **Single batched audit LLM call (per batch of 25 rows):**
+   ALL rows are audited in batches of `_BATCH_SIZE = 25`. Each batch is one GPT-4o-mini call. The prompt sends:
+   - Authority spec context (truncated to 2,000 chars)
+   - Datasheet context (truncated to 1,500 chars)
+   - Test report context (truncated to 1,500 chars)
+   - Up to 25 rows as a numbered text block
 
-The LLM returns one audit result per row. The response must have the same number of rows as the request. If fewer come back, missing rows default to `proposed_verified=False, severity=warning`.
+   The LLM returns one audit result per row. The response must have the same number of rows as the request. If fewer come back, missing rows default to `proposed_verified=False, severity=warning`.
 
 ### Deviation rule (critical — enforced in LLM prompt)
 A proposed value that **exceeds** a minimum requirement is NOT a deviation. Example: spec says "min 12% water reduction", contractor proposes "15%" — this is PASS, not a deviation. The LLM is explicitly instructed about this because it is non-obvious and easy to get wrong.
 
 ---
 
-## 12. Agent 5 — Consistency Checker (Rule-Based)
+## 14. Agent 5 — Consistency Checker (Rule-Based)
 
 **File:** `src/agents/consistency_checker.py`
 **Rules in:** `src/rules/name_matcher.py`
@@ -558,12 +720,20 @@ A proposed value that **exceeds** a minimum requirement is NOT a deviation. Exam
 No AI. rapidfuzz fuzzy string matching.
 
 ### What it checks
-- Manufacturer name (from cover page) must appear consistently in: TECHNICAL_DATASHEET, TEST_REPORT, MANUFACTURER_GUARANTEE, DED_REGISTRATION, MSDF, COMPARISON_TABLE, COVER_PAGE
-- Supplier name (from cover page) must appear consistently in: COVER_PAGE, MSDF, MAF
+Loads the knowledge store: `store = load_store(state["knowledge_store_id"])`.
+
+Reads entity names from the store (extracted from cover page by Agent 1):
+- `store.manufacturer_name`
+- `store.supplier_name`
+
+For each relevant document type, checks that the entity name appears in `section.text[:1000]` (first 1,000 chars of the full extracted text from the knowledge store).
+
+- Manufacturer name must appear consistently in: TECHNICAL_DATASHEET, TEST_REPORT, MANUFACTURER_GUARANTEE, DED_REGISTRATION, MSDF, MAF, COVER_PAGE
+- Supplier name must appear consistently in: COVER_PAGE, MSDF, MAF
 
 ### How fuzzy matching works
-For each document of the relevant types:
-1. Take first 1,000 chars of text (already in `text_preview` on ClassifiedDocument)
+For each document section of the relevant types:
+1. Take `section.text[:1000]` from the knowledge store (full text, truncated to first 1,000 chars for efficiency)
 2. Find the best candidate line that shares keywords with the entity name
 3. Compare candidate line against entity name using `fuzz.token_sort_ratio`
 4. Score ≥ 85 → match (consistent)
@@ -576,11 +746,11 @@ For each document of the relevant types:
 ### What this agent cannot detect
 - Different names that are genuinely similar (two companies with similar names)
 - OCR noise so severe that the name is unrecognizable
-- Cases where the manufacturer name is not in the first 1,000 chars
+- Cases where the manufacturer name appears only after the first 1,000 chars of a section
 
 ---
 
-## 13. Agent 6 — AVL Checker (TAQA Only)
+## 15. Agent 6 — AVL Checker (TAQA Only)
 
 **File:** `src/agents/avl_checker.py`
 
@@ -588,7 +758,7 @@ For each document of the relevant types:
 Only when `authority == "TAQA"`. For ADM, the `skip_avl` node runs instead and writes an empty list to `avl_findings`.
 
 ### How AVL search works
-1. Search `classified_documents` for any doc typed as `PREVIOUS_APPROVAL` or `OTHERS` that contains "approved vendor" or "vendor list" in its text
+1. Load knowledge store and search sections for any doc typed as `PREVIOUS_APPROVAL` or `OTHERS` that contains "approved vendor" or "vendor list" in its text
 2. If found → fuzzy-match manufacturer name against each line of AVL text
 3. Match found → PASS
 4. No match → CRITICAL
@@ -599,7 +769,7 @@ The AVL document is expected to be uploaded as part of the submittal package. If
 
 ---
 
-## 14. Agent 7 — Report Compiler
+## 16. Agent 7 — Report Compiler
 
 **File:** `src/agents/report_compiler.py`
 
@@ -630,7 +800,7 @@ Returns 2-4 professional sentences summarizing the review. Temperature=0 for det
 
 ---
 
-## 15. Agent 8 — Query Agent (Post-Review Chat)
+## 17. Agent 8 — Query Agent (Post-Review Chat)
 
 **File:** `src/agents/query_agent.py`
 
@@ -648,7 +818,7 @@ Calls `assemble_spec_context(question=question, clause_ref=spec_clause, authorit
 ### `submittal_rag` path
 Uses `src/rag/submittal_rag/retriever.py` — queries the per-session submittal collection (not the spec database). Semantic-only retrieval (no BM25, no reranking) — post-review Q&A queries are conversational, not spec-term lookups, so pure semantic is appropriate. Returns top-5 chunks with source filenames.
 
-**Important:** The submittal collection must be created before Q&A works. The embedder (`src/rag/submittal_rag/embedder.py`) must be called after the review completes to embed all submitted documents. The UI layer is responsible for triggering this.
+**Important:** The submittal collection must be populated before Q&A works. The embedder (`src/rag/submittal_rag/embedder.py`) must be called after the review completes to embed all submitted documents. This is a **known pending item** — as of Phase 5, the embedder is not called automatically after review. The `submittal_rag` route will return empty results until this is wired up.
 
 ### `report_json` path
 Flattens the report dict into a text summary and sends it as context. The LLM answers from the summary — no vector search needed for questions about the review itself.
@@ -658,7 +828,7 @@ Flattens the report dict into a text summary and sends it as context. The LLM an
 
 ---
 
-## 16. Rule-Based Components
+## 18. Rule-Based Components
 
 These three modules in `src/rules/` contain NO AI. They are deterministic Python functions.
 
@@ -669,18 +839,18 @@ Date checks are pass/fail with exact rules (expired = CRITICAL, not expired = PA
 - Guarantee: stated period must meet spec minimum (currently only warns if period not found)
 
 ### `completeness.py` — Pure set comparison
-Takes the set of `DocType` values present in classified documents. Compares against the `required_doc_types` list from the authority profile. Missing types → CRITICAL finding per missing type.
+Takes the set of `DocType` values present in `store.get_present_types()`. Compares against the `required_doc_types` list from the authority profile. Missing types → CRITICAL finding per missing type.
 
 Special case: `MAF` and `PREVIOUS_APPROVAL` are interchangeable for Index 8. If either is present, both are added to the present set before comparison.
 
-Mismatch detection: any document with `mismatch_flagged=True` (set by the classifier when the declared section doesn't match the actual doc_type) gets a WARNING finding.
+Mismatch detection: any section with `mismatch_flagged=True` (set by the classifier when the declared section doesn't match the actual doc_type) gets a WARNING finding.
 
 ### `name_matcher.py` — Why rapidfuzz over exact matching
 Exact matching would fail on: "Emirates LLC" vs "Emirates L.L.C.", OCR noise ("Em1rates"), Arabic/English name variations. rapidfuzz handles all of these. Threshold 85 was calibrated in Experiment A.
 
 ---
 
-## 17. Authority Profiles
+## 19. Authority Profiles
 
 **Files:** `src/config/base_profile.py`, `src/config/adm_profile.py`, `src/config/taqa_profile.py`
 
@@ -711,76 +881,154 @@ Returns the singleton profile object. Called from orchestrator and agents.
 
 ---
 
-## 18. End-to-End Data Flow
+## 20. Streamlit UI Layer
+
+**Files:** `app/main.py`, `app/pages/`
+
+The UI layer is a 5-page Streamlit application. All pages share `st.session_state` for review data.
+
+### Session state contract
+Defined once in `app/main.py`:
+```python
+{
+    "page":                 "upload",     # current page key
+    "authority":            "ADM",        # "ADM" or "TAQA"
+    "metadata":             None,         # SubmittalMetadata.model_dump()
+    "review_complete":      False,        # True once LangGraph run finishes
+    "knowledge_store_id":   None,         # path to SubmittalKnowledgeStore JSON
+    "report":               None,         # ReviewReport.model_dump()
+    "conversation_history": [],           # list of ConversationTurn dicts
+}
+```
+
+### Navigation
+Custom sidebar navigation via `st.session_state.page`. Three pages (`review`, `report`, `chat`) are disabled (`st.button(disabled=True)`) until `review_complete` is True.
+
+Native Streamlit multi-page routing was rejected because it provides no way to disable individual page links. See `engineering_log.md` Issue 5.5.
+
+### `app/pages/upload.py`
+- Authority selectbox → `st.session_state.authority`
+- Multi-file PDF uploader
+- Per-file label selectboxes (matches `profile.index_items`)
+- On submit: creates `SubmittalMetadata`, calls `save_upload()` to write PDFs to `data/submittals/{id}/`, calls `stage_files()`, sets `st.session_state.metadata`, navigates to `"review"`
+
+### `app/pages/review.py`
+- `@st.cache_resource` on `_get_graph()` — compiles LangGraph once per process
+- Calls `graph.stream(initial_state)` inside `st.status()` context
+- Shows each completed node as a status line in real time
+- Accumulates state across events: `accumulated.update(node_state)`
+- After graph ends: saves `report` and `knowledge_store_id` to session state, sets `review_complete=True`, calls `st.rerun()`
+
+### `app/pages/report.py`
+- Renders all 9 finding stages in expandable sections
+- Critical stages auto-expand; PASS stages collapse
+- Comparison table audit has per-row 4-column grid layout
+- Copy-pasteable plain-text report in a `st.text_area`
+- No PDF generation (plain text is sufficient for the prototype)
+
+### `app/pages/chat.py`
+- Suggested questions shown when conversation history is empty
+- Routes to `handle_query(state, question)` for each user message
+- Displays source routing per answer (`spec_rag` → "Authority Specification", etc.)
+- `st.session_state.conversation_history` persists turns within the session
+
+### `app/pages/spec_manager.py`
+- Shows current ChromaDB collection status (chunk count per authority)
+- Upload a spec PDF + provide authority + spec book name → call `index_spec_pdf()`
+- Optional "reset collection" checkbox before indexing
+- Saves spec PDF to `data/specs/{authority}/` via `save_upload()` before indexing
+
+### `sys.path` fix
+`app/main.py` has this as its first lines:
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+```
+Streamlit adds `app/` (the script's directory) to `sys.path`, not the project root. Without this fix, `from src.config.paths import ensure_dirs` fails with `ModuleNotFoundError: No module named 'src'`. See `engineering_log.md` Issue 5.4.
+
+---
+
+## 21. End-to-End Data Flow
 
 Trace exactly what happens from file upload to report:
 
 ```
-1. User uploads PDFs in Streamlit UI
-   → file_contents = {"ded.pdf": <bytes>, "datasheet.pdf": <bytes>, ...}
-   → declared_labels = {"ded.pdf": "Department of Economic Development (Registration)", ...}
+1. User uploads PDFs in Streamlit UI (upload.py)
    → authority = "ADM"
-   → submittal_id = "SUB-2024-001"
+   → uploaded files: [ded.pdf, datasheet.pdf, cover.pdf, ...]
+   → per-file declared labels: {"ded.pdf": "DED Registration", ...}
+   → SubmittalMetadata created: {submittal_id: "a1b2c3d4-...", authority: "ADM", ...}
 
-2. Initial state built:
+2. UI saves files to disk and stages bytes:
+   → save_upload("data/submittals/{id}/", "ded.pdf", bytes) → called per file
+   → stage_files(submittal_id, {filename→bytes}, {filename→label})
+   → bytes deposited in _staging dict (NOT in state)
+
+3. Initial LangGraph state built (small — no bytes):
    state = {
      "authority": "ADM",
-     "submittal_id": "SUB-2024-001",
-     "file_contents": {<dict of filename→bytes>},
-     "declared_labels": {<dict of filename→label>},
+     "submittal_id": "a1b2c3d4-...",
+     "review_date": "2026-06-25",
    }
 
-3. LangGraph app invoked: app.invoke(state)
+4. graph.stream(state) begins; UI renders each completed node as a status line.
 
-4. Node: doc_processor
-   → For each file: extract text (PyMuPDF/OCR) → GPT-4o-mini → ClassifiedDocument
-   → Finds cover page → extracts 6 fields with separate GPT-4o-mini call
-   → Writes to state:
-     - classified_documents: {"ded.pdf": {doc_type: "ded_registration", ...}, ...}
-     - material_description, spec_clause, manufacturer_name, ...
+5. Node: doc_processor
+   → Pops bytes from _staging[submittal_id]
+   → Classifies all documents (GPT-4o-mini per section)
+   → Extracts full text for each section
+   → Runs cover page extraction → fills store.{material_description, spec_clause, ...}
+   → Pre-parses comparison table rows → fills store.table_rows
+   → Saves SubmittalKnowledgeStore to data/knowledge_stores/{id}.json
+   → Returns: {**state, "knowledge_store_id": "/path/to/{id}.json"}
+   (Bytes consumed here — no longer needed or accessible)
 
-5. Node: completeness
-   → check_completeness(classified, ADM_profile)
-   → Compares present types against ADM required list
+6. Node: completeness
+   → store = load_store(state["knowledge_store_id"])
+   → check_completeness(store.get_present_types(), ADM_profile)
+   → Also flags store.get_mismatches() as warnings
    → Writes: completeness_findings, missing_documents
 
-6. Node: boq_drawing  [STUB — returns empty list]
+7. Node: boq_drawing  [STUB — returns empty list]
 
-7. Node: spec_verifier
-   → Reads spec_clause from state
-   → Calls assemble_spec_context() → full RAG pipeline → spec text
-   → Finds SPECIFICATION_COPY document → extracts its text
+8. Node: spec_verifier
+   → store = load_store(state["knowledge_store_id"])
+   → clause_ref = store.spec_clause
+   → assemble_spec_context(clause_ref, "ADM") → full RAG pipeline → spec text
+   → submitted_text = store.get_text(DocType.SPECIFICATION_COPY)
    → GPT-4o-mini: compare submitted spec vs authority spec
    → Writes: spec_verification_findings
 
-8. Node: validity_checker
-   → For each DED/test_report/guarantee doc:
-     extract text → regex date matching → compare to today
+9. Node: validity_checker
+   → store = load_store(state["knowledge_store_id"])
+   → For each DED/test_report/guarantee section: extract text → regex dates → compare to today
    → Writes: validity_findings
 
-9. Conditional: _should_run_avl
-   → authority == "ADM" → go to skip_avl
-   
-10. Node: skip_avl  → writes avl_findings = []
+10. Conditional: _should_run_avl
+    → authority == "ADM" → go to skip_avl
 
-11. Node: statement  [STUB — returns empty list]
+11. Node: skip_avl  → writes avl_findings = []
 
-12. Node: table_auditor
-    → Find COMPARISON_TABLE doc
-    → OCR every page → GPT-4o-mini table extraction → list[TableRow]
+12. Node: statement  [STUB — returns empty list]
+
+13. Node: table_auditor
+    → store = load_store(state["knowledge_store_id"])
+    → table_rows = [TableRow.model_validate(r) for r in store.table_rows]  ← pre-parsed by Agent 1
     → assemble_spec_context() [CACHED — no extra API calls]
-    → Extract TECHNICAL_DATASHEET and TEST_REPORT text
-    → Single GPT-4o-mini call for ALL rows at once
+    → store.get_text(DocType.TECHNICAL_DATASHEET), store.get_text(DocType.TEST_REPORT)
+    → Single GPT-4o-mini call per batch of 25 rows
     → Writes: table_audit_findings
 
-13. Node: consistency_checker
-    → Read manufacturer_name, supplier_name from state
-    → For each doc of relevant types: fuzzy match against text_preview
+14. Node: consistency_checker
+    → store = load_store(state["knowledge_store_id"])
+    → manufacturer_name = store.manufacturer_name  ← from cover page extraction in Agent 1
+    → For each relevant section: fuzzy match against section.text[:1000]
     → Writes: consistency_findings
 
-14. Node: others  [STUB — returns empty list]
+15. Node: others  [STUB — returns empty list]
 
-15. Node: report_compiler
+16. Node: report_compiler
     → Gather all findings from state
     → Count criticals and warnings
     → Determine recommendation (RESUBMIT/CONDITIONAL/APPROVE)
@@ -788,19 +1036,21 @@ Trace exactly what happens from file upload to report:
     → Build ReviewReport object
     → Writes: report, review_complete=True
 
-16. Graph ends (END node)
-    → Returns final state
+17. Graph ends (END node)
+    → Final state returned to UI
 
-17. UI reads state["report"] → display findings, allow PDF download
+18. UI saves report:
+    → st.session_state.report = state["report"]
+    → st.session_state.knowledge_store_id = state["knowledge_store_id"]
+    → st.session_state.review_complete = True
+    → st.rerun() → navigates to "review complete" view with recommendation badge
 
-18. UI triggers submittal embedding for Q&A:
-    → embed_submittal_documents(classified_docs, file_contents)
-    → store_embeddings(submittal_id, embedded)
-    → Per-session ChromaDB collection created: "submittal_SUB-2024-001"
+19. User navigates to report.py → sees all findings, copy-pastes plain text report
 
-19. User asks question in chat
-    → handle_query(state, question)
+20. User asks question in chat.py
+    → handle_query(minimal_state, question)
     → GPT-4o-mini routes question to spec_rag/submittal_rag/report_json
+    → [submittal_rag: pending — submittal collection not yet populated after review]
     → Retrieves context from appropriate source
     → GPT-4o-mini answers grounded in context
     → Answer stored in conversation_history
@@ -808,9 +1058,9 @@ Trace exactly what happens from file upload to report:
 
 ---
 
-## 19. ChromaDB Storage Structure
+## 22. ChromaDB Storage Structure
 
-ChromaDB stores all data locally at `data/chromadb/` (relative to project root).
+ChromaDB stores all data locally. The path is `CHROMA_PATH` from `src/config/paths.py`, which resolves to `{PROJECT_ROOT}/data/chromadb/`. This is an absolute path that does not depend on the working directory.
 
 ### Collection 1 — Spec database (permanent)
 ```
@@ -829,7 +1079,7 @@ Metadata per chunk: {
 }
 ```
 
-### Collection 2 — Per-session submittal (temporary)
+### Collection 2 — Per-session submittal (temporary, pending implementation)
 ```
 Collection name: "submittal_{submittal_id}"
 Documents: submitted PDF text chunks (500 chars each)
@@ -839,7 +1089,9 @@ Metadata per chunk: {
   doc_type: "technical_datasheet",
   chunk_index: 7
 }
-Lifecycle: created after review, deleted after session ends
+Status: schema defined in submittal_rag/store.py, but embedder.py is not yet called
+        after review completes. The submittal_rag query route returns empty results
+        until this is wired up. See engineering_log.md Future Known Issue #1.
 ```
 
 ### The parent-child relationship
@@ -847,66 +1099,82 @@ When the query pipeline retrieves top-5 chunks, those 500-char fragments are too
 
 This is the "hierarchical retrieval" pattern: retrieve small chunks for precision, then expand to parent for full context.
 
+### Local disk structure
+```
+data/
+├── chromadb/              ← ChromaDB SQLite files (PersistentClient)
+├── knowledge_stores/      ← {submittal_id}.json per review (SubmittalKnowledgeStore)
+├── specs/
+│   ├── adm/               ← admin-uploaded ADM spec PDFs (for traceability)
+│   └── taqa/              ← admin-uploaded TAQA spec PDFs
+└── submittals/
+    └── {submittal_id}/    ← user-uploaded submittal PDFs (saved by upload.py)
+```
+
 ---
 
-## 20. Common Failure Modes and How to Diagnose Them
+## 23. Common Failure Modes and How to Diagnose Them
 
 ### Problem: spec_verifier returns "clause not found"
 **Cause:** `assemble_spec_context()` returned `EMPTY_CONTEXT_SENTINEL`
 
 **Diagnosis steps:**
-1. Check if ChromaDB collection exists: `chromadb.PersistentClient("data/chromadb").list_collections()`
-2. Check if any docs exist for this network: collection.get(where={"network": "irrigation"})
+1. Check if ChromaDB collection exists: `chromadb.PersistentClient(path=CHROMA_PATH).list_collections()`
+2. Check if any docs exist for this network: `collection.get(where={"network": "irrigation"})`
 3. Check `_CLAUSE_TO_NETWORK` in `query_constructor.py` — is the clause prefix mapped?
 4. If clause is "33 10 13", does the map have "33 10"? (prefix match, not exact match)
-5. Run the indexing pipeline for the missing spec book
+5. Run the indexing pipeline for the missing spec book via Spec Manager
 
 ### Problem: doc_processor classifies documents wrong
 **Cause:** OCR quality is poor, or the document genuinely looks like a different type
 
 **Diagnosis steps:**
-1. Check `doc.reasoning` and `doc.key_indicators` in `classified_documents` state
-2. Check `doc.confidence` — if "low", the model wasn't sure
-3. Extract the text manually: `pdf_parser.extract_text_from_bytes(content)` — is it readable?
-4. If OCR returns garbage: Tesseract language pack might be missing, or image resolution is too low
-5. If text is fine but classification is wrong: the system prompt may need a new example for this document pattern
+1. Load the knowledge store and check `section.confidence` — if there are low-confidence sections, Agent 1 actually filtered them out (only "high" and "medium" are stored). The document may have been skipped.
+2. Check `section.text` in the knowledge store — is the extracted text readable?
+3. If OCR returns garbage: Tesseract language pack might be missing, or image resolution is too low
+4. If text is fine but classification is wrong: the system prompt may need a new example for this document pattern
 
 ### Problem: table_auditor returns no rows
-**Cause 1:** No document classified as `COMPARISON_TABLE`
-- Check `classified_documents` — is there a comparison table? What type was it classified as?
+**Cause 1:** `store.table_rows` is empty — Agent 1 found no table content
+- Check if any section has `doc_type == COMPARISON_TABLE` in the knowledge store
 - Comparison tables sometimes get classified as `specification_copy` if they have dense spec text
 
-**Cause 2:** OCR returned fewer than 5 words per page
+**Cause 2:** OCR returned fewer than 5 words per page in Agent 1's table extraction run
 - The page might be an image with no text layer
 - OCR at 2× zoom should handle this — check if Tesseract is installed and working
-- Run `extract_table_page(content, 0)` manually and check the `notes` field
 
-**Cause 3:** LLM returned zero rows for all pages
-- Check `_extract_with_llm()` return — look at the `notes` field on each `TablePageResult`
-- The LLM might see the page as a "cover page or title page with no table"
+**Cause 3:** LLM returned zero rows during Agent 1's `extract_all_table_rows()` call
+- Check `store.table_rows` — if it is `[]` and `store.has_type(DocType.COMPARISON_TABLE)` is True, the LLM saw the page but found no table structure
 
 ### Problem: consistency_checker gives false positives (flags names that are actually the same)
-**Cause:** `text_preview` is only 500 chars and the manufacturer name appears after char 500
+**Cause:** `section.text[:1000]` doesn't reach the manufacturer name if it appears deep in the document
 
 **Diagnosis:**
-- The consistency checker uses `doc.text_preview` (first 500 chars of text)
+- The consistency checker uses `section.text[:1000]` from the knowledge store
 - If the manufacturer name is on page 2 or after the header section, it won't be found
 - The `_extract_entity_from_preview()` function looks for the best keyword-matching line
-- If no keywords match, it falls back to first 80 chars of preview — which may not contain the name
+- If no keywords match, it falls back to first 80 chars — which may not contain the name
 
-**Fix path:** Increase text extracted for consistency check (currently max_pages=2 in `_extract_names_from_docs`)
+**Fix path:** Increase the text slice size for consistency checks (currently 1,000 chars)
 
 ### Problem: BM25 returns wrong results
 **Cause:** The `_build_bm25_for_network` cache is stale after new specs are indexed
 
-**Diagnosis:** The BM25 index is built from ChromaDB at process startup and cached with `@lru_cache`. If new documents were added to ChromaDB after process start, the BM25 index doesn't see them until process restart.
+**Diagnosis:** The BM25 index is built from ChromaDB at process startup and cached with `@lru_cache`. If new documents were added to ChromaDB (via Spec Manager) after process start, the BM25 index doesn't see them until process restart.
 
-**Fix:** Restart the process (or clear the cache manually with `_build_bm25_for_network.cache_clear()`)
+**Fix:** Restart the Streamlit server after indexing (or add a "Clear BM25 Cache" button in Spec Manager that calls `_build_bm25_for_network.cache_clear()`)
 
 ### Problem: LangGraph state missing fields
 **Cause:** A node returned a dict without `{**state, ...}` — it wiped earlier fields
 
 **Diagnosis:** Add logging to each node's return value. Check that every node returns `{**state, "new_field": value}`.
+
+### Problem: knowledge_store_id missing from state in downstream agent
+**Cause:** Agent 1 did not write it (usually because `_staging.pop()` returned empty — bytes were never staged)
+
+**Diagnosis:**
+1. Check that `stage_files(submittal_id, ...)` was called BEFORE `graph.invoke()` in the UI
+2. Check that the `submittal_id` matches between `stage_files()` and the state dict passed to `graph.invoke()`
 
 ### Problem: Cohere reranker API error
 **Cause:** `COHERE_API_KEY` missing or invalid
