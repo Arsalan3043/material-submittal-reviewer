@@ -4,7 +4,7 @@ from functools import lru_cache
 
 from src.rag.query.hybrid_retriever import retrieve_candidates
 from src.rag.query.parent_fetcher import fetch_parent_texts, get_parent_ids_for_chunks
-from src.rag.query.query_constructor import build_query
+from src.rag.query.query_constructor import build_query, normalize_clause_ref
 from src.rag.query.reranker import rerank
 
 # If RAG retrieval returns empty, the agent must flag "spec clause not found"
@@ -59,10 +59,12 @@ def assemble_spec_context(
 ) -> str:
     """
     Public API for all agents. Accepts an optional question kwarg for caller
-    convenience, but the cache key is (clause_ref, authority) only — both
-    spec_verifier and table_auditor get the same context from one RAG call.
+    convenience, but the cache key is (normalized_clause, authority) — both
+    spec_verifier and table_auditor get the same context from one RAG call,
+    and different phrasings of the same clause ("ADM Specs Div-02-Section 02810"
+    vs "Section 02810") share the same cache entry.
     """
-    return _fetch_spec_context(clause_ref, authority)
+    return _fetch_spec_context(normalize_clause_ref(clause_ref), authority)
 
 
 def _format_context(chunks: list[str]) -> str:

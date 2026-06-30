@@ -10,8 +10,8 @@ from src.rag.indexing.structurer import SpecSection
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
-# Sub-split threshold: clauses larger than this are split before chunking.
-# Required because some spec clauses can be 18,000+ chars (Problem 6, Experiment findings).
+# Sub-split threshold: sections larger than this are split before chunking.
+# Required because some spec sections can be 18,000+ chars.
 # MAX_EMBED_CHARS guard is 28,000 — sub-splitting at 6,000 keeps us well under.
 MAX_CLAUSE_CHARS = 6000
 SUB_SPLIT_OVERLAP = 200
@@ -20,19 +20,20 @@ SUB_SPLIT_OVERLAP = 200
 @dataclass
 class SpecChunk:
     chunk_id: str
-    parent_id: str      # ID of the full SpecSection (for parent fetcher)
+    parent_id: str       # ID of the full SpecSection (for parent fetcher)
     authority: str
     network: str
     source_file: str
-    division: str
-    section: str
-    clause: str
-    chunk_index: int    # position within the section
+    division: str        # e.g. "02"        — from footer
+    section: str         # e.g. "02810"     — from footer (primary filter key)
+    clause: str          # e.g. "26.3.2"    — subsection number from body
+    chapter_name: str    # road only: "earthworks" — "" for div/section specs
+    chunk_index: int     # position within the parent section
     text: str
 
 
 def _fixed_chunks(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> list[str]:
-    """Split text into fixed-size chunks with overlap."""
+    """Split text into fixed-size character chunks with overlap."""
     chunks = []
     start = 0
     while start < len(text):
@@ -46,13 +47,23 @@ def _fixed_chunks(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLA
 
 def chunk_section(section: SpecSection, section_index: int) -> list[SpecChunk]:
     """
-    Split a SpecSection into child chunks.
-    Large sections are first sub-split to prevent OpenAI token limit errors.
+    Split a SpecSection into fixed-size child chunks.
+
+    Because the structurer now creates one SpecSection per subsection (e.g.
+    "26.3.2 Delivery and Storage"), most sections are already short enough to
+    fit in one or two chunks.  The sub-split guard below handles the rare case
+    of a very long subsection.
+
+    parent_id encodes section + clause so the parent fetcher can retrieve the
+    full subsection text when a child chunk matches.
     """
-    parent_id = f"{section.authority}_{section.network}_{section_index:05d}"
+    # Include clause in parent_id so different subsections within the same
+    # section get distinct parent IDs.
+    safe_clause = section.clause.replace(".", "_").replace(" ", "_")
+    parent_id = f"{section.authority}_{section.network}_{section_index:05d}_{safe_clause}"
     text = section.text
 
-    # Sub-split oversized clauses before fixed chunking
+    # Sub-split oversized subsections before fixed chunking
     if len(text) > MAX_CLAUSE_CHARS:
         sub_texts = _fixed_chunks(text, size=MAX_CLAUSE_CHARS, overlap=SUB_SPLIT_OVERLAP)
     else:
@@ -71,6 +82,7 @@ def chunk_section(section: SpecSection, section_index: int) -> list[SpecChunk]:
                 division=section.division,
                 section=section.section,
                 clause=section.clause,
+                chapter_name=section.chapter_name,
                 chunk_index=chunk_idx,
                 text=fragment,
             ))

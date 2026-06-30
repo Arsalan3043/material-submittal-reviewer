@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 
 import chromadb
@@ -42,18 +43,22 @@ def _get_collection(collection_name: str) -> chromadb.Collection:
     return _chroma().get_collection(name=collection_name)
 
 
-@lru_cache(maxsize=4)
-def _build_bm25_for_network(
-    collection_name: str, network: str
+@lru_cache(maxsize=64)
+def _build_bm25(
+    collection_name: str,
+    filter_key: str,
+    filter_value: str,
 ) -> tuple[BM25Okapi, list[str], list[str]]:
     """
-    Build a per-network BM25 index from ChromaDB.
-    Cached — only built once per (collection, network) pair per process.
-    Filtering BM25 to the correct network eliminates cross-spec-book noise
-    that collapsed context_precision in exp03 (0.51 vs exp01's 0.86).
+    Filtered BM25 — cached per (collection, key, value).
+    filter_key / filter_value are the ChromaDB metadata field and value to scope
+    the corpus.  Call with filter_key="" to build over the full collection.
     """
     col = _get_collection(collection_name)
-    data = col.get(where={"network": network}, include=["documents"])
+    if filter_key:
+        data = col.get(where={filter_key: filter_value}, include=["documents"])
+    else:
+        data = col.get(include=["documents"])
     ids: list[str] = data["ids"]
     docs: list[str] = data["documents"]
     if not ids:
@@ -82,36 +87,71 @@ def _rrf_combine(
     return sorted(all_ids, key=score, reverse=True)
 
 
+def _bm25_top_ids(
+    collection_name: str,
+    filter_key: str,
+    filter_value: str,
+    query_tokens: list[str],
+) -> tuple[list[str], dict[str, str]]:
+    """Return (ranked_ids, id→doc map) from a filtered BM25 search."""
+    bm25, ids, docs = _build_bm25(collection_name, filter_key, filter_value)
+    if not ids:
+        return [], {}
+    scores = bm25.get_scores(query_tokens)
+    top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:BM25_CANDIDATES]
+    top_ids = [ids[i] for i in top_indices]
+    return top_ids, dict(zip(ids, docs))
+
+
 def retrieve_candidates(
     query: StructuredQuery,
     collection_name: str,
 ) -> list[str]:
     """
-    Network-filtered BM25 + semantic → RRF top-20 candidates.
-    Returns documents (not IDs) for the reranker.
-    Faithfulness = 1.0 and best recall achieved with this configuration (exp05).
-    Returns empty list if the collection is empty or does not exist.
+    BM25 + semantic → RRF top-20 candidates.
+
+    Retrieval strategy (in order of preference):
+
+    1. Section-scoped  — filter by {"section": clause_hint} when a ≥4-digit
+       section number is available.  This is the most precise corpus.
+    2. Network-scoped  — filter by {"network": network} when no clean section
+       number is available (e.g. only a 2-digit division is known).
+    3. Full-collection fallback — when the scoped search returns nothing (common
+       when section metadata was not populated at index time, e.g. when the spec
+       PDF headers use "SECTION 02810" format instead of a line starting with
+       digits).  In fallback mode the normalized clause number in the BM25
+       question string still ranks the correct chunks near the top.
+
+    The fallback is what fixes the "Clause ADM Specs Div-02-Section 02810 was not
+    found" error: the old code had no fallback, so a metadata filter miss meant
+    zero results every time.
     """
     try:
         col = _get_collection(collection_name)
     except Exception:
         return []
 
-    network = query.network
+    clause = query.clause_hint          # e.g. "02810" or "earthworks" (normalised)
+    query_tokens = query.question.lower().split()
 
-    # Per-network BM25 — skip entirely if collection has no documents for this network
-    bm25, net_ids, net_docs = _build_bm25_for_network(collection_name, network)
-    id_to_doc = dict(zip(net_ids, net_docs))
+    # ── BM25 — choose corpus by what kind of clause identifier we have ────────
+    has_section_num  = bool(clause and re.search(r'\d{4,}', clause))
+    has_chapter_name = bool(clause and not re.search(r'\d', clause))  # text only
 
-    if net_ids:
-        query_tokens = query.question.lower().split()
-        scores = bm25.get_scores(query_tokens)
-        top_bm25_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:BM25_CANDIDATES]
-        bm25_top_ids = [net_ids[i] for i in top_bm25_indices]
+    if has_section_num:
+        bm25_ids, id_to_doc = _bm25_top_ids(collection_name, "section", clause, query_tokens)
+    elif has_chapter_name:
+        bm25_ids, id_to_doc = _bm25_top_ids(collection_name, "chapter_name", clause, query_tokens)
     else:
-        bm25_top_ids = []
+        bm25_ids, id_to_doc = _bm25_top_ids(collection_name, "network", query.network, query_tokens)
 
-    # Network-filtered semantic search
+    # Fallback: scoped filter matched zero documents — search full collection.
+    # The clause number / chapter name in the BM25 question string still ranks
+    # the correct chunks near the top via term frequency.
+    if not bm25_ids:
+        bm25_ids, id_to_doc = _bm25_top_ids(collection_name, "", "", query_tokens)
+
+    # ── Semantic search ───────────────────────────────────────────────────────
     try:
         embedding = (
             _openai()
@@ -119,19 +159,30 @@ def retrieve_candidates(
             .data[0]
             .embedding
         )
-        sem_result = col.query(
-            query_embeddings=[embedding],
-            n_results=SEMANTIC_CANDIDATES,
-            where=query.metadata_filter,
-            include=[],
-        )
-        semantic_ids: list[str] = sem_result["ids"][0]
+
+        def _semantic_query(where: dict | None) -> list[str]:
+            kwargs: dict = dict(
+                query_embeddings=[embedding],
+                n_results=SEMANTIC_CANDIDATES,
+                include=[],
+            )
+            if where:
+                kwargs["where"] = where
+            result = col.query(**kwargs)
+            return result["ids"][0]
+
+        semantic_ids = _semantic_query(query.metadata_filter)
+
+        # Fallback: metadata filter matched nothing — search full collection
+        if not semantic_ids:
+            semantic_ids = _semantic_query(None)
+
     except Exception:
         semantic_ids = []
 
-    if not bm25_top_ids and not semantic_ids:
+    if not bm25_ids and not semantic_ids:
         return []
 
-    # RRF fusion
-    fused_ids = _rrf_combine(semantic_ids, bm25_top_ids)[:RRF_CANDIDATES]
+    # ── RRF fusion ────────────────────────────────────────────────────────────
+    fused_ids = _rrf_combine(semantic_ids, bm25_ids)[:RRF_CANDIDATES]
     return [id_to_doc[id_] for id_ in fused_ids if id_ in id_to_doc]
