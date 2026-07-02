@@ -67,6 +67,74 @@ def assemble_spec_context(
     return _fetch_spec_context(normalize_clause_ref(clause_ref), authority)
 
 
+def assemble_spec_context_enriched(
+    clause_ref: str,
+    authority: str,
+    material_description: str = "",
+    spec_snippet: str = "",
+) -> str:
+    """
+    Enriched (non-cached) retrieval that passes material_description and a
+    snippet of the submitted spec text into the query embedding.
+
+    Why not cached: material_description differs per review, so a cache keyed
+    on (clause, authority) alone would serve stale context to a different
+    material.  The enriched query is used only once per review (Phase 2 of
+    spec_verifier), so the cache hit rate would be near-zero anyway.
+
+    How enrichment helps:
+    - material_description → "Detectable Warning Tape" lands in the question
+      string, biasing the embedding toward relevant spec subsections.
+    - spec_snippet → key terms from the submitted spec (e.g. "BS EN 12966",
+      "26.3.2") are appended to the question, narrowing semantic search to the
+      subsections the contractor actually referenced.
+    """
+    from src.config import get_authority_profile
+
+    profile = get_authority_profile(authority)
+    collection_name = profile.chroma_collection_name
+    normalized = normalize_clause_ref(clause_ref)
+
+    query = build_query(
+        spec_clause=normalized,
+        material_description=material_description,
+        authority=authority,
+    )
+
+    # Append first 400 chars of submitted spec to enrich the semantic query.
+    # Trim to avoid bloating the embedding input beyond useful signal.
+    if spec_snippet.strip():
+        enriched_question = (
+            query.question
+            + f" Submitted specification context: {spec_snippet[:400].strip()}"
+        )
+        from src.rag.query.query_constructor import StructuredQuery
+        query = StructuredQuery(
+            question=enriched_question,
+            authority=query.authority,
+            network=query.network,
+            clause_hint=query.clause_hint,
+            metadata_filter=query.metadata_filter,
+        )
+
+    candidates = retrieve_candidates(query, collection_name)
+    if not candidates:
+        return EMPTY_CONTEXT_SENTINEL
+
+    reranked = rerank(query.question, candidates)
+    if not reranked:
+        return EMPTY_CONTEXT_SENTINEL
+
+    parent_ids = get_parent_ids_for_chunks(collection_name, reranked)
+    if parent_ids:
+        full_texts = fetch_parent_texts(collection_name, parent_ids)
+        context_chunks = full_texts if full_texts else reranked
+    else:
+        context_chunks = reranked
+
+    return _format_context(context_chunks)
+
+
 def _format_context(chunks: list[str]) -> str:
     parts = []
     for i, chunk in enumerate(chunks, 1):

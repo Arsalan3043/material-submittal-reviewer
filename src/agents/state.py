@@ -26,6 +26,12 @@ class SubmittalReviewState(TypedDict, total=False):
     # State carries only this string (~100 chars) — no PDF bytes, no large dicts.
     knowledge_store_id: str
 
+    # ── Requirement-centric artifacts (spec_verifier output) ─────────────
+    # ReviewRequirementsArtifact.model_dump() — extracted spec requirements
+    requirements_artifact: dict
+    # RequirementVerificationArtifact.model_dump() — compliance results per requirement
+    verification_artifact: dict
+
     # ── Per-stage findings (each stored as list[Finding.model_dump()]) ────
     completeness_findings: list[dict]
     boq_drawing_findings: list[dict]

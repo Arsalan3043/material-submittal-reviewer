@@ -14,17 +14,22 @@ from src.models.submittal import DocType
 class RequirementType(str, Enum):
     """Semantic classification of what a spec requirement is checking.
 
-    Used by the verification engine to route to the right verification logic —
-    NOT used to hardcode evidence sources (that comes from spec wording via LLM).
+    Used by the verification engine to route to the right verification logic
+    AND to infer default evidence sources and comparison_table_required.
     """
-    DIMENSION   = "dimension"    # numeric measurement: "wall thickness ≥ 6 mm"
-    STANDARD    = "standard"     # code/standard compliance: "comply with BS 6920"
-    MATERIAL    = "material"     # material type/grade: "HDPE PE100"
-    TEST        = "test"         # tested value: "compressive strength at 28 days"
-    CERTIFICATE = "certificate"  # third-party certification: "NSF 61 certified"
-    APPROVAL    = "approval"     # authority approval: "previously approved by ADM"
-    PROCEDURAL  = "procedural"   # process requirement: "method statement required"
-    OTHER       = "other"
+    DIMENSION    = "dimension"    # physical measurement: "wall thickness ≥ 6 mm"
+    STANDARD     = "standard"     # code/standard compliance: "comply with BS 6920"
+    MATERIAL     = "material"     # material type/grade: "HDPE PE100"
+    TEST         = "test"         # requires a lab test result: "tested to ASTM C39"
+    CERTIFICATE  = "certificate"  # third-party certification: "NSF 61 certified"
+    APPROVAL     = "approval"     # authority approval: "previously approved by ADM"
+    PERFORMANCE  = "performance"  # performance value without mandatory test: "tensile strength ≥ 500 N"
+    INSTALLATION = "installation" # how/where to install: "laid 300 mm above pipeline"
+    EXPERIENCE   = "experience"   # track record: "5 years proven use in UAE"
+    ADMINISTRATIVE = "administrative"  # doc submission: "contractor shall submit"
+    WARRANTY     = "warranty"     # guarantee period: "10-year warranty required"
+    PROCEDURAL   = "procedural"   # process requirement: "method statement required"
+    OTHER        = "other"
 
 
 class VerificationStatus(str, Enum):
@@ -132,6 +137,7 @@ class SpecRequirement(BaseModel):
     source_text: str                     # exact snippet from spec
 
     mandatory: bool = True               # False for conditional / informational requirements
+    comparison_table_required: bool = True  # False for installation/experience/admin requirements
 
 
 # ── Artifact produced after requirement extraction ──────────────────────────────
