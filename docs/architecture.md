@@ -153,21 +153,25 @@ The shared state object that flows between all LangGraph nodes. TypedDict (not P
 
 Key fields and who writes them:
 ```
-authority              → Input (set before graph.invoke())
-submittal_id           → Input (set before graph.invoke())
-review_date            → Input (defaults to today)
-knowledge_store_id     → Agent 1 (doc_processor) — file path to SubmittalKnowledgeStore JSON
-completeness_findings  → completeness node (inline, between Agent 1 and Agent 2)
-spec_verif_findings    → Agent 2 (spec_verifier)
-validity_findings      → Agent 3 (validity_checker)
-table_audit_findings   → Agent 4 (table_auditor)
-consistency_findings   → Agent 5 (consistency_checker)
-avl_findings           → Agent 6 (avl_checker) or skip_avl node
-report                 → Agent 7 (report_compiler)
-conversation_history   → handle_query() wrapper (post-review)
-missing_documents      → completeness node
-review_complete        → Agent 7 (report_compiler)
+authority                   → Input (set before graph.invoke())
+submittal_id                → Input (set before graph.invoke())
+review_date                 → Input (defaults to today)
+knowledge_store_id          → Agent 1 (doc_processor) — file path to SubmittalKnowledgeStore JSON
+completeness_findings       → completeness node (inline, between Agent 1 and Agent 2)
+requirements_artifact       → Agent 2 (spec_verifier) — ReviewRequirementsArtifact.model_dump()
+verification_artifact       → Agent 2 (spec_verifier) — RequirementVerificationArtifact.model_dump()
+spec_verification_findings  → Agent 2 (spec_verifier)
+validity_findings           → Agent 3 (validity_checker)
+table_audit_findings        → Agent 4 (table_auditor)
+consistency_findings        → Agent 5 (consistency_checker)
+avl_findings                → Agent 6 (avl_checker) or skip_avl node
+report                      → Agent 7 (report_compiler)
+conversation_history        → handle_query() wrapper (post-review)
+missing_documents           → completeness node
+review_complete             → Agent 7 (report_compiler)
 ```
+
+`requirements_artifact` flows from Agent 2 → Agent 4 (Table Auditor reads it to get the structured requirement list and `comparison_table_required` flags). `verification_artifact` flows from Agent 2 → Agent 7 (Report Compiler uses it for requirement-level recommendation logic).
 
 All cover page fields (`material_description`, `spec_clause`, `manufacturer_name`, etc.) live in `SubmittalKnowledgeStore`, not in state. Agents that need them call `load_store(state["knowledge_store_id"]).spec_clause` etc.
 
@@ -189,12 +193,103 @@ Extended format for comparison table rows:
 ### `ReviewReport` (`src/models/findings.py`)
 The final report. Contains all nine lists of findings + computed counts + recommendation + summary. The `critical_count` and `warning_count` fields are computed automatically by a `@model_validator` when the report is created — they are NOT computed manually.
 
-Recommendation logic (in report_compiler.py):
+Recommendation logic (in report_compiler.py) — uses structured `RequirementVerificationArtifact` when available:
 ```
-critical_count > 0         → RESUBMIT
-warning_count > 2          → CONDITIONAL
-otherwise                  → APPROVE
+critical_count > 0                                → RESUBMIT
+artifact.non_compliant_count > 0                  → RESUBMIT
+artifact.missing_evidence_count > 0 + warnings    → RESUBMIT
+artifact.missing_evidence_count > 0 (alone)       → CONDITIONAL
+warning_count > 2                                 → CONDITIONAL
+otherwise                                         → APPROVE
 ```
+
+---
+
+### Requirement Models (`src/models/requirements.py`)
+
+These models represent the requirement-centric spec verification architecture. They were added as part of the Phase 5 spec verifier overhaul.
+
+**`RequirementType`** (enum) — 13 types classifying what a spec requirement is checking:
+`dimension`, `standard`, `material`, `test`, `certificate`, `approval`, `performance`, `installation`, `experience`, `administrative`, `warranty`, `procedural`, `other`
+
+**`VerificationStatus`** (enum) — outcome of verifying a requirement against submitted documents:
+`satisfied`, `non_compliant`, `partially_verified`, `missing_evidence`, `not_applicable`
+
+**`VerificationMethod`** (enum) — how verification was performed, for traceability:
+`numeric_comparison`, `string_match`, `semantic_match`, `certificate_validation`, `date_validation`, `llm_reasoning`
+
+**`ExpectedValue`** — structured representation of what value a requirement expects:
+```python
+class ExpectedValue(BaseModel):
+    text: str | None         # raw: "BS 6920:2000", "HDPE PE100", "6 mm"
+    operator: str | None     # ">=", "<=", "==", "in_range"
+    numeric_min: float | None
+    numeric_max: float | None
+    unit: str | None         # "mm", "MPa", "%", "bar"
+
+    def is_numeric(self) -> bool   # True if numeric_min is populated
+    def check(self, actual: float) -> bool  # deterministic Python comparison
+```
+`.check()` is the key method — it enables deterministic PASS/FAIL without LLM judgment for numeric requirements.
+
+**`EvidenceExpectation`** — describes what documents are needed to satisfy a requirement:
+```python
+class EvidenceExpectation(BaseModel):
+    required_sources: list[DocType]    # ALL must provide evidence
+    optional_sources: list[DocType]    # at least minimum_optional_matches must confirm
+    minimum_optional_matches: int      # 0 = optional_sources are truly optional
+```
+The LLM infers this from spec wording — not from a hardcoded type→evidence table. Examples:
+- "comply with BS EN 805" → optional_sources: [datasheet, test_report], min_matches: 1
+- "tested to ASTM C39" → required_sources: [test_report]
+- "laid 300 mm above pipeline" → required_sources: [method_statement]
+
+**`SpecRequirement`** — one verifiable requirement extracted from the authority spec:
+```python
+class SpecRequirement(BaseModel):
+    id: str                          # "R-001"
+    requirement_type: RequirementType
+    normalized_requirement: str      # "Minimum tensile strength ≥ 500 N/50mm"
+    expected_value: ExpectedValue
+    evidence_expectation: EvidenceExpectation
+    source_clause: str               # "26.3.2"
+    source_page: int
+    source_text: str                 # exact snippet from spec
+    mandatory: bool = True
+    comparison_table_required: bool = True  # False for installation/experience/admin
+```
+`comparison_table_required` is critical — when False, Stage 9 (Table Auditor) does not flag this requirement as "missing from comparison table."
+
+**`ReviewRequirementsArtifact`** — all requirements extracted in Phase 2:
+Stored in `state["requirements_artifact"]` as `.model_dump()`. Shared with Table Auditor and Report Compiler.
+
+**`EvidenceSnippet`** — a piece of text from a submitted document supporting a requirement:
+```python
+class EvidenceSnippet(BaseModel):
+    document_type: DocType
+    source_document: str    # filename
+    page: int
+    text: str               # exact snippet
+    extracted_value: float | None  # parsed numeric if applicable
+```
+
+**`RequirementVerification`** — compliance result for one `SpecRequirement`:
+```python
+class RequirementVerification(BaseModel):
+    requirement_id: str
+    requirement_summary: str
+    status: VerificationStatus
+    verification_method: VerificationMethod
+    confidence: float           # 0.0–1.0
+    evidence_found: list[EvidenceSnippet]
+    missing_evidence: list[DocType]
+    contradictions: list[EvidenceSnippet]
+    reasoning: str
+```
+
+**`RequirementVerificationArtifact`** — all verifications for one review:
+Stored in `state["verification_artifact"]`. Consumed by Report Compiler for recommendation logic.
+Computed properties: `satisfied_count`, `non_compliant_count`, `missing_evidence_count`, `mandatory_failures`
 
 ---
 
@@ -400,7 +495,14 @@ Experiment 3 (hybrid search without network filter) collapsed `context_precision
 RRF_K=60 is the standard constant from the original RRF paper. It controls the weight given to rank position. Lower K → rank 1 gets much more weight than rank 2. K=60 gives a smooth distribution that works well when both BM25 and semantic are reliable.
 
 ### The `lru_cache` in context_assembler.py
-Both `spec_verifier` and `table_auditor` call `assemble_spec_context(clause_ref, authority)` for the same clause in the same review. Without the cache, that's 2× embedding calls + 2× Cohere calls per review. The `@lru_cache(maxsize=64)` on `_fetch_spec_context` means the second call is a free dict lookup. Cache key is `(clause_ref, authority)`.
+Both `spec_verifier` (for table audit context) and `table_auditor` call `assemble_spec_context(clause_ref, authority)` for the same clause in the same review. Without the cache, that's 2× embedding calls + 2× Cohere calls per review. The `@lru_cache(maxsize=64)` on `_fetch_spec_context` means the second call is a free dict lookup. Cache key is `(normalize_clause_ref(clause_ref), authority)`.
+
+### `assemble_spec_context_enriched()` (non-cached variant)
+Used by `spec_verifier` Phase 2 for the initial requirement extraction call. Takes two extra parameters:
+- `material_description` — included in the query question to bias retrieval toward relevant subsections
+- `spec_snippet` — first 400 chars of the submitted spec copy (Index 2); key terms and subsection numbers from the contractor's reference narrow semantic search to the exact subsections they cited
+
+Not cached because `material_description` differs per review — a cache keyed only on `(clause, authority)` would serve wrong material context to a different review. The enriched call happens exactly once per review (Phase 2 of spec_verifier), so cache hit rate would be near-zero anyway.
 
 ### The `EMPTY_CONTEXT_SENTINEL`
 If retrieval returns no candidates (clause not in ChromaDB, collection doesn't exist, network filter eliminates everything), the function returns the string `"__SPEC_NOT_FOUND__"`. Agents check for this string and generate a "spec not found" warning instead of hallucinating. This is a deliberate design — never hallucinate spec content.
@@ -589,28 +691,83 @@ This allows the rest of the system to treat them as if they were separate files.
 
 **File:** `src/agents/spec_verifier.py`
 
-### What it does
-Compares the submitted specification copy (Index 2 — what the contractor includes as their copy of the spec) against the actual authority spec stored in ChromaDB.
+This is a three-phase compliance engine. It does NOT simply compare two documents. It extracts structured requirements from the authority spec, then verifies each requirement against the submitted documents — this is how a professional engineer actually reviews a submittal.
 
-### Execution flow
-1. Load knowledge store: `store = load_store(state["knowledge_store_id"])`
-2. Read `store.spec_clause` — extracted from cover page by Agent 1
-3. If empty → generate WARNING finding, return early
-4. Call `assemble_spec_context(clause_ref=store.spec_clause, authority=authority)` → this triggers the full RAG pipeline (query → BM25+semantic → RRF → rerank → parent fetch)
-5. If returns `EMPTY_CONTEXT_SENTINEL` → generate WARNING ("clause not in database"), return early
-6. Get submitted spec text: `store.get_text(DocType.SPECIFICATION_COPY)` — returns full text, not a preview
-7. If empty → generate CRITICAL finding ("missing Index 2"), return early
-8. Send BOTH texts to GPT-4o-mini with prompt: "Find discrepancies between submitted spec and authority spec"
-9. Parse the JSON response into `Finding` objects
+The key architectural principle: **the authority spec is the source of truth, submitted documents are evidence.** Each requirement either has sufficient evidence or it does not.
 
-### What the LLM looks for
-The system prompt instructs the LLM to flag:
-- `wrong_clause` — submitted clause number doesn't match what's on the cover page
-- `incomplete_section` — submitted copy is cut off or missing sub-clauses
-- `wrong_values` — submitted spec shows different numeric values than authority spec
-- `correct` — no discrepancies found
+### Phase 1 — Validate Index 2 (pure Python, no LLM)
 
-Minor formatting differences are explicitly excluded. Only genuine content discrepancies get flagged.
+Check that the submitted specification copy is present and references the correct clause number:
+- If `SPECIFICATION_COPY` absent → CRITICAL finding
+- If clause reference not found in the submitted text → WARNING finding
+
+### Phase 2 — Extract Requirements from Authority Spec
+
+**Retrieval:** Calls `assemble_spec_context_enriched()` (NOT the plain cached version). This enriched variant passes `material_description` and a snippet of the submitted spec copy (first 400 chars) into the query embedding, biasing semantic search toward the specific subsections the contractor referenced. Called once per review; result used by both Phase 2 and Phase 3.
+
+**Extraction:** One GPT-4o-mini call with `_EXTRACT_SYSTEM` prompt. Returns a list of `SpecRequirement` objects, each with:
+- `id` — sequential "R-001", "R-002", ...
+- `requirement_type` — one of 13 types (dimension, performance, standard, material, test, certificate, installation, experience, administrative, warranty, procedural, approval, other)
+- `expected_value` — structured: `operator` (≥, ≤, ==, in_range), `numeric_min`, `numeric_max`, `unit`
+- `evidence_expectation` — what documents must provide evidence (inferred from spec wording by LLM)
+- `comparison_table_required` — False for installation/experience/administrative requirements (these never appear in a comparison table, so Table Auditor should not flag them as missing)
+- `mandatory` — whether the requirement is conditional or unconditional
+
+**Operator inference rules** (critical — documented here because LLM needs explicit guidance):
+- "minimum", "not less than", "≥" → operator: `>=`
+- "maximum", "shall not exceed" → operator: `<=`
+- "between X and Y", "X to Y" → operator: `in_range`
+- Plain performance value with no qualifier → default to `>=` (NEVER `==` — specs state minimums)
+
+**Evidence source rules** (inferred by LLM from spec wording):
+- dimension/performance → optional_sources: [datasheet, test_report], min 1 (either is acceptable)
+- installation → required_sources: [method_statement] (never datasheet — datasheets don't describe installation)
+- test → required_sources: [test_report] (spec explicitly requires independent measurement)
+- material → required_sources: [technical_datasheet] (manufacturer-declared property)
+
+Output stored in `state["requirements_artifact"]` as `ReviewRequirementsArtifact.model_dump()`.
+
+### Phase 3 — Verify Requirements Against Submitted Documents
+
+**Evidence assembly:** `_build_evidence_block()` assembles two types of evidence:
+
+1. `[COMPARISON_TABLE_ROWS]` section — pre-parsed structured rows from `store.table_rows` (the same data Stage 9 uses). Each row shows `parameter: specified=... | proposed=... | measured=...`. This is placed first in the evidence block and labeled as authoritative structured data.
+
+2. Raw document text — `TECHNICAL_DATASHEET`, `TEST_REPORT`, `COMPARISON_TABLE` are always included regardless of `evidence_expectation`. Truncated to `_MAX_DOC_CHARS = 8000` per type.
+
+**LLM verification call:** One GPT-4o-mini call with `_VERIFY_SYSTEM` prompt. For each requirement, the LLM returns `status`, `evidence_found` (list of `EvidenceSnippet` with `extracted_value`), `missing_evidence`, `contradictions`, `reasoning`.
+
+The prompt explicitly instructs the LLM:
+- Treat `COMPARISON_TABLE_ROWS` as authoritative structured evidence — if a measured value satisfies a requirement, do not report `missing_evidence`
+- For numeric requirements: only find and report `extracted_value` — Python performs the pass/fail evaluation (not the LLM)
+- Search ALL documents before declaring `missing_evidence`
+
+**Deterministic override — numeric (`_apply_deterministic_overrides`):**
+
+Two-pass strategy:
+1. Pass 1: if LLM returned `evidence_found` with `extracted_value` → use it
+2. Pass 2: if `evidence_found` is empty → search `store.table_rows` directly with Python using `_match_table_row()` (rapidfuzz `token_set_ratio` ≥ 60 threshold)
+
+Whichever pass finds the value: call `expected_value.check(actual)` → override status to `SATISFIED` or `NON_COMPLIANT` at confidence 1.0.
+
+Evidence priority when multiple sources exist: test_report (3) > comparison_table (2) > technical_datasheet (1). The highest-priority source's value is used.
+
+**Deterministic override — text (`_apply_text_overrides`):**
+
+For `STANDARD`, `MATERIAL`, and `CERTIFICATE` requirements: regex search for `expected_value.text` in the full evidence block. Full phrase tried first, then individual tokens (skipping tokens ≤ 2 chars or pure digits to avoid false positives).
+
+If found → override to `STRING_MATCH`, `SATISFIED`, confidence 0.85.
+If not found → leave LLM result unchanged (LLM may have found a semantic equivalent).
+
+**Override confidence levels:**
+- Numeric comparison (Python math): 1.0
+- String match (standard/material/cert): 0.85
+- LLM reasoning (semantic): 0.50–0.90
+
+**Output:**
+- `state["requirements_artifact"]` — `ReviewRequirementsArtifact.model_dump()` (consumed by Agent 4)
+- `state["verification_artifact"]` — `RequirementVerificationArtifact.model_dump()` (consumed by Agent 7)
+- `state["spec_verification_findings"]` — `list[Finding.model_dump()]` (one per requirement, for the report)
 
 ---
 
@@ -691,24 +848,62 @@ class TableRow:
 
 The LLM system prompt maps alternative column names (e.g. "As Offered" → proposed, "Test Result" → measured) so the extraction works regardless of how the contractor named their columns.
 
-### What Agent 4 actually does: retrieve contexts and audit
+### What Agent 4 actually does: load requirements, then audit
 
-1. **Get supporting contexts:**
-   - `assemble_spec_context()` once → cached, so no extra API cost if spec_verifier already called it
-   - `store.get_text(DocType.TECHNICAL_DATASHEET)` — full datasheet text
-   - `store.get_text(DocType.TEST_REPORT)` — full test report text
+**Step 1 — Load structured requirements from state:**
 
-2. **Single batched audit LLM call (per batch of 25 rows):**
-   ALL rows are audited in batches of `_BATCH_SIZE = 25`. Each batch is one GPT-4o-mini call. The prompt sends:
-   - Authority spec context (truncated to 2,000 chars)
-   - Datasheet context (truncated to 1,500 chars)
-   - Test report context (truncated to 1,500 chars)
-   - Up to 25 rows as a numbered text block
+Agent 4 reads `state["requirements_artifact"]` (written by Agent 2) and filters to only requirements where `comparison_table_required=True`. This is critical: installation, experience, administrative, and warranty requirements are never in a comparison table, so they must not be flagged as "missing."
 
-   The LLM returns one audit result per row. The response must have the same number of rows as the request. If fewer come back, missing rows default to `proposed_verified=False, severity=warning`.
+```python
+table_reqs = [r for r in requirements_artifact.requirements if r.comparison_table_required]
+```
+
+These filtered requirements are serialized as structured JSON objects (not English text) and sent to the LLM:
+```json
+{
+  "id": "R-003",
+  "type": "performance",
+  "description": "Minimum tensile strength ≥ 500 N/50mm",
+  "operator": ">=",
+  "value_min": 500,
+  "unit": "N/50mm",
+  "mandatory": true
+}
+```
+The LLM receives clean data objects — not a paragraph it must re-parse.
+
+**Step 2 — Single batched audit LLM call (per batch of 25 rows):**
+
+Each batch is one GPT-4o-mini call. The prompt sends:
+- `SPEC REQUIREMENTS (JSON)` — structured requirement list
+- `DATASHEET` — `store.get_text(DocType.TECHNICAL_DATASHEET)` truncated to `_MAX_DOC_CHARS = 3000`
+- `TEST REPORT` — `store.get_text(DocType.TEST_REPORT)` truncated to 3000 chars
+- `TABLE ROWS` — up to 25 rows as `parameter=... | specified=... | proposed=... | measured=...`
+
+For each row the LLM returns: `matched_requirement_id`, boolean audit flags, `extracted_proposed_value`, `extracted_measured_value`, `finding`, `severity`.
+Also returns `missing_requirement_ids` — requirement IDs with no corresponding row in the table.
+
+**Step 3 — Deterministic override (`_apply_deterministic_overrides`):**
+
+Python post-processes every row after the LLM returns:
+
+1. **Numeric requirement check:** For rows with a `matched_requirement_id` that maps to a numeric `SpecRequirement`, call `expected_value.check(proposed_val)`. If the LLM's `extracted_proposed_value` is None, fall back to `_parse_numeric(row.proposed)`. Override `specified_correct` and `severity` deterministically.
+
+2. **Contradiction detection:** If `proposed_val` and `measured_val` both exist and differ by >15%, set `contradiction_detected=True`. The 15% threshold is intentional — manufacturing tolerances and different test conditions routinely produce 5–10% variation without indicating a genuine contradiction (see `engineering_log.md` Issue 5.12).
+
+**Step 4 — Missing mandatory requirements:**
+
+For any `requirement_id` in `missing_requirement_ids` where the requirement is mandatory and `comparison_table_required=True`, a CRITICAL `TableRowFinding` is generated: "Mandatory requirement X is absent from the comparison table."
 
 ### Deviation rule (critical — enforced in LLM prompt)
-A proposed value that **exceeds** a minimum requirement is NOT a deviation. Example: spec says "min 12% water reduction", contractor proposes "15%" — this is PASS, not a deviation. The LLM is explicitly instructed about this because it is non-obvious and easy to get wrong.
+A proposed value that **exceeds** a minimum requirement is NOT a deviation. Example: spec says "min 500 N/50mm", proposed is "1000 N/50mm" — this is PASS, severity=pass. The deterministic override also enforces this: `expected_value.check(1000)` returns True for `operator=">=", numeric_min=500`.
+
+### Boolean safety guard
+LLM JSON sometimes returns `null` for boolean fields when uncertain. `dict.get(key, default)` returns `None` (not the default) when the key is present with a null value. All boolean field assignments use:
+```python
+def _b(val, default): return val if isinstance(val, bool) else default
+```
+This handles `null`, missing key, and wrong type identically.
 
 ---
 
@@ -777,26 +972,44 @@ The AVL document is expected to be uploaded as part of the submittal package. If
 Gathers all findings from all state keys, counts criticals and warnings, determines the recommendation, generates professional summary comments with GPT-4o-mini, and builds the final `ReviewReport`.
 
 ### Recommendation logic
+
+Agent 7 reads `state["verification_artifact"]` (written by Agent 2) as a `RequirementVerificationArtifact` and uses it alongside raw finding severity counts:
+
 ```python
-if critical_count > 0:     → "RESUBMIT"
-elif warning_count > 2:    → "CONDITIONAL"
-else:                      → "APPROVE"
+if critical_count > 0:
+    → "RESUBMIT"
+elif artifact.non_compliant_count > 0:
+    → "RESUBMIT"    # a requirement explicitly failed
+elif artifact.missing_evidence_count > 0 and warning_count > 0:
+    → "RESUBMIT"    # evidence gaps + other issues = resubmit
+elif artifact.missing_evidence_count > 0:
+    → "CONDITIONAL" # evidence gaps alone = conditional approval
+elif warning_count > 2:
+    → "CONDITIONAL"
+else:
+    → "APPROVE"
 ```
 
-Note: `critical_count` and `warning_count` are computed here AND separately by `ReviewReport`'s `@model_validator`. The agent computes them manually to determine the recommendation before building the report object. The model_validator recomputes them from the finding lists for data integrity.
+This is more precise than severity counts alone: a submittal with 0 critical findings but one `NON_COMPLIANT` requirement (e.g., tensile strength fails) gets RESUBMIT, not CONDITIONAL.
 
 ### Summary generation
-Sends a digest to GPT-4o-mini:
+Sends an enriched digest to GPT-4o-mini — includes per-requirement compliance from `RequirementVerificationArtifact`:
 ```
 Authority: ADM
 Material: [description]
 Clause: [spec_clause]
 Recommendation: RESUBMIT
-Critical issues (3): expired DED; wrong table value; missing method statement
+Critical issues (3): expired DED; tensile strength fails; missing method statement
 Warnings: 2
 Missing documents: test_report, method_statement
+
+Requirement-level compliance:
+  [FAIL] Minimum tensile strength ≥ 500 N/50mm
+         → 1000 N/50mm >= 500 N/50mm → PASS (deterministic). FAIL (deterministic): ...
+  [PASS] Material grade HDPE PE100
+  [MISSING] Method statement for installation
 ```
-Returns 2-4 professional sentences summarizing the review. Temperature=0 for deterministic output.
+Returns 2-4 professional sentences summarizing the review, specific to which requirements failed. Temperature=0 for deterministic output.
 
 ---
 
@@ -992,13 +1205,27 @@ Trace exactly what happens from file upload to report:
 
 7. Node: boq_drawing  [STUB — returns empty list]
 
-8. Node: spec_verifier
+8. Node: spec_verifier (3 phases)
+   Phase 1:
    → store = load_store(state["knowledge_store_id"])
-   → clause_ref = store.spec_clause
-   → assemble_spec_context(clause_ref, "ADM") → full RAG pipeline → spec text
-   → submitted_text = store.get_text(DocType.SPECIFICATION_COPY)
-   → GPT-4o-mini: compare submitted spec vs authority spec
-   → Writes: spec_verification_findings
+   → Check SPECIFICATION_COPY present and references correct clause
+   → Writes phase1_findings (CRITICAL/WARNING if issues)
+
+   Phase 2:
+   → spec_copy_snippet = store.get_text(DocType.SPECIFICATION_COPY)[:500]
+   → assemble_spec_context_enriched(clause_ref, "ADM", material_description, spec_copy_snippet)
+   → GPT-4o-mini: extract SpecRequirement list from authority spec context
+   → Writes: state["requirements_artifact"] (ReviewRequirementsArtifact.model_dump())
+
+   Phase 3:
+   → _build_evidence_block() → [COMPARISON_TABLE_ROWS] + raw doc text (8000 chars/type)
+   → GPT-4o-mini: verify each requirement against evidence
+   → _apply_deterministic_overrides() → Python math for numeric (confidence 1.0)
+     Pass 1: use LLM's extracted_value if present
+     Pass 2: if empty, search store.table_rows directly via _match_table_row() (rapidfuzz)
+   → _apply_text_overrides() → regex for STANDARD/MATERIAL/CERTIFICATE (confidence 0.85)
+   → Writes: state["verification_artifact"] (RequirementVerificationArtifact.model_dump())
+   → Writes: state["spec_verification_findings"] (one Finding per requirement)
 
 9. Node: validity_checker
    → store = load_store(state["knowledge_store_id"])
@@ -1015,9 +1242,15 @@ Trace exactly what happens from file upload to report:
 13. Node: table_auditor
     → store = load_store(state["knowledge_store_id"])
     → table_rows = [TableRow.model_validate(r) for r in store.table_rows]  ← pre-parsed by Agent 1
-    → assemble_spec_context() [CACHED — no extra API calls]
-    → store.get_text(DocType.TECHNICAL_DATASHEET), store.get_text(DocType.TEST_REPORT)
-    → Single GPT-4o-mini call per batch of 25 rows
+    → Load requirements_artifact from state["requirements_artifact"]
+    → Filter: table_reqs = [r for r in requirements if r.comparison_table_required]
+      (installation/experience/admin requirements excluded — they're never in a comparison table)
+    → Build structured requirements JSON from filtered list (not English text)
+    → For each batch of 25 rows:
+        GPT-4o-mini: audit rows against structured requirements JSON + datasheet + test report
+        _apply_deterministic_overrides(): Python numeric check for matched requirements
+        Contradiction detection: proposed vs measured diff > 15% → flag (not 5% — too aggressive)
+    → Missing mandatory table requirements → CRITICAL TableRowFinding per missing requirement
     → Writes: table_audit_findings
 
 14. Node: consistency_checker
@@ -1029,10 +1262,13 @@ Trace exactly what happens from file upload to report:
 15. Node: others  [STUB — returns empty list]
 
 16. Node: report_compiler
-    → Gather all findings from state
-    → Count criticals and warnings
-    → Determine recommendation (RESUBMIT/CONDITIONAL/APPROVE)
-    → GPT-4o-mini: generate summary comments
+    → Gather all findings from state (all 9 finding lists)
+    → Count criticals and warnings across all stages
+    → Load verification_artifact from state["verification_artifact"]
+    → _determine_recommendation(): uses both severity counts AND RequirementVerificationArtifact
+      (NON_COMPLIANT requirement → RESUBMIT regardless of warning count)
+    → _build_requirement_digest(): per-requirement PASS/FAIL/PARTIAL/MISSING summary for LLM
+    → GPT-4o-mini: generate 2-4 sentence professional summary with requirement-level context
     → Build ReviewReport object
     → Writes: report, review_complete=True
 
@@ -1116,7 +1352,7 @@ data/
 ## 23. Common Failure Modes and How to Diagnose Them
 
 ### Problem: spec_verifier returns "clause not found"
-**Cause:** `assemble_spec_context()` returned `EMPTY_CONTEXT_SENTINEL`
+**Cause:** `assemble_spec_context_enriched()` returned `EMPTY_CONTEXT_SENTINEL`
 
 **Diagnosis steps:**
 1. Check if ChromaDB collection exists: `chromadb.PersistentClient(path=CHROMA_PATH).list_collections()`
@@ -1124,6 +1360,25 @@ data/
 3. Check `_CLAUSE_TO_NETWORK` in `query_constructor.py` — is the clause prefix mapped?
 4. If clause is "33 10 13", does the map have "33 10"? (prefix match, not exact match)
 5. Run the indexing pipeline for the missing spec book via Spec Manager
+
+### Problem: spec_verifier extracts requirements but all show missing_evidence
+**Likely cause A:** `store.table_rows` is empty — the comparison table was not extracted by Agent 1. `_match_table_row()` (the Python fallback) will find nothing, and the LLM's evidence block will have no `[COMPARISON_TABLE_ROWS]` section.
+- Check `store.table_rows` in the knowledge store JSON — is it `[]`?
+- If yes, table extraction failed during Agent 1's run (see Table Auditor diagnosis below)
+
+**Likely cause B:** All relevant values are past the 8000-char truncation point in the test report.
+- Check how large `store.get_text(DocType.TEST_REPORT)` is. If >8000 chars, later pages are truncated.
+- Long-term fix: Submittal RAG per-requirement chunk retrieval (see `engineering_log.md` Future Issue 1)
+
+**Likely cause C:** Operator was extracted as `==` instead of `>=` for a performance requirement.
+- `_apply_deterministic_overrides()` runs `expected_value.check(actual)` — if operator is `==` and actual ≠ spec value, it returns NON_COMPLIANT, not SATISFIED
+- Check `state["requirements_artifact"]["requirements"]` in the report for the operator field
+
+### Problem: report recommendation is RESUBMIT with 0 critical findings and 0 table audit issues
+**Cause:** `RequirementVerificationArtifact` has `non_compliant_count > 0`
+- `_determine_recommendation()` treats `NON_COMPLIANT` requirements as RESUBMIT regardless of finding severity counts
+- Check `state["verification_artifact"]["verifications"]` for any `status == "non_compliant"` entries
+- Trace back to the requirement: is the `extracted_value` correct? Did `expected_value.check()` correctly evaluate it?
 
 ### Problem: doc_processor classifies documents wrong
 **Cause:** OCR quality is poor, or the document genuinely looks like a different type

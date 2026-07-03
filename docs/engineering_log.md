@@ -29,10 +29,23 @@
    - [Issue 5.4 — ModuleNotFoundError: No module named 'src'](#issue-54--modulenotfounderror-no-module-named-src)
    - [Issue 5.5 — Streamlit Navigation: Custom Sidebar vs Native Multi-Page](#issue-55--streamlit-navigation-custom-sidebar-vs-native-multi-page)
    - [Issue 5.6 — File I/O Scattered Across the Pipeline](#issue-56--file-io-scattered-across-the-pipeline)
-4. [Architectural Debates and Reasoning](#architectural-debates-and-reasoning)
+4. [Phase 5 (Continued) — Specification Verification Architecture Overhaul](#phase-5-continued--specification-verification-architecture-overhaul)
+   - [Issue 5.7 — Spec Verifier Had No Structured Requirement Model](#issue-57--spec-verifier-had-no-structured-requirement-model)
+   - [Issue 5.8 — Pydantic ValidationError: Boolean Fields Returning Null](#issue-58--pydantic-validationerror-boolean-fields-returning-null)
+   - [Issue 5.9 — Stage 3 Reported Missing Evidence That Stage 9 Already Found](#issue-59--stage-3-reported-missing-evidence-that-stage-9-already-found)
+   - [Issue 5.10 — Wrong Operators Extracted for Performance Requirements](#issue-510--wrong-operators-extracted-for-performance-requirements)
+   - [Issue 5.11 — Installation Requirements Expected Evidence From Technical Datasheet](#issue-511--installation-requirements-expected-evidence-from-technical-datasheet)
+   - [Issue 5.12 — Contradiction Detection Threshold Too Aggressive (5%)](#issue-512--contradiction-detection-threshold-too-aggressive-5)
+   - [Issue 5.13 — `comparison_table_required` Extracted But Never Read](#issue-513--comparison_table_required-extracted-but-never-read)
+   - [Issue 5.14 — Deterministic Override Only Ran If LLM Found Evidence First](#issue-514--deterministic-override-only-ran-if-llm-found-evidence-first)
+   - [Issue 5.15 — Prompt Instructed GPT to Do Numeric Comparison (Python's Job)](#issue-515--prompt-instructed-gpt-to-do-numeric-comparison-pythons-job)
+   - [Issue 5.16 — Standard and Material Requirements Left to LLM Judgment](#issue-516--standard-and-material-requirements-left-to-llm-judgment)
+5. [Architectural Debates and Reasoning](#architectural-debates-and-reasoning)
    - [Debate A — ChromaDB Cloud vs Local PersistentClient](#debate-a--chromadb-cloud-vs-local-persistentclient)
    - [Debate B — Production Transition Readiness of Local-First Architecture](#debate-b--production-transition-readiness-of-local-first-architecture)
-5. [Future Known Issues and Watch Points](#future-known-issues-and-watch-points)
+   - [Debate C — Evidence Architecture: Document Comparison vs Requirement-Centric](#debate-c--evidence-architecture-document-comparison-vs-requirement-centric)
+   - [Debate D — Where Should Numeric Verification Live?](#debate-d--where-should-numeric-verification-live)
+6. [Future Known Issues and Watch Points](#future-known-issues-and-watch-points)
 
 ---
 
@@ -736,6 +749,562 @@ This is not implemented because Phase 2 showed the table auditor correctly retur
 
 ---
 
+---
+
+## Phase 5 (Continued) — Specification Verification Architecture Overhaul
+
+This section documents a major second pass on the specification verification layer that happened after the initial Phase 5 build was functionally working. The review pipeline ran end-to-end without errors, but the quality of spec verification findings was poor in ways that only became visible when reading actual output reports. This phase of work was driven by careful analysis of real report output and cross-referencing with what Stage 9 (Table Auditor) was correctly finding.
+
+---
+
+### Issue 5.7 — Spec Verifier Had No Structured Requirement Model
+
+**When it appeared:** After the first complete review run produced a report, when reading the spec verification findings section and comparing it with the table audit findings.
+
+**What happened:**
+
+The original `spec_verifier.py` was a single-phase agent that did the following:
+1. Retrieved the authority spec clause via RAG
+2. Retrieved the submitted spec copy (Index 2)
+3. Sent both to GPT with a prompt asking: "compare these two documents, flag anything wrong"
+4. GPT returned a list of free-text findings
+
+This produced findings that were qualitatively vague — things like "The submitted specification copy appears to reference the correct clause" or "Tensile strength requirement appears to be satisfied based on the comparison table." These findings:
+
+- Had no structured connection to specific requirements (no IDs, no source clauses)
+- Could not be used for deterministic numeric checks
+- Could not drive the recommendation logic in `report_compiler` (which needed to know which requirements were actually non-compliant vs. just under-evidenced)
+- Produced duplicate effort: Stage 3 re-read documents that Stage 9 had already parsed
+- Made the report look generic rather than requirement-specific
+
+Meanwhile Stage 9 (Table Auditor) was correctly finding issues like "proposed 45 MPa satisfies minimum 40 MPa (PASS)" because it had structured table rows from `store.table_rows`. Stage 3 had no equivalent.
+
+**The root question that changed the design:**
+
+> What does spec verification actually mean in this domain?
+
+The answer: it does not mean "compare two documents." It means "extract requirements from the authority spec, then check whether the submitted documents satisfy each requirement." The spec is the source of truth. The submitted documents are evidence. Each requirement either has sufficient evidence or it does not.
+
+This is a requirement-centric architecture, not a document comparison architecture.
+
+**What changed:**
+
+A full rewrite of `spec_verifier.py` and the creation of `src/models/requirements.py` as the canonical data model for the new approach.
+
+**`src/models/requirements.py` — New file, created from scratch:**
+
+- `RequirementType` enum — 13 types: `dimension`, `standard`, `material`, `test`, `certificate`, `approval`, `performance`, `installation`, `experience`, `administrative`, `warranty`, `procedural`, `other`
+- `VerificationStatus` enum — `satisfied`, `non_compliant`, `partially_verified`, `missing_evidence`, `not_applicable`
+- `VerificationMethod` enum — `numeric_comparison`, `string_match`, `semantic_match`, `certificate_validation`, `date_validation`, `llm_reasoning`
+- `ExpectedValue` — structured value model with `operator` (≥, ≤, ==, in_range), `numeric_min`, `numeric_max`, `unit`, and a `.check(actual: float) -> bool` method for deterministic Python comparison
+- `EvidenceExpectation` — `required_sources` (ALL must provide evidence), `optional_sources`, `minimum_optional_matches`
+- `SpecRequirement` — full requirement model with `id`, `requirement_type`, `normalized_requirement`, `expected_value`, `evidence_expectation`, `source_clause`, `source_page`, `mandatory`, `comparison_table_required`
+- `ReviewRequirementsArtifact` — extraction output (Phase 2 of spec verifier)
+- `EvidenceSnippet` — a piece of text from a submitted document that supports a requirement
+- `RequirementVerification` — per-requirement compliance result
+- `RequirementVerificationArtifact` — all verifications for a review, with computed properties `satisfied_count`, `non_compliant_count`, `missing_evidence_count`, `mandatory_failures`
+
+**`src/agents/spec_verifier.py` — Complete rewrite into three phases:**
+
+*Phase 1 — Validate Index 2:*
+Check that the submitted specification copy is present and references the correct clause number. Pure Python, no LLM. Produces `Finding` objects.
+
+*Phase 2 — Extract Requirements:*
+Call GPT to parse the retrieved authority spec context and produce a list of `SpecRequirement` objects. The LLM determines `evidence_expectation` from the spec wording, not from a hardcoded type→evidence table. The extraction prompt includes explicit rules for operator inference, evidence source rules, and `comparison_table_required` classification.
+
+*Phase 3 — Verify Requirements:*
+Call GPT to search the submitted documents for evidence of each requirement. Python then applies deterministic overrides: for numeric requirements, `expected_value.check(actual)` is called with confidence 1.0; for standard/material/certificate requirements, a regex string match is run at confidence 0.85.
+
+**Two new state fields added to `src/agents/state.py`:**
+- `requirements_artifact: dict` — `ReviewRequirementsArtifact.model_dump()` from Phase 2
+- `verification_artifact: dict` — `RequirementVerificationArtifact.model_dump()` from Phase 3
+
+These are consumed by both `table_auditor` (to filter which requirements appear in the comparison table) and `report_compiler` (to drive the recommendation logic).
+
+**`src/agents/report_compiler.py` — Updated:**
+- Added `_load_verification_artifact()` to read `RequirementVerificationArtifact` from state
+- Added `_build_requirement_digest()` to produce a per-requirement PASS/FAIL/PARTIAL/MISSING digest for the summary LLM call
+- Updated `_determine_recommendation()` to use structured compliance status:
+  - Any `NON_COMPLIANT` requirement → RESUBMIT
+  - `MISSING_EVIDENCE` + warnings → RESUBMIT
+  - `MISSING_EVIDENCE` alone → CONDITIONAL
+  - Otherwise falls back to raw finding severity counts
+
+**`src/rag/query/context_assembler.py` — Added enriched retrieval:**
+Added `assemble_spec_context_enriched()` — a non-cached variant that takes `material_description` and a `spec_snippet` (first 400 chars of the submitted spec copy) and appends them to the query embedding. This biases semantic search toward the specific subsections the contractor actually referenced, rather than the broadest possible match for the clause number alone.
+
+**`src/agents/table_auditor.py` — Updated to use structured requirements:**
+- `_build_requirements_json()` serializes `SpecRequirement` objects as structured JSON objects (not English text) for the audit prompt. The LLM receives clean data — `id`, `type`, `description`, `operator`, `value_min`, `unit` — not a paragraph it must re-parse
+- `table_auditor_node()` filters requirements to `comparison_table_required=True` before auditing, so installation/experience/administrative requirements never appear as "missing" from the comparison table
+
+**Lesson:**
+A spec verifier that compares two documents is doing the wrong thing. The authority spec is not being compared to the submitted spec copy — it is providing the requirement list that the entire submittal must satisfy. The submitted spec copy is just one piece of evidence among many. The correct architecture is: extract requirements → gather evidence → verify each requirement. This is what professional engineers do. The AI should do the same.
+
+---
+
+### Issue 5.8 — Pydantic ValidationError: Boolean Fields Returning Null
+
+**When it appeared:** During a review run after the table auditor rewrite. The same submittal that had passed on the previous build now crashed in the middle of Stage 8.
+
+**Error message:**
+```
+pydantic_core._pydantic_core.ValidationError: 1 validation error for TableRowFinding
+proposed_verified
+  Input should be a valid boolean [type=bool_type, input_value=None, input_url=...]
+```
+
+**What happened:**
+
+The LLM was returning `null` for some boolean fields in the JSON response — specifically `proposed_verified` and `measured_verified`. These are valid JSON values for Python `None`.
+
+The code that read these fields was:
+```python
+proposed_verified=raw.get("proposed_verified", False),
+```
+
+The bug: `dict.get(key, default)` only uses the `default` when the key is **absent** from the dict. When the key is present but the value is `None`, `.get()` returns `None` — not the default. `TableRowFinding` has `proposed_verified: bool` with no `Optional`, so Pydantic rejected `None` with a validation error.
+
+This had not appeared in earlier test runs because earlier versions of the prompt produced valid booleans consistently. The new, longer prompt with more context produced null for some rows where the LLM was uncertain.
+
+**Fix:**
+
+Added a small helper function inside `_audit_batch()`:
+```python
+def _b(val: object, default: bool) -> bool:
+    return val if isinstance(val, bool) else default
+```
+
+Applied to every boolean field assignment:
+```python
+proposed_verified=_b(raw.get("proposed_verified"), False),
+measured_verified=_b(raw.get("measured_verified"), True),
+```
+
+This handles `None`, missing key, wrong type (string, int) all the same way — any non-bool falls back to the default. The defaults are chosen conservatively: `measured_verified=True` because an empty measured cell means "not tested" not "failed."
+
+**Lesson:**
+When reading LLM JSON output, never assume boolean fields are boolean. GPT frequently returns `null` for fields it is uncertain about. `dict.get(key, default)` is not sufficient — `isinstance(val, bool)` is required to distinguish an absent key from an explicitly null value.
+
+---
+
+### Issue 5.9 — Stage 3 Reported Missing Evidence That Stage 9 Already Found
+
+**When it appeared:** After running a complete review and reading the report. Stage 8 (Table Auditor) was producing PASS findings for tensile strength, elongation, softening point, and thickness. Stage 3 (Spec Verifier) was simultaneously producing WARNING findings for the same parameters, saying "missing evidence from technical_datasheet and test_report."
+
+**What happened — the root cause:**
+
+Stage 9 reads `store.table_rows` — pre-parsed structured rows with columns `parameter`, `specified`, `proposed`, `measured`. These are extracted by `doc_processor` during document processing and stored in the knowledge store as structured data. Stage 9 never reads raw PDF text at all. It has direct access to the measured and proposed values as strings like `"1130 N/50mm"`.
+
+Stage 3 only had access to raw PDF text, truncated to 2500 characters per document type. A test report with 15 pages has most of its content — including measured values on pages 4–10 — cut off after 2500 chars. The LLM in Stage 3 was looking at the front matter of the test report (lab name, certificate header, standard references) and never seeing the actual test results.
+
+This was not a knowledge store problem. The full text was in `store.get_text(DocType.TEST_REPORT)`. The truncation happened in `_build_evidence_block()` after reading from the store.
+
+**Three fixes applied:**
+
+*Fix 1 — Include comparison table rows in Stage 3's evidence block.*
+
+`_build_evidence_block()` was updated to include a `[COMPARISON_TABLE_ROWS]` section at the top of the evidence block, formatted identically to what Stage 9 uses:
+```
+[COMPARISON_TABLE_ROWS] pre-parsed structured data
+  Tensile Strength: specified='500 N/50mm' | proposed='1000 N/50mm' | measured='1130 N/50mm'
+  Elongation at break: specified='≥ 50%' | proposed='800%' | measured='52%'
+  ...
+```
+Stage 3 now has access to the same data Stage 9 has. The LLM can cite these as `comparison_table` evidence.
+
+*Fix 2 — Increase `_MAX_DOC_CHARS` from 2500 to 8000.*
+
+8000 characters is approximately 4–5 pages of a typical test report. This does not solve the truncation problem for very long documents, but it covers the majority of real submittals (test reports with 3–8 pages of results).
+
+*Fix 3 — Always include TEST_REPORT in the evidence block.*
+
+Previously `always_include` was `{DocType.TECHNICAL_DATASHEET, DocType.COMPARISON_TABLE}`. Updated to also always include `DocType.TEST_REPORT`, regardless of what `evidence_expectation` specifies for any particular requirement.
+
+**Lesson:**
+When two stages in the same pipeline disagree about the same fact, the first question to ask is "do they read the same data source?" In this case they did not. Stage 9 read structured pre-parsed rows; Stage 3 read truncated raw text. The fix was to give Stage 3 access to the same structured data.
+
+---
+
+### Issue 5.10 — Wrong Operators Extracted for Performance Requirements
+
+**When it appeared:** During analysis of Stage 3 output. A requirement for "Tensile Strength: 500 N/50mm" was being extracted with `operator: "=="` and `numeric_min: 500`. A product with tensile strength 1000 N/50mm was failing the check because `1000 == 500` is False.
+
+**What happened:**
+
+The extraction prompt had no explicit guidance on when to use `==` vs `>=`. GPT was defaulting to `==` for plain numeric values without a qualifying word ("minimum", "not less than", "≥"), treating them as exact requirements.
+
+This is wrong for engineering specifications. A performance value listed without a qualifier always means a minimum. A product exceeding the stated value is always acceptable unless an upper limit is separately specified. `==` in an engineering spec means "exactly this value and nothing else" — which almost never appears in construction material specifications.
+
+**Fix:**
+
+Added explicit OPERATOR INFERENCE RULES to `_EXTRACT_SYSTEM`:
+```
+"minimum", "not less than", "≥", "at least"  → operator: ">="
+"maximum", "not more than", "≤", "shall not exceed"  → operator: "<="
+"between X and Y", "X to Y", "from X to Y"  → operator: "in_range"
+"exactly", "shall be exactly"  → operator: "=="
+Plain performance value with no qualifier (e.g. "Tensile Strength: 500 N"):
+  → default to ">=" — NEVER use "==" unless explicitly required.
+  A product exceeding a minimum is always acceptable.
+```
+
+**Lesson:**
+LLMs will guess when they have no explicit rule. The guess for a numeric value with no qualifier is `==` because that is the most literal reading of an equality. Engineering context says `>=`. Always encode domain-specific conventions explicitly in the prompt — do not assume the LLM will infer them.
+
+---
+
+### Issue 5.11 — Installation Requirements Expected Evidence From Technical Datasheet
+
+**When it appeared:** Stage 3 was extracting requirements for installation procedures (e.g., "Tape shall be laid 300 mm above pipeline") and setting `required_sources: ["technical_datasheet"]`. Since no manufacturer datasheet describes installation depth, this produced MISSING_EVIDENCE for every installation requirement.
+
+**What happened:**
+
+The LLM was inferring evidence sources from `required_sources` without domain-specific guidance. For any requirement that sounded product-related, it defaulted to `technical_datasheet`. Installation requirements are not product properties — they describe how to install, which belongs in a method statement, not a datasheet.
+
+**Fix:**
+
+Added explicit EVIDENCE SOURCE RULES by requirement type to `_EXTRACT_SYSTEM`:
+```
+installation ("laid X mm above", "backfill", "overlap"):
+  required_sources: ["method_statement"]
+  optional_sources: []
+  DO NOT set technical_datasheet — a datasheet never describes installation procedures
+
+warranty:
+  required_sources: ["manufacturer_guarantee"]
+
+administrative, procedural:
+  required_sources: []
+  optional_sources: [], minimum_optional_matches: 0
+```
+
+Also added the KEY PRINCIPLE:
+> For most product properties, EITHER the technical datasheet OR the test report can serve as evidence. Do NOT set only one source as required unless the spec explicitly mandates it.
+
+**Lesson:**
+Evidence source inference is not a general-purpose task — it requires domain knowledge about what type of document contains what type of information. Installation procedures are never in datasheets. Warranties are never in test reports. This knowledge must be encoded explicitly. LLMs have construction domain knowledge but may not apply it consistently without rules.
+
+---
+
+### Issue 5.12 — Contradiction Detection Threshold Too Aggressive (5%)
+
+**When it appeared:** Stage 9 (Table Auditor) was flagging rows as CONTRADICTION where the datasheet said 1000 N/50mm and the test report measured 1130 N/50mm — a 13% difference. The finding was "CONTRADICTION: datasheet shows 1000, test report shows 1130 (13% difference)."
+
+**What happened:**
+
+The contradiction detection threshold was set at 5%:
+```python
+if diff_pct > 0.05:
+    raw["contradiction_detected"] = True
+```
+
+In construction material testing, several legitimate sources of variation routinely produce 5–15% differences between a manufacturer's declared value and an independent test result:
+- The datasheet states a **typical** value; the test report measures an **actual** sample
+- Test conditions differ (temperature, humidity, specimen preparation)
+- The manufacturer's value may be a minimum; the tested specimen exceeded it
+
+A 13% difference between declared 1000 N/50mm and measured 1130 N/50mm is not a contradiction — it is a compliant product that performed better than declared.
+
+**Fix:**
+
+Threshold changed from 5% to 15%:
+```python
+if diff_pct > 0.15:
+    raw["contradiction_detected"] = True
+```
+
+Updated comment explains the reasoning so future developers do not revert it without understanding why it was changed.
+
+**Lesson:**
+Domain knowledge must drive threshold choices. A 5% threshold is appropriate for financial data or sensor readings. For construction material testing, manufacturing tolerances and test condition variability routinely produce 5–10% variation that has no engineering significance. Always ask "what does this number mean in the domain?" before setting a threshold.
+
+---
+
+### Issue 5.13 — `comparison_table_required` Extracted But Never Read
+
+**When it appeared:** After implementing `comparison_table_required` as a field in `SpecRequirement`, installation and administrative requirements were still appearing as "missing from comparison table" in Stage 9's output.
+
+**What happened:**
+
+The extraction prompt was correctly returning `comparison_table_required: false` for installation requirements. But `_phase2_extract_requirements()` was constructing `SpecRequirement` objects without reading this field from the LLM response:
+
+```python
+req = SpecRequirement(
+    id=item.get("id", ...),
+    ...
+    mandatory=item.get("mandatory", True),
+    # comparison_table_required was not here — it defaulted to True for everything
+)
+```
+
+The LLM was doing the right thing. The parsing code was silently discarding the result. Every requirement defaulted to `comparison_table_required=True`, causing Stage 9 to flag every installation requirement as "missing from the comparison table."
+
+**Fix:**
+```python
+req = SpecRequirement(
+    ...
+    mandatory=item.get("mandatory", True),
+    comparison_table_required=item.get("comparison_table_required", True),
+)
+```
+
+One line. The `table_auditor_node` already had the filter in place:
+```python
+table_reqs = [r for r in requirements_artifact.requirements if r.comparison_table_required]
+```
+It just wasn't getting the right value because parsing was incomplete.
+
+**Lesson:**
+When adding a new field to a Pydantic model AND the LLM extraction prompt, always trace the full path: prompt → LLM response JSON → parsing code → model constructor → downstream usage. Any break in this chain causes a silent failure. The field exists in the model, the prompt extracts it, the LLM returns it — but if the parsing code doesn't read it, the default wins.
+
+---
+
+### Issue 5.14 — Deterministic Override Only Ran If LLM Found Evidence First
+
+**When it appeared:** During architectural review of `spec_verifier.py` after Stage 3 was still producing `missing_evidence` for some numeric requirements that Stage 9 found correctly.
+
+**What happened:**
+
+The deterministic override in `_apply_deterministic_overrides()` worked as follows:
+1. Look at `v.evidence_found` for `extracted_value`
+2. If found → run `expected_value.check(actual)`
+3. Override the status
+
+But if the LLM returned `evidence_found = []` — meaning it failed to locate the value in the prompt text — then `numeric_values = []`, `actual = None`, and the override never ran. The verification stayed at `missing_evidence` even though the value was available in `store.table_rows`.
+
+This meant that Stage 3's numeric verification still had a single point of failure: if GPT missed the value in the prompt, Python never got a chance to check. Stage 9 had no such dependency — it read from `store.table_rows` directly without asking GPT to search anything.
+
+**The architectural insight:**
+
+Stage 9 is reliable not because its prompt is better, but because its data path is different:
+```
+Stage 9: store.table_rows → Python extracts value → Python checks → PASS/FAIL
+Stage 3: store.table_rows → build_evidence_block → prompt → GPT searches → extracts value → Python checks
+```
+Stage 3 has GPT as an intermediate step that can fail. Stage 9 does not.
+
+**Fix — Two-pass deterministic override:**
+
+`_apply_deterministic_overrides()` was updated to accept `table_rows` as an optional parameter and implement a second pass:
+
+```
+Pass 1: Use extracted_value from LLM's evidence_found (if present)
+Pass 2: If evidence_found is empty, search store.table_rows directly with Python
+        → _match_table_row() finds the row, extracts the numeric value
+        → Synthetic EvidenceSnippet created with document_type=comparison_table
+        → expected_value.check(actual) runs regardless of what GPT returned
+```
+
+`_match_table_row()` uses `rapidfuzz.fuzz.token_set_ratio()` to match requirement names to table row parameters:
+- "Minimum tensile strength ≥ 500 N" matches "Tensile Strength" (score ~85)
+- "Peel Strength" does NOT match "Tensile Strength" despite sharing "strength" (score ~45, below 60 threshold)
+- Threshold: 60 — empirically chosen to catch legitimate matches while avoiding single-word false positives
+
+Evidence priority ordering was also fixed. Previously `numeric_values[0]` picked whichever evidence snippet the LLM returned first — which was LLM-order-dependent. Now evidence snippets are sorted by source quality before picking `actual`:
+```
+test_report (3) > comparison_table (2) > technical_datasheet (1)
+```
+If both a test report and a datasheet mention a value, the test report value is used (it is independently measured; the datasheet is manufacturer-declared).
+
+**Lesson:**
+A deterministic override that depends on the LLM to find the evidence first is not truly deterministic. The Python fallback must be able to find evidence independently of what the LLM returned. For numeric requirements, `store.table_rows` is the canonical structured evidence source — not the raw document text and not the LLM's search results.
+
+---
+
+### Issue 5.15 — Prompt Instructed GPT to Do Numeric Comparison (Python's Job)
+
+**When it appeared:** During architectural review of `_VERIFY_SYSTEM`.
+
+**What happened:**
+
+The verification prompt told GPT:
+```
+- numeric: find the value in ANY document, report extracted_value, assess against operator
+```
+
+But Python was overriding the assessment anyway via `_apply_deterministic_overrides()`. GPT was doing work that Python would immediately discard. Worse, GPT's assessment could pollute the `status` field before the override ran, and if the override didn't run (e.g., `evidence_found` was empty), GPT's wrong assessment became the final result.
+
+**Fix:**
+
+Changed the prompt instruction to cleanly separate responsibilities:
+```
+- numeric: find the value in ANY document, report extracted_value — Python performs the
+  pass/fail evaluation after you return. Your job is only to locate the value and report
+  extracted_value accurately.
+```
+
+GPT is now responsible for finding and reporting the value. Python is responsible for evaluating it. Clear separation of concerns.
+
+**Lesson:**
+When an LLM's output in one field will always be overridden by deterministic Python code, remove the instruction that asks the LLM to produce that output in the first place. Redundant LLM computation costs tokens, can introduce confusion, and creates a "two sources of truth" situation where the wrong one might win if the override fails.
+
+---
+
+### Issue 5.16 — Standard and Material Requirements Left to LLM Judgment
+
+**When it appeared:** During architectural review of `_apply_deterministic_overrides()`. After fixing numeric overrides, standard/material/certificate requirements were still fully LLM-determined — GPT decided whether "BS EN 13252" appeared in the documents.
+
+**What happened:**
+
+Standard code references like "BS EN 13252", "ASTM D638", material grades like "HDPE PE100", and certifications like "NSF 61" are exact strings. If they appear anywhere in the submitted documents, the requirement is satisfied. This does not require semantic reasoning — it requires a regex search.
+
+GPT is reliable for this in most cases but introduces unnecessary variability. A deterministic regex is faster, cheaper, and produces exactly reproducible results.
+
+**Fix — `_apply_text_overrides()`:**
+
+Added a third deterministic pass after `_apply_deterministic_overrides()`, targeting `RequirementType.STANDARD`, `RequirementType.MATERIAL`, and `RequirementType.CERTIFICATE`:
+
+1. Extract search terms from `expected_value.text` (e.g., "BS EN 13252")
+2. Split into tokens; try full phrase first, then individual tokens
+3. Skip tokens ≤ 2 chars or pure digits (to avoid false positives from "BS", "EN", "61")
+4. `re.search(re.escape(candidate), evidence_text, re.IGNORECASE)`
+5. If found → override to `string_match`, `satisfied`, confidence 0.85
+6. If not found → leave LLM result unchanged (LLM may have found a semantic equivalent)
+
+The search runs against the full `evidence_block` string — the same text the LLM already received, so no extra I/O.
+
+**Confidence levels:**
+- Numeric comparison: 1.0 (deterministic math)
+- String match (standard/material/certificate): 0.85 (string found, but context not verified)
+- LLM reasoning (semantic): 0.50–0.90 (model-dependent)
+
+**Coverage after all three override layers:**
+```
+Numeric (dimension, performance, test): Python math, confidence 1.0
+Standard code, material grade, certification: regex, confidence 0.85
+Installation, experience, administrative: LLM reasoning only (these are inherently semantic)
+```
+
+**Lesson:**
+Classify verification tasks by their information-theoretic nature before assigning them to an LLM. Text presence is a search problem, not a reasoning problem. Numeric comparison is math, not reasoning. LLMs should only be used for tasks that genuinely require understanding — conflicting wording, ambiguous context, semantic equivalence. Everything else should be deterministic.
+
+---
+
+## Architectural Debates and Reasoning (Continued)
+
+---
+
+### Debate C — Evidence Architecture: Document Comparison vs. Requirement-Centric
+
+**The original design:**
+Spec verifier receives spec context + submitted documents → GPT compares them → produces findings.
+
+**The problem with this design:**
+
+A document comparison approach answers "Do these two documents agree?" But the right question is "Does the submitted evidence satisfy each requirement from the authority specification?"
+
+These are different questions with different answers. Two documents can "agree" while both failing a requirement. A submitted spec copy that says "tensile strength 500 N/50mm" agrees with the authority spec that says "tensile strength ≥ 500 N/50mm" — but the datasheet needs to confirm the product actually achieves this value.
+
+**The requirement-centric design:**
+
+1. The authority spec is the source of truth → extract structured requirements from it
+2. Submitted documents are evidence → search them for each requirement
+3. Each requirement either has sufficient evidence (satisfied) or does not (missing_evidence, non_compliant, partially_verified)
+4. Python applies deterministic checks wherever possible — LLM only handles semantic reasoning
+
+This mirrors how a professional engineer actually reviews a submittal. They read the spec clause, note what is required, then check each submitted document against those requirements. They do not "compare two documents."
+
+**Why the rewrite was worth it:**
+
+The old design produced generic, uncheckable findings. The new design produces:
+- Findings tied to specific requirement IDs
+- Numeric findings with deterministic PASS/FAIL at confidence 1.0
+- A `RequirementVerificationArtifact` that drives recommendation logic in `report_compiler`
+- Structured output that can be queried in post-review chat mode
+- A `comparison_table_required` flag that prevents Stage 9 from generating false "missing" findings for non-table requirements
+
+---
+
+### Debate D — Where Should Numeric Verification Live?
+
+**The question:** Should numeric requirement checking happen in Stage 3 (Spec Verifier) or Stage 9 (Table Auditor)?
+
+**What actually happens today:**
+Both stages do numeric verification, but from different data sources:
+- Stage 3 uses `store.table_rows` (via Python fallback `_match_table_row`) and `expected_value.check(actual)` from `RequirementVerification`
+- Stage 9 also uses `store.table_rows` and `expected_value.check(actual)` from `TableRowFinding`
+
+This creates a situation where both stages produce verdicts on the same numeric value. If the two verdicts agree, the report has a consistent story. If they disagree (Stage 3 says PASS, Stage 9 says WARNING), the engineer reading the report has contradictory information.
+
+**Why this duplication exists:**
+Stage 3 is the requirement authority — it owns the `RequirementVerificationArtifact` that drives `report_compiler`'s recommendation. Stage 9 is the table auditor — it reviews each row of the contractor's comparison table and flags incorrect specified values, unverifiable proposed values, and missing parameters. They answer related but different questions:
+- Stage 3: "Does the submitted package satisfy requirement R-003?"
+- Stage 9: "Is row 5 of the comparison table correct and verifiable?"
+
+They are intended to be complementary, not duplicative. Row 5 might say "Specified: 500 N | Proposed: 1000 N | Measured: 1130 N" — Stage 9 verifies the row structure; Stage 3 verifies that R-003 (tensile ≥ 500 N) is satisfied.
+
+**Current risk:** If Stage 3's `_match_table_row()` fuzzy-matches a requirement to the wrong table row, the numeric check uses the wrong value. Stage 9 would not catch this because it audits rows, not requirements.
+
+**Resolution:** This is a known architectural tension, not a bug. It will resolve naturally when the Submittal RAG is implemented — Stage 3 will retrieve evidence chunks per requirement rather than searching table rows, and Stage 9 will remain the table structure auditor. See Future Issue 6 below.
+
+---
+
+## Future Known Issues and Watch Points (Updated)
+
+These are not current bugs but are known risks and planned improvements, prioritized by impact.
+
+**1. Submittal RAG — Per-Requirement Chunk Retrieval (Highest Priority)**
+
+Currently `store.get_text(doc_type)` returns concatenated raw text from all pages of a document type, truncated to 8000 characters. For a 40-page test report, evidence on pages 10–40 is never seen by Stage 3.
+
+The proper fix is `store.get_relevant_chunks(doc_type, query=req.normalized_requirement)` — embed the submitted document pages into a per-session ChromaDB collection and retrieve the top 3–5 chunks most relevant to each requirement.
+
+This would:
+- Eliminate the 8000-char truncation problem
+- Scale to 100-page technical documents without increasing prompt size
+- Give Stage 3 the same retrieval quality Stage 9 already has for comparison table data
+- Enable truly per-requirement evidence lookup
+
+Blocked by: `src/rag/submittal_rag/embedder.py` exists but nothing in the pipeline calls it after a review. Fix: after `review_complete`, call `embed_submittal_documents()` to populate the per-session collection. Then replace `_build_evidence_block()` with per-requirement chunk retrieval.
+
+**2. BM25 Cache Staleness After Re-indexing**
+
+`_build_bm25_for_network()` in `hybrid_retriever.py` uses `@lru_cache`. The cache is populated at first query and held for the process lifetime. If a new spec is indexed via Spec Manager while the Streamlit server is running, the BM25 cache does not see the new chunks until the process restarts.
+
+Fix: add a "Clear BM25 Cache" button in Spec Manager that calls `_build_bm25_for_network.cache_clear()`.
+
+**3. Single-Process Concurrency**
+
+LangGraph runs synchronously in the Streamlit thread. One review blocks the entire app. For a shared deployment, this blocks all users.
+
+Fix: move `graph.invoke()` to a background thread or task queue. The review architecture itself is thread-safe — no shared mutable state between reviews.
+
+**4. Placeholder Nodes Not Yet Implemented**
+
+Three graph nodes return empty findings lists as stubs:
+- `_boq_drawing_node` — BOQ/drawing material type check
+- `_statement_node` — Compliance statement audit
+- `_others_node` — OTHERS section document review
+
+These are real review stages. They are deferred work, not bugs. Drop-in replacements in the existing graph.
+
+**5. PDF Rotation / Mirror Causing Empty OCR**
+
+Some scanned PDF pages are rotated sideways or upside down. Tesseract returns garbled or empty text. Current failure mode is a WARNING finding ("Could not extract table content") rather than a wrong finding — acceptable for the prototype.
+
+Fix: add `config='--psm 1 --oem 3'` to `pytesseract.image_to_string()` for automatic orientation detection.
+
+**6. Stage 3 and Stage 9 Numeric Verification Overlap**
+
+Both stages verify numeric requirements from the same `store.table_rows` data. This produces consistent results when both checks use the same value, but creates potential for contradictory report findings if `_match_table_row()` fuzzy-matches a requirement to the wrong row.
+
+Fix: once the Submittal RAG is implemented (Future Issue 1), Stage 3 will retrieve evidence chunks from embedded document pages rather than searching table rows. Stage 9 remains the comparison table structure auditor. The architectural roles become cleanly separated.
+
+**7. Evidence Provenance for Synthetic Snippets**
+
+When `_match_table_row()` finds a value and creates a synthetic `EvidenceSnippet`, it records `page=0` and `source_document="comparison_table (structured rows)"`. The actual page number and original PDF filename are not preserved because `store.table_rows` dicts do not carry this metadata.
+
+Fix: when `doc_processor` stores table rows in the knowledge store, also store the source page and filename for each row. Then `_match_table_row()` can populate `EvidenceSnippet.page` and `EvidenceSnippet.source_document` with real values, enabling precise citation in the report.
+
+**8. Prompt Size Will Become a Constraint**
+
+Stage 3 currently sends all requirements + all document text in one prompt. For a spec clause with 20+ requirements and three 8000-char documents, the combined prompt is 25,000–30,000 tokens. `gpt-4o-mini` supports 128k context so this is within limits today, but there is no batching logic for very large requirement sets.
+
+Once Submittal RAG is implemented (Future Issue 1), per-requirement chunk retrieval will replace the single large evidence block with small targeted chunks. The prompt size problem largely solves itself at that point. Until then, if a spec clause produces 30+ requirements, the prompt could degrade in quality due to attention dilution over a very long context.
+
+---
+
 *Engineering log started: 2026-06-24*
-*Covers: Phase 3 (Production Build) · Phase 4 (Scenario Testing) · Phase 5 (UI Build)*
-*Next update: add Phase 6 issues as they occur during portfolio polish*
+*Covers: Phase 3 (Production Build) · Phase 4 (Scenario Testing) · Phase 5 (UI Build + Spec Verification Overhaul)*
+*Last updated: 2026-07-03*
+*Next update: Phase 6 (Portfolio Polish) and Submittal RAG implementation*
