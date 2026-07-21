@@ -233,3 +233,6 @@ data/
 review_history.db
 
 experiments/data/sample_submittals/
+
+planning/
+docs/claude_handoff.md
