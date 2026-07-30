@@ -77,17 +77,16 @@ async def get_db(tenant_id: uuid.UUID | str | None = None) -> AsyncGenerator[Asy
     for tenant-agnostic work (migrations, the job-queue worker's own bookkeeping on `jobs`,
     which has no tenant_id column and is not RLS-protected).
     """
-    async with SessionLocal() as session:
-        async with session.begin():
-            if tenant_id is not None:
-                # Postgres's SET/SET LOCAL does not support bind parameters ($1) — it
-                # requires a literal in the statement text (confirmed: asyncpg raises
-                # PostgresSyntaxError on "SET LOCAL app.tenant_id = $1"). Safe to inline
-                # directly here because uuid.UUID(...) below raises on anything that
-                # isn't a well-formed UUID — the resulting string can only ever contain
-                # hex digits and hyphens, so there's no injection surface.
-                validated_tenant_id = uuid.UUID(str(tenant_id))
-                await session.execute(
-                    text(f"SET LOCAL app.tenant_id = '{validated_tenant_id}'")
-                )
-            yield session
+    async with SessionLocal() as session, session.begin():
+        if tenant_id is not None:
+            # Postgres's SET/SET LOCAL does not support bind parameters ($1) — it
+            # requires a literal in the statement text (confirmed: asyncpg raises
+            # PostgresSyntaxError on "SET LOCAL app.tenant_id = $1"). Safe to inline
+            # directly here because uuid.UUID(...) below raises on anything that
+            # isn't a well-formed UUID — the resulting string can only ever contain
+            # hex digits and hyphens, so there's no injection surface.
+            validated_tenant_id = uuid.UUID(str(tenant_id))
+            await session.execute(
+                text(f"SET LOCAL app.tenant_id = '{validated_tenant_id}'")
+            )
+        yield session

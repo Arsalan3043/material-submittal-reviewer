@@ -1,28 +1,217 @@
 @import "tailwindcss";
 
+/* Design tokens — frontend/design_handoff_clause_qc_review/README.md. Light-only for now
+   (no dark-mode-aware components exist), so color-scheme is pinned to stop the browser from
+   auto-dark-styling native form controls under OS dark mode. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-ink: #17181a;
+  --color-ink-2: #3e4145;
+  --color-text-secondary: #5c5f63;
+  --color-text-muted: #8e8e93;
+  --color-text-faint: #a9a9ae;
+
+  --color-accent: #1b4dff;
+  --color-accent-hover: #0b3ae0;
+  --color-accent-wash: #e9edff;
+
+  --color-canvas: #fafaf9;
+  --color-panel: #ffffff;
+  --color-panel-2: #f7f7f5;
+  --color-sidebar: #f2f2f0;
+
+  --color-line: #eaeae7;
+  --color-line-2: #ecece9;
+  --color-line-3: #f1f1ee;
+  --color-border-input: #dddcd8;
+
+  --color-pass: #0e8a5f;
+  --color-pass-text: #0e7a55;
+  --color-pass-bg: #e6f4ee;
+
+  --color-warning: #b26a00;
+  --color-warning-text: #96591a;
+  --color-warning-bg: #fbf0df;
+
+  --color-critical: #c62828;
+  --color-critical-text: #a82020;
+  --color-critical-bg: #fbe9e9;
+
+  --color-verdict-conditional-bg: #fbf3e4;
+  --color-verdict-conditional-border: #efddbf;
+  --color-verdict-conditional-bar: #b26a00;
+  --color-verdict-conditional-title: #8a5310;
+  --color-verdict-conditional-body: #7a5a28;
+
+  --color-verdict-approve-bg: #e9f5ef;
+  --color-verdict-approve-border: #cbe7da;
+  --color-verdict-approve-bar: #0e8a5f;
+  --color-verdict-approve-title: #0e7a55;
+  --color-verdict-approve-body: #33705a;
+
+  --color-verdict-resubmit-bg: #fbe9e9;
+  --color-verdict-resubmit-border: #f2cfcf;
+  --color-verdict-resubmit-bar: #c62828;
+  --color-verdict-resubmit-title: #a82020;
+  --color-verdict-resubmit-body: #7a3232;
+
+  --color-toast-bg: #17181a;
+  --color-toast-action: #7fa0ff;
+  --color-toast-dot: #3dd68c;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  --color-ink: var(--color-ink);
+  --color-ink-2: var(--color-ink-2);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-faint: var(--color-text-faint);
+
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-wash: var(--color-accent-wash);
+
+  --color-canvas: var(--color-canvas);
+  --color-panel: var(--color-panel);
+  --color-panel-2: var(--color-panel-2);
+  --color-sidebar: var(--color-sidebar);
+
+  --color-line: var(--color-line);
+  --color-line-2: var(--color-line-2);
+  --color-line-3: var(--color-line-3);
+  --color-border-input: var(--color-border-input);
+
+  --color-pass: var(--color-pass);
+  --color-pass-text: var(--color-pass-text);
+  --color-pass-bg: var(--color-pass-bg);
+
+  --color-warning: var(--color-warning);
+  --color-warning-text: var(--color-warning-text);
+  --color-warning-bg: var(--color-warning-bg);
+
+  --color-critical: var(--color-critical);
+  --color-critical-text: var(--color-critical-text);
+  --color-critical-bg: var(--color-critical-bg);
+
+  --color-verdict-conditional-bg: var(--color-verdict-conditional-bg);
+  --color-verdict-conditional-border: var(--color-verdict-conditional-border);
+  --color-verdict-conditional-bar: var(--color-verdict-conditional-bar);
+  --color-verdict-conditional-title: var(--color-verdict-conditional-title);
+  --color-verdict-conditional-body: var(--color-verdict-conditional-body);
+
+  --color-verdict-approve-bg: var(--color-verdict-approve-bg);
+  --color-verdict-approve-border: var(--color-verdict-approve-border);
+  --color-verdict-approve-bar: var(--color-verdict-approve-bar);
+  --color-verdict-approve-title: var(--color-verdict-approve-title);
+  --color-verdict-approve-body: var(--color-verdict-approve-body);
+
+  --color-verdict-resubmit-bg: var(--color-verdict-resubmit-bg);
+  --color-verdict-resubmit-border: var(--color-verdict-resubmit-border);
+  --color-verdict-resubmit-bar: var(--color-verdict-resubmit-bar);
+  --color-verdict-resubmit-title: var(--color-verdict-resubmit-title);
+  --color-verdict-resubmit-body: var(--color-verdict-resubmit-body);
+
+  --color-toast-bg: var(--color-toast-bg);
+  --color-toast-action: var(--color-toast-action);
+  --color-toast-dot: var(--color-toast-dot);
 }
 
-/* This app is light-only for now — no dark-mode-aware components exist yet (sidebar, cards,
-   tables all use explicit light Tailwind classes). Pinning color-scheme stops the browser
-   from auto-dark-styling native form controls (inputs/selects) under OS dark mode, which is
-   what caused typed text to render near-invisible: white-ish text (inherited from body's
-   --foreground flipping under prefers-color-scheme) on a white input background. */
 html {
   color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+@keyframes softPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes popIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-riseIn {
+  animation: riseIn 300ms ease both;
+}
+.animate-fadeIn {
+  animation: fadeIn 200ms ease both;
+}
+.animate-sweep {
+  animation: sweep 1.8s linear infinite;
+}
+.animate-softPulse {
+  animation: softPulse 1.2s ease-in-out infinite;
+}
+.animate-popIn {
+  animation: popIn 280ms ease both;
+}
+.animate-slideUp {
+  animation: slideUp 250ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-riseIn,
+  .animate-fadeIn,
+  .animate-sweep,
+  .animate-softPulse,
+  .animate-popIn,
+  .animate-slideUp {
+    animation: none !important;
+  }
 }

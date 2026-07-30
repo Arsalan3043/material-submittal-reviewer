@@ -307,24 +307,15 @@ function bodies to S3 is the only sanctioned `src/` change outside this exercise
 
 ---
 
-## 7. The Streamlit app (`app/`)
+## 7. The Streamlit app (`app/`) — REMOVED (2026-07-30)
 
-- `app/main.py` — entry point. Inserts project root into `sys.path` (Streamlit quirk), loads
-  `.env`, calls `ensure_dirs()`, defines `st.session_state` defaults (`page`, `authority`,
-  `metadata`, `review_complete`, `knowledge_store_id`, `report`, `conversation_history`), and a
-  hand-rolled sidebar nav (`_NAV` list) that gates `review`/`report`/`chat` pages behind
-  `review_complete`. NOT Streamlit's native multi-page routing — deliberate choice (see
-  handoff Issue 5.5) to keep gating logic centralized.
-- `app/pages/upload.py` (112 lines) — authority selector, project name, file uploader (per-index
-  or single bundled PDF), builds `SubmittalMetadata`, calls `save_upload()` then `stage_files()`,
-  triggers navigation to `review`.
-- `app/pages/review.py` (157 lines) — calls `compile_review_graph()`, drives `graph.stream()`,
-  renders live per-node progress.
-- `app/pages/report.py` (231 lines) — renders every stage's findings as color-coded expandable
-  sections (red/yellow/green), a dedicated comparison-table view, plain-text export.
-- `app/pages/chat.py` (125 lines) — post-review Q&A UI calling `handle_query()`.
-- `app/pages/spec_manager.py` (169 lines) — admin UI to upload+index authority spec PDFs
-  (Pipeline 1 trigger).
+This section originally documented `app/main.py` + `app/pages/*.py`, the original Streamlit
+prototype UI. It has been **deleted from the repo** (`git rm -r app/`) now that `frontend/`
+(Next.js) + `apps/api/` (FastAPI) fully replace it — nothing in the active codebase imports
+`app.*` anymore (confirmed by grep before deletion). Kept here only as a pointer for anyone
+who finds it referenced in old commits or `docs/`: it was the five-page hand-rolled-nav
+Streamlit app (`upload` → `review` → `report` / `chat`, plus an admin `spec_manager` page),
+superseded feature-for-feature by the production frontend/API.
 
 ---
 
@@ -472,7 +463,9 @@ not just written and assumed to work.
 ### 13.2 Phase 2 — job queue + worker (`apps/worker/`)
 
 - `apps/worker/jobs.py` — `claim_next_job()` uses `FOR UPDATE SKIP LOCKED` (the whole "queue"
-  is the `jobs` table — no Celery, no SQS, per `CLAUDE.md` rule 3).
+  is the `jobs` table). **This is the Phase 1 target for replacement** — see §13.7 — not a
+  permanent design; the `jobs` table itself stays as the audit/status record even after SQS
+  becomes the actual dispatch mechanism.
 - `apps/worker/worker.py` — `run_worker(s3_bucket)` loop; `run_review()` wraps the **real**
   `compile_review_graph()` unchanged; `run_index()` wraps the **real**
   `src/rag/indexing/indexer.py::index_spec_pdf()` unchanged (downloads the spec PDF from S3 to
@@ -557,9 +550,250 @@ real second tenant: isolation now holds.
   tenant) — that still happens via direct DB access (`scripts/dev_seed_review.py` or manual
   SQL), matching the "admin-provisioned accounts" decision, not yet wrapped in an API.
 
+### 13.6 Phase 0 (production-readiness rebuild) — foundation, done 2026-07-30
+
+`CLAUDE.md`'s original "simplicity for 20-40 clients" framing (no Celery, no SQS, Qdrant
+Cloud not self-hosted) was explicitly superseded mid-project: the decision became "invest
+properly, one time, so the architecture doesn't need redoing after client #3-5." A new
+8-phase production-readiness plan governs everything from here forward (Phase 1 = this
+section's SQS/IAM work, Phase 2 = secrets/rate-limiting, Phase 3 = CloudWatch observability,
+Phase 4 = RDS + self-hosted Qdrant, Phase 5 = the Layer-2/ports-and-adapters extraction,
+Phase 6 = Terraform + systemd deploy, Phase 7 = product-completeness routes from `notes/api.md`).
+Phase 0 — the foundation everything else builds on — is complete:
+
+- **`config.py`** — one `pydantic-settings` `Settings` object, validated at boot, replacing
+  scattered `os.environ` reads across `apps/api/auth.py`, `apps/api/s3.py`,
+  `apps/worker/worker.py`, `db/session.py`. Not yet wired into those call sites — exists and
+  is tested, but the scattered reads it's meant to replace are still live (see §13.8 gap).
+- **`core/errors.py`** — typed `AppError` hierarchy (`AppError` → `CategoryError` sets
+  `component` → `LeafError` sets `error_code` + `retryable`), covering storage/pipeline/
+  queue/database/identity/edge. `retryable` is the field Phase 1's SQS worker branches on:
+  leave the message for redelivery vs. delete immediately.
+- **`core/ports.py` + `adapters/pipeline/`** — the **`ReviewPipelinePort`** seam over frozen
+  `src/`. `LangGraphReviewPipeline` wraps `compile_review_graph()`/`stage_files()` completely
+  unchanged; `FakeReviewPipeline` is a zero-cost, zero-network double that emits the same 11
+  real node names in the same order (including the TAQA `avl_check` / non-TAQA `skip_avl`
+  branch) and returns a valid `ReviewResult`. This is the actual unlock — everything
+  downstream (tests, eventually the eval harness) runs against the fake, for free, instead of
+  paying real OpenAI cost per run.
+- **`composition.py`** — the one file allowed to import a concrete adapter;
+  `apps/worker/worker.py::run_worker()` now takes an injectable `pipeline: ReviewPipelinePort`
+  and defaults to `composition.build_review_pipeline()` at real runtime.
+- **`tests/unit/`** — first real test suite (46 tests, `pytest.ini` now actually exercised,
+  not just present): typed-error contract tests, `FakeReviewPipeline` node-sequence/branching/
+  failure-path tests, composition-root wiring, and two DB-backed tests
+  (`test_worker_run_review.py`) that run `run_review()` against a real Postgres transaction
+  (self-contained tenant/project/submittal fixture, S3 monkeypatched out) — marked
+  `integration` for the DB dependency, but still zero OpenAI cost.
+- **`.github/workflows/ci.yml`** — ruff + mypy (scoped to `core/`, `adapters/`,
+  `apps/worker/`, `composition.py`, `config.py`, `db/`, `tests/unit/` — deliberately
+  excluding frozen `src/` and the (now-deleted) legacy `app/`) + pytest against a real
+  Postgres service container, on every push.
+- **Verified twice, both against the real dev DB and real S3 files (submittal
+  `32b79c90-3d27-4d59-b764-a12d3627ddb3`):** once through `FakeReviewPipeline` (zero cost,
+  proves the DB/S3/event-logging wiring), once through the real `LangGraphReviewPipeline`
+  (real OpenAI spend, explicit go-ahead given first — proves the port wrapper changed
+  nothing: real `RESUBMIT` recommendation, real report + requirements/verification
+  artifacts, all 11 real node names logged in order).
+
+### 13.7 Locked decisions for the production-readiness rebuild (recorded so they aren't re-litigated later)
+
+- **Job queue: SQS + a Dead-Letter Queue, not Celery+Redis.** Redis-backed Celery means
+  self-operating a broker (HA, backups, patching) for machinery (task routing, canvases,
+  result backends) this system doesn't use. SQS is fully managed and gives retry
+  (visibility-timeout redelivery) + dead-lettering (`maxReceiveCount`) natively — exactly
+  the two things actually needed. The `jobs` table stays as the audit/status record even
+  after this lands; SQS becomes the dispatch mechanism, not a replacement for status tracking.
+- **Tooling: AWS-native only, no new paid third-party SaaS.** No Sentry (CloudWatch Logs/
+  Metrics/Alarms + SNS instead). Self-hosted Qdrant on EC2 (Docker), not Qdrant Cloud —
+  reverses the "Qdrant Cloud" line in the old Phase 4 framing below.
+- **Worker deployment: still a plain Python process, still on the one EC2 host — but
+  supervised via a systemd template unit, not a bare terminal process.** Scaling from N to
+  N+1 concurrent reviews means starting one more instance of the same unit (`worker@3`,
+  `worker@4`, ...) — all instances long-poll the same SQS queue independently; SQS handles
+  not double-delivering a message, no coordination code needed. Concurrency ceiling is the
+  one EC2 box's CPU/RAM, not the queue. Considered and explicitly rejected for now: Docker
+  (extra moving parts, not needed yet), ECS/Fargate (real infra investment, contradicts
+  `CLAUDE.md`'s original "not ECS" framing for pre-PMF), Lambda (15-min timeout too close to
+  the ~6-min pipeline with no margin, and packaging LangGraph + PDF/OCR deps for Lambda is
+  real friction), Kubernetes (overkill at this scale). Each of these remains a valid future
+  upgrade if the system ever outgrows one EC2 host — not a decision being made now.
+
+### 13.8 Known gaps carried forward from Phase 0
+
+- `config.py` is now wired into `apps/worker/worker.py`'s and the API routers' new SQS code
+  path (via `composition.build_job_queue()` → `config.get_settings()`), but **not yet** into
+  `apps/api/auth.py`, `apps/api/s3.py`, `db/session.py`, or the rest of `apps/worker/worker.py`
+  — those still read `os.environ` directly. Folding the rest in is unscheduled busywork, not
+  blocking anything.
+- `core/ports.py` now has `ReviewPipelinePort` and `JobQueuePort`. Still deliberately absent:
+  `SpecIndexPort`, `ObjectStoragePort`, `SubmittalRepository`, `IdentityPort` (all named in
+  `notes/architecture.md` §3.3) — added when their own phase needs them (Phase 4, 4, 5, 5 —
+  per the kit's volatility rule), not spread speculatively now.
+- **IAM hardening (the second half of Phase 1) was explicitly deferred by user decision**:
+  the existing personal AWS access key/secret (already used for S3) is reused for SQS rather
+  than creating `msr-api-role`/`msr-worker-role` right now. The one thing actually done for
+  this: confirmed the key has `AmazonSQSFullAccess` attached. Scoped IAM roles remain a real,
+  not-forgotten gap — worth doing before onboarding a real client, just not blocking this
+  phase.
+- `/health` and `/ready` (the other Phase 1 item from `notes/api.md` §4.1) — not yet built.
+
+### 13.9 Phase 1 (partial) — SQS migration, done 2026-07-30
+
+Real, billed AWS resources created via the Console (not Terraform/CLI — deliberate, matches
+"foundation first, minimal ceremony" for this pass): queue `msr-review-jobs` + DLQ
+`msr-review-jobs-dlq`, both `us-east-1`, 20-minute visibility timeout (comfortably covers the
+~6-minute real pipeline), 20s long-poll wait time, `maxReceiveCount=3` redrive to the DLQ.
+
+- **`core/ports.py::JobQueuePort`** — minimal by design: `send`/`receive`/`delete` only, no
+  `extend_visibility`/heartbeat (the 20-min timeout has enough margin that it isn't needed
+  yet). Message body is just the job id — the `jobs` Postgres table stays the single source
+  of truth for `job_type`/`submittal_id`/`payload`; SQS is purely dispatch+retry layered on
+  top, not a second copy of the data.
+- **`adapters/queue/sqs_queue.py`** (`SQSJobQueue`) — the real adapter, botocore exceptions
+  translated to `core.errors.QueueTransientError`. **`adapters/queue/fake_queue.py`**
+  (`FakeJobQueue`) — in-memory double mirroring real SQS's essential behavior (a received
+  message is invisible until acked or requeued), used by every test so none of them touch AWS.
+- **`apps/worker/jobs.py`** — `claim_next_job` (the old `FOR UPDATE SKIP LOCKED` claim)
+  replaced by `try_claim_job` (atomic PENDING→RUNNING flip by job id, returns `None` if
+  already claimed — handles SQS's at-least-once delivery safely) and `requeue_job` (reverts
+  RUNNING→PENDING so a redelivered message can re-claim after a retryable failure).
+- **`apps/worker/worker.py`** — main loop rewritten: `queue.receive()` (long-polls 20s, no
+  more manual `time.sleep` between empty polls) → `try_claim_job` → `_handle_job` → on
+  success, `mark_done` + `queue.delete()` (ack); on a **retryable** typed error, `requeue_job`
+  + leave the message un-acked (SQS redelivers after the visibility timeout expires — real
+  retry, not simulated); on a **non-retryable** typed error (or any untyped/unrecognized
+  exception — deliberately treated as non-retryable by default, same philosophy as
+  `adapters/pipeline/langgraph_pipeline.py`'s catch-all), `mark_failed` + `queue.delete()` so
+  it never wastes a redelivery. The per-message logic was pulled out into
+  `_process_message()` specifically so it's testable without needing to break out of an
+  infinite loop.
+- **`apps/api/routers/submittals.py::/start`** and **`specs.py::/index`** — both now call
+  `queue.send(job_id)` right after the `jobs` row INSERT commits (never before — a worker
+  must never be able to receive a job id the DB hasn't durably recorded yet). The `SQSJobQueue`
+  instance is built once at module import (matches `apps/api/s3.py`'s existing boto3-client
+  pattern), and `send()` runs via `asyncio.to_thread` since boto3 is synchronous and would
+  otherwise block the event loop.
+- **17 new tests** (`tests/unit/test_fake_queue.py`, `test_sqs_queue.py`,
+  `test_worker_sqs_loop.py`) — `FakeJobQueue` behavior, `SQSJobQueue` against a mocked
+  boto3 client (`unittest.mock`, not moto — avoided a new test dependency), and all 4 real
+  scenarios for `_process_message` against real Postgres: success, retryable-failure-requeues,
+  non-retryable-failure-fails-and-acks, unknown-job-id-acks-without-touching-DB. 63 tests
+  total now, all zero-cost.
+- Added `pyproject.toml` with one `[tool.ruff.lint.flake8-bugbear]` entry
+  (`extend-immutable-calls` for `fastapi.Depends`/`Query`/`Body`/`Path`) — without it, ruff's
+  B008 rule flags every FastAPI route's dependency-injection pattern as a bug, which it isn't.
+- **Verified against the real, live SQS queue** (not just `FakeJobQueue`): sent a real
+  message, received it via a real 20s long-poll, processed it through the real
+  `_process_message` (with `FakeReviewPipeline` — zero OpenAI cost, this test isolates the
+  SQS wiring specifically), confirmed the DB updated correctly (job `DONE`, submittal
+  `COMPLETED`), and confirmed the message was actually acked — a second real receive came
+  back empty.
+- **Not done in this pass** (see §13.8): scoped IAM roles, `/health`/`/ready`, and actually
+  running the worker as a systemd unit (still a bare `python -m apps.worker.worker` process
+  today — the SQS dispatch mechanism is real, but the "supervised, restartable, easy to
+  scale to N copies" deployment piece from the locked decisions in §13.7 hasn't been built
+  yet).
+
+### 13.10 Frontend — full desktop redesign, done 2026-07-31
+
+The Next.js frontend (previously a functional-but-generic Tailwind UI) was rebuilt against a
+real design handoff (`frontend/design_handoff_clause_qc_review/README.md` +
+`frontend-api-reference.md`, itself derived from `notes/frontend.md`). The existing working
+logic (retry-safe upload, SSE progress streaming, direct-to-S3 upload) was kept and re-skinned,
+not rewritten from scratch.
+
+- **Design system**: Instrument Sans + IBM Plex Mono fonts, full color/spacing/radius token
+  set as Tailwind theme variables, `lucide-react` icons, a toast system, shared
+  `Button`/`Chip`/`StatusChip` primitives, `lib/status.ts` mapping real API enum values
+  (`satisfied`/`non_compliant`/etc.) to the design's MET/PARTIAL/NOT MET language.
+- **Every screen rebuilt**: Login, Projects home, Create Project (now a real modal, not a
+  route), Project Register (stats computed from real submittal data, not invented), Submit
+  (real XHR upload progress, no fake cover-page auto-fill — that's not a real API feature),
+  Progress (the real 11-stage weighted checklist, actual node names/weights), Findings
+  Report (verdict banner, compliance matrix from real `citations` + `table_audit_findings`,
+  local-only confirm/dismiss per G1, chat rail), and a new Spec Library admin screen
+  (role-gated on `tenant_admin`).
+- **Also added**: session-expired redirect with return-path + inline note, the "no tenant"
+  404 edge state (`GET /me` returning 404).
+- **Verified**: `next build`, `tsc --noEmit`, and `eslint` all pass clean.
+- **Known gap, explicit**: **desktop/laptop only.** The sidebar hides below `md` breakpoint
+  so mobile doesn't visually break, but there is no mobile-specific layout yet — no bottom
+  tab bar, tables don't collapse to cards, etc. Same codebase, same components either way
+  (Tailwind responsive classes, not a separate app) — just not built yet.
+
+### 13.11 Qdrant migration (spec library) — done 2026-07-31
+
+Per the locked decision in §13.7 (self-hosted Qdrant, not Qdrant Cloud). Scoped narrowly to
+the spec library only — submittal-level RAG (see below) was deliberately deferred as a
+separate, later step.
+
+- **Real blocker found and explicitly resolved**: ChromaDB was hardwired directly into 5
+  frozen `src/` files (`src/rag/indexing/indexer.py`, `src/rag/query/hybrid_retriever.py`,
+  `src/rag/query/parent_fetcher.py`, plus `src/rag/submittal_rag/store.py` and `retriever.py`
+  for the deferred submittal-RAG piece) — not a drop-in swap underneath them. Per CLAUDE.md
+  rule 1's "stop and ask first," explicit sign-off was obtained to extend the same narrow,
+  mechanical exception already made for `file_io.py` to these files: swap only the
+  `chromadb.PersistentClient` calls for a Qdrant client, preserve all business logic
+  (chunking, query construction, RRF fusion, reranking) unchanged.
+- **Collection structure**: one collection per authority (`adm_specifications`,
+  `taqa_specifications`) — unchanged from the ChromaDB design, still shared/global across
+  all tenants, correctly so (spec text is public reference data, not tenant data).
+- **One real semantic gap handled deliberately**: ChromaDB's `where_document={"$contains":
+  ...}` substring search (used in `parent_fetcher.py`'s `get_parent_ids_for_chunks`) has no
+  Qdrant-native equivalent (Qdrant's payload text match is token-based, not substring).
+  Preserved identical behavior via a cached full-collection scroll + Python substring match,
+  rather than approximating with different-semantics token matching.
+- **Self-hosted via Docker**: `qdrant` service added to `docker-compose.yml` (same pattern as
+  the existing local Postgres), matching the target of the same image running on EC2 in prod
+  later.
+- **Re-indexed all 3 real ADM spec PDFs** — 23,835 chunks total, **exactly matching** the
+  original ChromaDB counts (irrigation 7,886 + road 9,631 + storm_water 6,318).
+- **Verified against a real, paid review run** (not just a smoke test): real spec clauses
+  cited (10.2.2, 11.2.2, Table 10.2-1), real deterministic numeric checks, real extracted
+  citation text, a sensible `RESUBMIT` recommendation consistent with this same submittal's
+  earlier ChromaDB-backed run — no retrieval quality regression.
+- **Deliberately deferred**: submittal-level RAG (activating the currently-dead
+  `src/rag/submittal_rag/` code so a submittal's own uploaded documents get embedded and are
+  queryable in chat) — a genuinely new feature, not an engine swap, planned as a separate
+  step. Also deferred: custom/private per-project specs (discussed and explicitly shelved —
+  every spec today is global/admin-ingested, visible to all tenants, matching current
+  behavior exactly).
+
 ---
 
 ## What's next
+
+**Done:** Phase 0 (§13.6-13.8) — foundation. Phase 1 **partial** (§13.9) — SQS migration
+real and verified; IAM roles, `/health`/`/ready`, and systemd deployment still pending, all
+by explicit deferral, not oversight. Frontend desktop redesign (§13.10) — complete. Qdrant
+spec-library migration (§13.11) — complete and verified.
+
+**Pending, in no particular committed order:**
+
+1. **Phase 1 leftovers** — scoped IAM roles (`msr-api-role`/`msr-worker-role`, currently
+   using personal AWS keys), `/health`/`/ready` endpoints, worker running as a supervised
+   systemd unit (still a bare process).
+2. **Phase 2** — AWS Parameter Store for secrets, SES email, per-tenant rate limiting.
+3. **Phase 3** — CloudWatch logs/metrics + SNS alarms.
+4. **RDS** — explicitly staying on Docker Postgres for now (cost decision); migrating later
+   via `pg_dump`/`pg_restore` or AWS DMS is straightforward whenever needed.
+5. **Submittal-level RAG** — activate the dead `src/rag/submittal_rag/` code (chat grounded
+   in a submittal's own uploaded documents, not just the spec) — deferred, see §13.11.
+6. **Phase 5** — the Layer-2 extraction (repositories, policies, pipelines) absorbing the
+   ~28 raw SQL statements currently inline in routers/worker.
+7. **Phase 6** — actual deployment (Terraform, EC2, ALB, HTTPS) — nothing is on AWS yet
+   beyond S3/Cognito/SQS; everything else still runs locally.
+8. **Phase 7 / product-completeness routes** — see `notes/api.md` §3-4 for the full gap
+   list: finding override (persisted, not just local UI state), PDF export, cancel/retry,
+   tenant/user admin screens.
+9. **Mobile responsiveness** — the frontend (§13.10) is desktop/laptop only right now.
+10. **Custom/private per-project specs** — discussed and explicitly shelved; every spec
+    today is global, admin-ingested, visible to all tenants.
+
+---
+
+## Superseded: original Phase 4-6 framing (kept for history, see §13.7 for what's current)
 
 Phases 1–3 are built and verified against real infrastructure, including one real security
 bug (13.4) found and fixed by testing with a real second tenant rather than trusting the

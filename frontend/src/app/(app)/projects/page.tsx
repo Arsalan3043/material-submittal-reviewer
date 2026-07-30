@@ -1,59 +1,89 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { listProjects, type Project } from "@/lib/api";
+import { PageHeader } from "@/components/page-header";
+import { Chip, Button } from "@/components/ui";
+import { useNewProjectModal } from "@/components/new-project-modal";
+import { useSession } from "@/lib/hooks/use-session";
 
+/** README Screen 2 — project grid, or the create-project form directly when there are none. */
 export default function ProjectsPage() {
+  const router = useRouter();
+  const { open: openNewProjectModal } = useNewProjectModal();
+  const { user } = useSession();
   const [projects, setProjects] = useState<Project[] | null>(null);
 
   useEffect(() => {
     listProjects().then(setProjects);
   }, []);
 
-  if (projects === null) {
-    return <div className="p-8 text-sm text-zinc-400">Loading...</div>;
-  }
-
-  if (projects.length === 0) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-        <p className="text-lg text-zinc-600">
-          Create a project to start reviewing submittals
-        </p>
-        <Link href="/projects/new">
-          <button className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800">
-            Create your first project
-          </button>
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-8">
-      <h1 className="mb-6 text-lg font-semibold text-zinc-900">Projects</h1>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((p) => (
-          <Link
-            key={p.id}
-            href={`/projects/${p.id}`}
-            className="rounded-lg border border-zinc-200 bg-white p-4 hover:border-zinc-300 hover:shadow-sm"
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="font-medium text-zinc-900">{p.name}</h2>
-              <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-                {p.authority}
+    <div className="flex h-full flex-col">
+      <PageHeader
+        title="Projects"
+        right={
+          <Button className="h-[34px] px-4" onClick={openNewProjectModal}>
+            New project
+          </Button>
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto p-6 md:p-6.5">
+        {projects === null && (
+          <p className="text-sm text-text-faint">Loading…</p>
+        )}
+
+        {projects?.length === 0 && (
+          <div className="animate-riseIn flex h-full flex-col items-center justify-center gap-3 text-center">
+            <p className="text-lg text-text-secondary">
+              Create a project to start reviewing submittals
+            </p>
+            <Button className="h-10 px-5" onClick={openNewProjectModal}>
+              Create your first project
+            </Button>
+          </div>
+        )}
+
+        {projects && projects.length > 0 && (
+          <div className="animate-riseIn flex flex-col gap-4">
+            <div className="flex items-baseline justify-between">
+              <h1 className="text-[15px] font-semibold text-ink">Your projects</h1>
+              <span className="text-[12.5px] text-text-muted">
+                {projects.length} active{user ? ` · ${user.email.split("@")[1] ?? ""}` : ""}
               </span>
             </div>
-            {p.description && (
-              <p className="line-clamp-2 text-sm text-zinc-500">{p.description}</p>
-            )}
-            <p className="mt-3 text-xs text-zinc-400">
-              Created {new Date(p.created_at).toLocaleDateString()}
-            </p>
-          </Link>
-        ))}
+
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => router.push(`/projects/${p.id}`)}
+                  className="flex flex-col gap-2.5 rounded-xl border border-line bg-panel p-4 text-left transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-accent"
+                >
+                  <div className="flex items-center justify-between">
+                    <Chip className="bg-accent-wash text-accent">{p.authority}</Chip>
+                  </div>
+                  <div className="text-[15px] font-semibold leading-snug text-ink">
+                    {p.name}
+                  </div>
+                  <div className="text-[12.5px] text-text-muted">
+                    Created {new Date(p.created_at).toLocaleDateString()}
+                  </div>
+                </button>
+              ))}
+
+              <button
+                onClick={openNewProjectModal}
+                className="flex flex-col justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[#D8D7D2] p-4 text-left hover:border-accent hover:bg-[#F7F8FF]"
+              >
+                <span className="text-sm font-semibold text-accent">+ New project</span>
+                <span className="text-xs text-text-muted">Name and authority — two fields.</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

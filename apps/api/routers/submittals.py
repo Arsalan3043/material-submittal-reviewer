@@ -6,19 +6,31 @@ status, progress events, list. Mirrors the worker's expectations exactly: s3_key
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.dependencies import CurrentUser, get_current_user, get_db
 from apps.api.s3 import presigned_get_url, presigned_put_url
+from composition import build_job_queue
+from db.session import get_db as db_session_scope
 from src.rag.query.query_constructor import build_query
 
+_STREAM_POLL_SECONDS = 1
+_TERMINAL_STATUSES = ("COMPLETED", "FAILED", "CANCELLED")
+
 router = APIRouter(prefix="/api/v1", tags=["submittals"])
+
+# Built once at import time, like apps/api/s3.py's boto3 client — SQSJobQueue holds a
+# boto3 client internally, and constructing a fresh one per request would redo local
+# credential/config resolution on every single call for no benefit.
+_job_queue = build_job_queue()
 
 
 class SubmittalFileRequest(BaseModel):
@@ -67,6 +79,7 @@ async def create_submittal(
             },
         )
     ).fetchone()
+    assert submittal_row is not None  # RETURNING id always yields exactly one row on a successful INSERT
     submittal_id = submittal_row[0]
 
     uploads = []
@@ -140,7 +153,14 @@ async def start_submittal(
         )
     ).fetchone()
     await db.commit()
-    return {"status": "queued", "job_id": str(job_row[0])}
+    assert job_row is not None  # RETURNING id always yields exactly one row on a successful INSERT
+    job_id = job_row[0]
+    # jobs row above is the audit/status record; SQS is the actual dispatch mechanism a
+    # worker long-polls (see apps/worker/worker.py). Sent after the commit so a worker can
+    # never receive a job_id the DB hasn't durably recorded yet. boto3 is sync, so this runs
+    # off the event loop rather than blocking it.
+    await asyncio.to_thread(_job_queue.send, str(job_id))
+    return {"status": "queued", "job_id": str(job_id)}
 
 
 @router.get("/submittals/{submittal_id}")
@@ -192,6 +212,109 @@ async def get_submittal_events(
         )
     ).mappings().fetchall()
     return [dict(r) for r in rows]
+
+
+@router.get("/submittals/{submittal_id}/stream")
+async def stream_submittal_progress(
+    submittal_id: uuid.UUID,
+    request: Request,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Server-Sent Events replacement for client-side polling of /events and /{id}. Chosen
+    deliberately over Postgres LISTEN/NOTIFY (the "true push" alternative): the actual
+    bottleneck in review latency is the ~5-minute silent gap inside doc_processor, which
+    emits no event either way — so real-time push over the currently-instant events buys
+    negligible user-facing benefit for meaningfully more moving parts (a raw connection
+    outside the pool, reconnect/missed-notification handling). This still polls Postgres,
+    just server-side on a 1s interval instead of the browser making a new HTTP request
+    every 2s, forwarding changes over one held-open connection.
+
+    The `Depends(get_db)` session above is used ONLY for the existence check before the
+    response is constructed. It is NOT reused inside event_source() — FastAPI tears down
+    `yield`-based dependencies as soon as the route function returns (i.e. the moment the
+    StreamingResponse object is constructed), which happens well before the generator
+    body actually runs. Confirmed the hard way: reusing `db` inside the generator raised
+    `asyncpg.InvalidTextRepresentationError: invalid input syntax for type uuid: ""` on
+    the very first poll tick — the session was already torn down. Each tick below opens
+    its own short-lived session instead, which also removes the alternative tradeoff this
+    endpoint used to have (holding one connection + one open transaction for the full
+    ~6-minute life of a stream).
+
+    Native EventSource can't send an Authorization header, which is why the frontend
+    consumes this with fetch() + a manual reader instead of `new EventSource(...)`.
+    """
+    exists = (
+        await db.execute(text("SELECT id FROM submittals WHERE id = :id"), {"id": submittal_id})
+    ).fetchone()
+    if exists is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "submittal not found")
+
+    tenant_id = current_user.tenant_id
+
+    async def event_source():
+        last_seq = -1
+        while True:
+            if await request.is_disconnected():
+                break
+
+            async with db_session_scope(tenant_id=tenant_id) as tick_db:
+                submittal_row = (
+                    await tick_db.execute(
+                        text("SELECT status FROM submittals WHERE id = :id"),
+                        {"id": submittal_id},
+                    )
+                ).mappings().fetchone()
+
+                new_events = (
+                    await tick_db.execute(
+                        text(
+                            """
+                            SELECT sequence_number, node_name, created_at
+                            FROM submittal_events
+                            WHERE submittal_id = :id AND sequence_number > :last_seq
+                            ORDER BY sequence_number
+                            """
+                        ),
+                        {"id": submittal_id, "last_seq": last_seq},
+                    )
+                ).mappings().fetchall()
+
+            if submittal_row is None:
+                break
+
+            for e in new_events:
+                last_seq = e["sequence_number"]
+                payload = {
+                    "sequence_number": e["sequence_number"],
+                    "node_name": e["node_name"],
+                    "created_at": e["created_at"].isoformat(),
+                }
+                yield f"event: node_complete\ndata: {json.dumps(payload)}\n\n"
+
+            yield f"event: status\ndata: {json.dumps({'status': submittal_row['status']})}\n\n"
+
+            if submittal_row["status"] in _TERMINAL_STATUSES:
+                yield (
+                    f"event: done\n"
+                    f"data: {json.dumps({'status': submittal_row['status']})}\n\n"
+                )
+                break
+
+            await asyncio.sleep(_STREAM_POLL_SECONDS)
+
+    return StreamingResponse(
+        event_source(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            # Disables response buffering on nginx-style reverse proxies — without this,
+            # a proxy in front of the API in production could hold the whole stream until
+            # it closes, defeating the point.
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/projects/{project_id}/submittals")

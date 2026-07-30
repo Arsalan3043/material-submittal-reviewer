@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored design-handoff prototype (design_handoff_clause_qc_review/README.md: "Not
+    // part of the deliverable" — its own runtime, not our app code).
+    "design_handoff_clause_qc_review/**",
   ]),
 ]);
 

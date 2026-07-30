@@ -1,0 +1,5 @@
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection pattern (`db: AsyncSession = Depends(get_db)`) IS the
+# framework's documented, idiomatic usage — B008 exists to catch accidental mutable-default
+# bugs, not this. Without this, every route in apps/api/routers/ trips B008.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Path"]

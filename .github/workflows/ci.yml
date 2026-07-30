@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main, feat/production]
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: ruff (production layer — src/, app/, experiments/ are pre-existing/frozen, not in scope)
+        run: |
+          ruff check core/ adapters/ apps/worker/ composition.py config.py db/ tests/unit/ \
+            apps/api/routers/submittals.py apps/api/routers/specs.py
+      - name: mypy (production layer — core/adapters/apps/db/composition/config)
+        run: |
+          mypy --ignore-missing-imports --follow-imports=silent \
+            core/ adapters/ apps/worker/ composition.py config.py db/ tests/unit/ \
+            apps/api/routers/submittals.py apps/api/routers/specs.py
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: material_submittal_reviewer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: run migrations (creates api_app/worker_app roles + schema)
+        run: alembic upgrade head
+        env:
+          ADMIN_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/material_submittal_reviewer
+      - name: pytest (FakeReviewPipeline throughout — zero OpenAI cost)
+        run: pytest tests/unit -v
+        env:
+          DATABASE_URL: postgresql+asyncpg://api_app:api_app_dev_password@localhost:5432/material_submittal_reviewer
+          WORKER_DATABASE_URL: postgresql+asyncpg://worker_app:worker_app_dev_password@localhost:5432/material_submittal_reviewer

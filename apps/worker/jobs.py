@@ -1,12 +1,13 @@
 """
 Job-queue primitives on top of the `jobs` table (see migrations/versions/001_initial_schema.py).
 
-No Celery, no SQS, no broker — the queue IS the `jobs` table. `claim_next_job` is the one
-statement that makes this safe: `FOR UPDATE SKIP LOCKED` lets multiple workers poll the same
-table without ever double-claiming a row, using nothing but Postgres row locking. This is a
-deliberate simplicity choice (CLAUDE.md rule 3 / planning/05_build_plan_for_claude_code.md
-Phase 2) appropriate for the first 20-40 clients, not a stopgap — there is no plan to
-"graduate" to Celery later, only a trigger table if job volume ever demands it.
+Dispatch is SQS (adapters/queue/sqs_queue.py) as of Phase 1 — `jobs` is now the audit/status
+record, not the dispatch mechanism itself. `try_claim_job` replaces the old `claim_next_job`'s
+`FOR UPDATE SKIP LOCKED` claiming: exclusivity is now SQS's job (a message is only delivered
+to one worker at a time, per its visibility timeout), so this just needs to atomically flip
+PENDING -> RUNNING and tell the caller whether it actually won that flip — SQS's at-least-once
+delivery means the same message can legitimately arrive twice (e.g. a slow ack racing a
+visibility-timeout expiry), and a second arrival must be a safe no-op, not a double-run.
 """
 
 from __future__ import annotations
@@ -18,30 +19,36 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 
-def claim_next_job(db: Session) -> dict | None:
-    """Atomically claim the oldest PENDING job, or return None if the queue is empty."""
+def try_claim_job(db: Session, job_id: uuid.UUID | str) -> dict | None:
+    """Atomically flips PENDING -> RUNNING for this job id. Returns None if the job is
+    unknown or was already claimed (not PENDING) — the caller should treat that as "already
+    handled, just ack the message," not an error."""
     row = (
         db.execute(
             text(
                 """
                 UPDATE jobs
                 SET status = 'RUNNING', picked_at = NOW(), attempts = attempts + 1
-                WHERE id = (
-                    SELECT id FROM jobs
-                    WHERE status = 'PENDING'
-                    ORDER BY created_at
-                    FOR UPDATE SKIP LOCKED
-                    LIMIT 1
-                )
+                WHERE id = :id AND status = 'PENDING'
                 RETURNING id, job_type, submittal_id, payload
                 """
-            )
+            ),
+            {"id": job_id},
         )
         .mappings()
         .fetchone()
     )
     db.commit()
     return dict(row) if row is not None else None
+
+
+def requeue_job(db: Session, job_id: uuid.UUID) -> None:
+    """Reverts a claimed job back to PENDING after a retryable failure, so the SQS
+    redelivery (message left un-acked, visibility timeout expires) can re-claim it. Without
+    this, the redelivered message would find the job stuck at RUNNING and try_claim_job would
+    treat it as already-claimed, silently dropping the retry."""
+    db.execute(text("UPDATE jobs SET status='PENDING' WHERE id=:id"), {"id": job_id})
+    db.commit()
 
 
 def mark_done(db: Session, job_id: uuid.UUID) -> None:
@@ -86,4 +93,5 @@ def enqueue_job(
         },
     ).fetchone()
     db.commit()
+    assert row is not None  # RETURNING id always yields exactly one row on a successful INSERT
     return row[0]

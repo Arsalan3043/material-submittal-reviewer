@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import os
 import re
 from functools import lru_cache
 
-import chromadb
 from langsmith.wrappers import wrap_openai
 from openai import OpenAI
+from qdrant_client import QdrantClient
+from qdrant_client.models import FieldCondition, Filter, MatchValue
 from rank_bm25 import BM25Okapi
 
-from src.config.paths import CHROMA_PATH
 from src.rag.query.query_constructor import StructuredQuery
 
 # Promoted directly from experiments/rag/exp05_metadata_filter/pipeline.py.
@@ -19,10 +20,15 @@ BM25_CANDIDATES = 20
 SEMANTIC_CANDIDATES = 20
 RRF_K = 60
 
+# Qdrant's scroll() is paginated — this is the page size used to walk a full filtered (or
+# unfiltered) corpus for BM25, not a result-count cap (unlike ChromaDB's single get() call,
+# which returned everything at once).
+SCROLL_PAGE_SIZE = 500
+
 EMBED_MODEL = "text-embedding-3-small"
 
 _openai_client: OpenAI | None = None
-_chroma_client: chromadb.PersistentClient | None = None
+_qdrant_client: QdrantClient | None = None
 
 
 def _openai() -> OpenAI:
@@ -32,15 +38,36 @@ def _openai() -> OpenAI:
     return _openai_client
 
 
-def _chroma() -> chromadb.PersistentClient:
-    global _chroma_client
-    if _chroma_client is None:
-        _chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
-    return _chroma_client
+def _qdrant() -> QdrantClient:
+    global _qdrant_client
+    if _qdrant_client is None:
+        _qdrant_client = QdrantClient(url=os.environ.get("QDRANT_URL", "http://localhost:6333"))
+    return _qdrant_client
 
 
-def _get_collection(collection_name: str) -> chromadb.Collection:
-    return _chroma().get_collection(name=collection_name)
+def _scroll_all(collection_name: str, query_filter: Filter | None) -> tuple[list[str], list[str]]:
+    """Walks every point matching query_filter (or the whole collection when None),
+    paginating with scroll() since Qdrant returns results a page at a time rather than
+    all-at-once like ChromaDB's get(). Returns (ids, documents) in the same shape the old
+    ChromaDB-backed _build_bm25 expected."""
+    ids: list[str] = []
+    docs: list[str] = []
+    offset = None
+    while True:
+        records, offset = _qdrant().scroll(
+            collection_name=collection_name,
+            scroll_filter=query_filter,
+            limit=SCROLL_PAGE_SIZE,
+            offset=offset,
+            with_payload=["document"],
+            with_vectors=False,
+        )
+        for r in records:
+            ids.append(str(r.id))
+            docs.append((r.payload or {}).get("document", ""))
+        if offset is None:
+            break
+    return ids, docs
 
 
 @lru_cache(maxsize=64)
@@ -51,16 +78,18 @@ def _build_bm25(
 ) -> tuple[BM25Okapi, list[str], list[str]]:
     """
     Filtered BM25 — cached per (collection, key, value).
-    filter_key / filter_value are the ChromaDB metadata field and value to scope
-    the corpus.  Call with filter_key="" to build over the full collection.
+    filter_key / filter_value are the Qdrant payload field and value to scope the corpus.
+    Call with filter_key="" to build over the full collection.
     """
-    col = _get_collection(collection_name)
-    if filter_key:
-        data = col.get(where={filter_key: filter_value}, include=["documents"])
-    else:
-        data = col.get(include=["documents"])
-    ids: list[str] = data["ids"]
-    docs: list[str] = data["documents"]
+    query_filter = (
+        Filter(must=[FieldCondition(key=filter_key, match=MatchValue(value=filter_value))])
+        if filter_key
+        else None
+    )
+    try:
+        ids, docs = _scroll_all(collection_name, query_filter)
+    except Exception:
+        return BM25Okapi([["placeholder"]]), [], []
     if not ids:
         return BM25Okapi([["placeholder"]]), ids, docs
     tokenized = [d.lower().split() for d in docs]
@@ -126,9 +155,7 @@ def retrieve_candidates(
     found" error: the old code had no fallback, so a metadata filter miss meant
     zero results every time.
     """
-    try:
-        col = _get_collection(collection_name)
-    except Exception:
+    if not _qdrant().collection_exists(collection_name):
         return []
 
     clause = query.clause_hint          # e.g. "02810" or "earthworks" (normalised)
@@ -161,15 +188,19 @@ def retrieve_candidates(
         )
 
         def _semantic_query(where: dict | None) -> list[str]:
-            kwargs: dict = dict(
-                query_embeddings=[embedding],
-                n_results=SEMANTIC_CANDIDATES,
-                include=[],
+            query_filter = (
+                Filter(must=[FieldCondition(key=k, match=MatchValue(value=v)) for k, v in where.items()])
+                if where
+                else None
             )
-            if where:
-                kwargs["where"] = where
-            result = col.query(**kwargs)
-            return result["ids"][0]
+            result = _qdrant().query_points(
+                collection_name=collection_name,
+                query=embedding,
+                query_filter=query_filter,
+                limit=SEMANTIC_CANDIDATES,
+                with_payload=False,
+            )
+            return [str(p.id) for p in result.points]
 
         semantic_ids = _semantic_query(query.metadata_filter)
 

@@ -23,7 +23,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    String,
     Text,
     UniqueConstraint,
     func,
@@ -52,8 +51,8 @@ class Tenant(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    users: Mapped[list["User"]] = relationship(back_populates="tenant")
-    projects: Mapped[list["Project"]] = relationship(back_populates="tenant")
+    users: Mapped[list[User]] = relationship(back_populates="tenant")
+    projects: Mapped[list[Project]] = relationship(back_populates="tenant")
 
 
 class User(Base):
@@ -75,7 +74,7 @@ class User(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    tenant: Mapped["Tenant"] = relationship(back_populates="users")
+    tenant: Mapped[Tenant] = relationship(back_populates="users")
 
 
 class Project(Base):
@@ -96,9 +95,9 @@ class Project(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    tenant: Mapped["Tenant"] = relationship(back_populates="projects")
-    specs: Mapped[list["ProjectSpec"]] = relationship(back_populates="project")
-    submittals: Mapped[list["Submittal"]] = relationship(back_populates="project")
+    tenant: Mapped[Tenant] = relationship(back_populates="projects")
+    specs: Mapped[list[ProjectSpec]] = relationship(back_populates="project")
+    submittals: Mapped[list[Submittal]] = relationship(back_populates="project")
 
 
 class SpecDocument(Base):
@@ -132,7 +131,7 @@ class SpecDocument(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    project_specs: Mapped[list["ProjectSpec"]] = relationship(back_populates="spec_document")
+    project_specs: Mapped[list[ProjectSpec]] = relationship(back_populates="spec_document")
 
 
 class ProjectSpec(Base):
@@ -159,8 +158,8 @@ class ProjectSpec(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    project: Mapped["Project"] = relationship(back_populates="specs")
-    spec_document: Mapped["SpecDocument"] = relationship(back_populates="project_specs")
+    project: Mapped[Project] = relationship(back_populates="specs")
+    spec_document: Mapped[SpecDocument] = relationship(back_populates="project_specs")
 
 
 class Submittal(Base):
@@ -207,10 +206,10 @@ class Submittal(Base):
         TIMESTAMP(timezone=True), nullable=True
     )
 
-    project: Mapped["Project"] = relationship(back_populates="submittals")
-    files: Mapped[list["SubmittalFile"]] = relationship(back_populates="submittal")
-    events: Mapped[list["SubmittalEvent"]] = relationship(back_populates="submittal")
-    chat_turns: Mapped[list["ChatTurn"]] = relationship(back_populates="submittal")
+    project: Mapped[Project] = relationship(back_populates="submittals")
+    files: Mapped[list[SubmittalFile]] = relationship(back_populates="submittal")
+    events: Mapped[list[SubmittalEvent]] = relationship(back_populates="submittal")
+    chat_turns: Mapped[list[ChatTurn]] = relationship(back_populates="submittal")
 
 
 class SubmittalFile(Base):
@@ -230,7 +229,7 @@ class SubmittalFile(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    submittal: Mapped["Submittal"] = relationship(back_populates="files")
+    submittal: Mapped[Submittal] = relationship(back_populates="files")
 
 
 class SubmittalEvent(Base):
@@ -251,7 +250,7 @@ class SubmittalEvent(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    submittal: Mapped["Submittal"] = relationship(back_populates="events")
+    submittal: Mapped[Submittal] = relationship(back_populates="events")
 
 
 class ChatTurn(Base):
@@ -275,7 +274,7 @@ class ChatTurn(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    submittal: Mapped["Submittal"] = relationship(back_populates="chat_turns")
+    submittal: Mapped[Submittal] = relationship(back_populates="chat_turns")
 
 
 class Job(Base):

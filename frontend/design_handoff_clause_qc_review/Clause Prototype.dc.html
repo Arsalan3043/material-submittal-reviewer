@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #DEDDD9; }
+  a { color: #1B4DFF; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  input, button { font-family: 'Instrument Sans', system-ui, sans-serif; }
+  input:focus { outline: none; border-color: #1B4DFF !important; }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sweep { 0% { transform: translateX(-120%); } 100% { transform: translateX(420%); } }
+  @keyframes softPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes popIn { 0% { transform: scale(.5); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:40px;display:flex;flex-direction:column;align-items:center;gap:18px;font-family:'Instrument Sans',system-ui,sans-serif">
+  <div style="width:1240px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+    <div style="display:flex;flex-direction:column;gap:5px">
+      <div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#6E6E76">CLICKABLE PROTOTYPE · DIRECTION 1A</div>
+      <div style="font:600 22px/1 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.01em">Clause — submit, review, resolve</div>
+      <div style="font:400 13px/1.5 'Instrument Sans',sans-serif;color:#5C5F63;max-width:760px">Sign in, create a project, drop files, watch the real weighted pipeline run, then work the findings — expand citations, confirm or dismiss each one, ask a grounded question, export. Everything below is live state.</div>
+    </div>
+    <div style="display:flex;gap:9px;flex-shrink:0;align-items:center">
+      <div style="display:flex;gap:2px;padding:3px;border-radius:11px;background:#CFCEC9">
+        <button type="button" style="{{ devDesktop }}" onClick="{{ goDesktop }}">Laptop</button>
+        <button type="button" style="{{ devMobile }}" onClick="{{ goMobile }}">Mobile</button>
+      </div>
+      <button type="button" style="height:32px;padding:0 13px;border:1px solid #C3C2BD;border-radius:9px;background:#FFF;color:#4E5054;font:500 12.5px/1 'Instrument Sans',sans-serif;cursor:pointer" onClick="{{ reset }}">Reset demo</button>
+    </div>
+  </div>
+
+  <!-- ================= LAPTOP ================= -->
+  <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+  <div style="width:1240px;height:830px;border-radius:14px;overflow:hidden;border:1px solid #C9C8C3;background:#FAFAF9;box-shadow:0 24px 60px -30px rgba(20,20,25,.45);position:relative;display:flex">
+
+    <sc-if value="{{ notAuthed }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;display:flex;animation:fadeIn .3s ease both">
+      <div style="width:52%;background:#17181A;padding:52px;display:flex;flex-direction:column;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:24px;height:24px;border-radius:7px;background:#1B4DFF"></div>
+          <div style="font:600 16px/1 'Instrument Sans',sans-serif;color:#FAFAF9">Clause</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="font:600 34px/1.2 'Instrument Sans',sans-serif;color:#FAFAF9;letter-spacing:-.02em;max-width:420px;text-wrap:pretty">Material submittals, reviewed against ADM and TAQA clauses in under five minutes.</div>
+          <div style="font:400 14px/1.6 'Instrument Sans',sans-serif;color:#9A9A9F;max-width:400px">Every finding carries the spec clause and the page it came from. If we can't cite it, we don't say it.</div>
+        </div>
+        <div style="display:flex;gap:26px">
+          <div><div style="font:600 20px/1 'Instrument Sans',sans-serif;color:#FAFAF9">4m 12s</div><div style="margin-top:5px;font:400 11.5px/1 'IBM Plex Mono',monospace;color:#7E7E85">AVG FIRST PASS</div></div>
+          <div><div style="font:600 20px/1 'Instrument Sans',sans-serif;color:#FAFAF9">10 yrs</div><div style="margin-top:5px;font:400 11.5px/1 'IBM Plex Mono',monospace;color:#7E7E85">RETENTION READY</div></div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px">
+        <div style="width:352px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font:600 22px/1.2 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.01em">Sign in</div>
+            <div style="margin-top:7px;font:400 13px/1.5 'Instrument Sans',sans-serif;color:#7C7F84">Accounts are provisioned by your tenant admin — there's no sign-up to fill in.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8E8E93">WORK EMAIL</label>
+            <input type="email" value="{{ email }}" onChange="{{ setEmail }}" onKeyDown="{{ loginKey }}" placeholder="arsalan@trojan.ae" style="height:42px;padding:0 13px;border:1px solid #DDDCD8;border-radius:10px;background:#FFF;font-size:14px;color:#17181A" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8E8E93">PASSWORD</label>
+            <input type="password" value="{{ pw }}" onChange="{{ setPw }}" onKeyDown="{{ loginKey }}" placeholder="••••••••" style="height:42px;padding:0 13px;border:1px solid #DDDCD8;border-radius:10px;background:#FFF;font-size:14px;color:#17181A" />
+          </div>
+          <sc-if value="{{ loginErr }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:10px 12px;border-radius:9px;background:#FBE9E9;color:#A82020;font:400 12.5px/1.4 'Instrument Sans',sans-serif;animation:popIn .25s ease both">{{ loginErrMsg }}</div>
+          </sc-if>
+          <button type="button" onClick="{{ doLogin }}" style="height:44px;border:none;border-radius:10px;background:#1B4DFF;color:#fff;font:600 14px/1 'Instrument Sans',sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(27,77,255,.3)" style-hover="background:#0B3AE0">Continue</button>
+          <div style="font:400 12px/1.5 'Instrument Sans',sans-serif;color:#A9A9AE">Demo: any email with an @ and 4+ characters of password.</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ authed }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;display:flex;min-width:0">
+      <!-- sidebar -->
+      <div style="width:236px;flex-shrink:0;background:#F2F2F0;border-right:1px solid #E6E6E3;display:flex;flex-direction:column;padding:18px 14px;gap:16px">
+        <div style="display:flex;align-items:center;gap:9px;padding:0 6px">
+          <div style="width:22px;height:22px;border-radius:6px;background:#1B4DFF"></div>
+          <div style="font:600 15px/1 'Instrument Sans',sans-serif;color:#17181A">Clause</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:9px;background:#FFF;border:1px solid #E2E2DF">
+          <div style="width:11px;height:11px;border-radius:50%;border:1.5px solid #9A9A9F;flex-shrink:0"></div>
+          <input value="{{ query }}" onChange="{{ setQuery }}" placeholder="Search submittals" style="flex:1;min-width:0;border:none;background:transparent;font-size:13px;color:#17181A" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;min-height:0;overflow:hidden">
+          <div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#8E8E93;padding:0 8px 6px">PROJECTS</div>
+          <sc-for list="{{ projectList }}" as="p" hint-placeholder-count="3">
+            <div style="{{ p.rowStyle }}" onClick="{{ p.open }}">
+              <div style="{{ p.nameStyle }}">{{ p.name }}</div>
+              <div style="display:flex;gap:6px;align-items:center"><span style="{{ p.authStyle }}">{{ p.authority }}</span><span style="font:400 11px/1 'Instrument Sans',sans-serif;color:#A9A9AE">{{ p.count }}</span></div>
+            </div>
+          </sc-for>
+          <div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;color:#1B4DFF;font:500 13px/1 'Instrument Sans',sans-serif;cursor:pointer" style-hover="background:#E9EDFF" onClick="{{ openNewProject }}">+ New project</div>
+        </div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:2px;border-top:1px solid #E4E4E1;padding-top:12px">
+          <div style="padding:8px 10px;border-radius:8px;font:400 13px/1 'Instrument Sans',sans-serif;color:#5C5F63;cursor:pointer" style-hover="background:#EAEAE7" onClick="{{ goSpecs }}">Spec library <span style="font:500 10px/1 'IBM Plex Mono',monospace;color:#A9A9AE">ADMIN</span></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 10px">
+            <div style="width:24px;height:24px;border-radius:50%;background:#1B4DFF;color:#fff;font:600 11px/24px 'Instrument Sans',sans-serif;text-align:center">AA</div>
+            <div style="font:400 12px/1.25 'Instrument Sans',sans-serif;color:#5C5F63;flex:1;min-width:0"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ email }}</span><span style="color:#A9A9AE">Reviewer</span></div>
+            <span style="font:400 11px/1 'Instrument Sans',sans-serif;color:#1B4DFF;cursor:pointer" onClick="{{ logout }}">Out</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- main -->
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
+        <div style="height:62px;flex-shrink:0;border-bottom:1px solid #ECECE9;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 26px">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0">
+            <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+              <span style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #E4E4E1;background:#FFF;font:500 12px/26px 'Instrument Sans',sans-serif;color:#5C5F63;cursor:pointer" style-hover="background:#F4F4F2" onClick="{{ goProject }}">← Back</span>
+            </sc-if>
+            <span style="font:600 16px/1 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.01em">{{ crumb }}</span>
+            <span style="display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:5px;background:#E9EDFF;color:#1B4DFF;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.06em">{{ activeAuthority }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:9px;height:32px;padding:0 12px;border-radius:9px;background:#E9EDFF;cursor:pointer;animation:fadeIn .3s ease both" onClick="{{ goProgress }}">
+                <span style="width:8px;height:8px;border-radius:50%;background:#1B4DFF;animation:softPulse 1.2s ease-in-out infinite"></span>
+                <span style="font:500 12px/1 'Instrument Sans',sans-serif;color:#1B4DFF">Review running · {{ percentLabel }}</span>
+              </div>
+            </sc-if>
+            <button type="button" style="height:34px;padding:0 15px;border:none;border-radius:9px;background:#1B4DFF;color:#fff;font:600 13px/1 'Instrument Sans',sans-serif;cursor:pointer;box-shadow:0 2px 6px rgba(27,77,255,.3)" style-hover="background:#0B3AE0" onClick="{{ goSubmit }}">New submittal</button>
+          </div>
+        </div>
+
+        <!-- projects home -->
+        <sc-if value="{{ atProjects }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;overflow:hidden;padding:24px 26px;display:flex;flex-direction:column;gap:16px;animation:riseIn .3s ease both">
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <div style="font:600 15px/1 'Instrument Sans',sans-serif;color:#17181A">Your projects</div>
+            <div style="font:400 12.5px/1 'Instrument Sans',sans-serif;color:#8E8E93">{{ projectCountLabel }}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px">
+            <sc-for list="{{ projectList }}" as="p" hint-placeholder-count="3">
+              <div style="padding:17px;border-radius:12px;background:#FFF;border:1px solid #EAEAE7;cursor:pointer;display:flex;flex-direction:column;gap:11px;transition:border-color .18s ease,transform .18s ease" style-hover="border-color:#1B4DFF;transform:translateY(-2px)" onClick="{{ p.open }}">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="height:20px;padding:0 7px;border-radius:5px;background:#E9EDFF;color:#1B4DFF;font:600 10px/20px 'IBM Plex Mono',monospace">{{ p.authority }}</span>
+                  <sc-if value="{{ p.needsAction }}" hint-placeholder-val="{{ false }}"><span style="height:20px;padding:0 7px;border-radius:5px;background:#FBE9E9;color:#A82020;font:600 10px/20px 'IBM Plex Mono',monospace">{{ p.actionLabel }}</span></sc-if>
+                </div>
+                <div style="font:600 15px/1.35 'Instrument Sans',sans-serif;color:#17181A">{{ p.name }}</div>
+                <div style="font:400 12.5px/1.4 'Instrument Sans',sans-serif;color:#8E8E93">{{ p.count }} · last activity {{ p.last }}</div>
+              </div>
+            </sc-for>
+            <div style="padding:17px;border-radius:12px;border:1.5px dashed #D8D7D2;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer" style-hover="border-color:#1B4DFF;background:#F7F8FF" onClick="{{ openNewProject }}">
+              <div style="font:600 14px/1 'Instrument Sans',sans-serif;color:#1B4DFF">+ New project</div>
+              <div style="font:400 12px/1.4 'Instrument Sans',sans-serif;color:#8E8E93">Name and authority — two fields.</div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- project register -->
+        <sc-if value="{{ atProject }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow:hidden;padding:22px 26px;display:flex;flex-direction:column;gap:16px;animation:riseIn .3s ease both">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
+              <div style="padding:14px 16px;border-radius:11px;background:#FFF;border:1px solid #EAEAE7;display:flex;flex-direction:column;gap:6px">
+                <div style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8E8E93">{{ s.label }}</div>
+                <div style="font:600 24px/1 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.02em">{{ s.value }}</div>
+                <div style="font:400 12px/1 'Instrument Sans',sans-serif;color:#8E8E93">{{ s.note }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="font:600 13px/1 'Instrument Sans',sans-serif;color:#17181A">Submittal register</div>
+            <div style="display:flex;gap:6px;margin-left:8px">
+              <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+                <span style="{{ f.style }}" onClick="{{ f.pick }}">{{ f.label }}</span>
+              </sc-for>
+            </div>
+            <div style="margin-left:auto;font:400 12px/1 'Instrument Sans',sans-serif;color:#8E8E93">Retained 10 yrs · Law No. 7 of 2025</div>
+          </div>
+          <div style="flex:1;min-height:0;overflow:hidden;border:1px solid #EAEAE7;border-radius:11px;background:#FFF;display:flex;flex-direction:column">
+            <div style="display:grid;grid-template-columns:104px 1fr 132px 140px 96px;gap:12px;padding:10px 16px;background:#F7F7F5;border-bottom:1px solid #EDEDEA;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;color:#8E8E93">
+              <div>REF</div><div>MATERIAL</div><div>RESULT</div><div>FINDINGS</div><div>SUBMITTED</div>
+            </div>
+            <div style="flex:1;min-height:0;overflow:auto">
+              <sc-for list="{{ visibleSubs }}" as="r" hint-placeholder-count="5">
+                <div style="display:grid;grid-template-columns:104px 1fr 132px 140px 96px;gap:12px;padding:13px 16px;border-bottom:1px solid #F1F1EE;align-items:center;cursor:pointer" style-hover="background:#FBFBFA" onClick="{{ r.open }}">
+                  <div style="font:500 12px/1 'IBM Plex Mono',monospace;color:#5C5F63">{{ r.ref }}</div>
+                  <div style="font:400 13px/1.3 'Instrument Sans',sans-serif;color:#17181A">{{ r.mat }}</div>
+                  <div><span style="{{ r.chipStyle }}">{{ r.chipLabel }}</span></div>
+                  <div style="font:400 12px/1 'Instrument Sans',sans-serif;color:#5C5F63">{{ r.crit }}</div>
+                  <div style="font:400 12px/1 'Instrument Sans',sans-serif;color:#8E8E93">{{ r.when }}</div>
+                </div>
+              </sc-for>
+              <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:44px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;animation:fadeIn .25s ease both">
+                  <div style="font:600 14px/1 'Instrument Sans',sans-serif;color:#17181A">Nothing matches “{{ query }}”</div>
+                  <div style="font:400 12.5px/1.5 'Instrument Sans',sans-serif;color:#8E8E93">Try a material name, a reference, or clear the filter.</div>
+                  <span style="margin-top:4px;height:30px;padding:0 12px;border-radius:8px;border:1px solid #E4E4E1;font:500 12px/28px 'Instrument Sans',sans-serif;color:#5C5F63;cursor:pointer" onClick="{{ clearFilters }}">Clear search &amp; filters</span>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- submit -->
+        <sc-if value="{{ atSubmit }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow:auto;padding:26px;display:flex;justify-content:center;animation:riseIn .3s ease both">
+          <div style="width:660px;display:flex;flex-direction:column;gap:15px">
+            <div>
+              <div style="font:600 20px/1.2 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.015em">New submittal</div>
+              <div style="margin-top:6px;font:400 13px/1.5 'Instrument Sans',sans-serif;color:#6E7175">Drop the PDFs. Project, authority and clause scope are already known — the material description is read from your cover page.</div>
+            </div>
+            <div style="border:1.5px dashed #C3C9DE;border-radius:13px;background:linear-gradient(#F4F6FF,#FBFCFF);padding:26px;display:flex;flex-direction:column;align-items:center;gap:9px;cursor:pointer;transition:border-color .18s ease" style-hover="border-color:#1B4DFF" onClick="{{ addFiles }}">
+              <div style="width:36px;height:36px;border-radius:11px;background:#1B4DFF;box-shadow:0 4px 12px rgba(27,77,255,.28);animation:softPulse 2.6s ease-in-out infinite"></div>
+              <div style="font:600 15px/1 'Instrument Sans',sans-serif;color:#17181A">{{ dropHeadline }}</div>
+              <div style="font:400 12px/1 'Instrument Sans',sans-serif;color:#7C7F84">{{ dropSub }}</div>
+            </div>
+            <sc-for list="{{ uploads }}" as="f" hint-placeholder-count="0">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid #EAEAE7;border-radius:10px;background:#FFF;animation:slideUp .3s ease both">
+                <div style="width:26px;height:32px;border-radius:4px;background:#F1F1EE;border:1px solid #E2E2DF;font:600 8px/32px 'IBM Plex Mono',monospace;color:#8E8E93;text-align:center;flex-shrink:0">PDF</div>
+                <div style="min-width:0;flex:1">
+                  <div style="font:500 13px/1.3 'Instrument Sans',sans-serif;color:#17181A">{{ f.name }}</div>
+                  <div style="font:400 11px/1.3 'Instrument Sans',sans-serif;color:#8E8E93">{{ f.sub }}</div>
+                  <sc-if value="{{ f.busy }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:7px;height:4px;border-radius:99px;background:#EDEDEA;overflow:hidden"><div style="{{ f.barStyle }}"></div></div>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ f.done }}" hint-placeholder-val="{{ false }}"><span style="font:500 11px/1 'IBM Plex Mono',monospace;color:#0E8A5F;animation:popIn .3s ease both">UPLOADED</span></sc-if>
+                <sc-if value="{{ f.busy }}" hint-placeholder-val="{{ false }}"><span style="font:500 11px/1 'IBM Plex Mono',monospace;color:#8E8E93">{{ f.pctLabel }}</span></sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{ hasMaterial }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:7px;padding:14px;border:1px solid #EAEAE7;border-radius:10px;background:#FFF;animation:slideUp .3s ease both">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8E8E93">MATERIAL DESCRIPTION</div>
+                <span style="height:18px;padding:0 6px;border-radius:4px;background:#E6F4EE;color:#0E7A55;font:600 9px/18px 'IBM Plex Mono',monospace">AUTO-FILLED FROM COVER PAGE</span>
+              </div>
+              <input value="{{ material }}" onChange="{{ setMaterial }}" style="height:40px;padding:0 12px;border:1px solid #E6E6E3;border-radius:9px;background:#FCFCFB;font-size:14px;color:#17181A" />
+              <div style="font:400 11.5px/1 'Instrument Sans',sans-serif;color:#A9A9AE">The only editable field on this screen.</div>
+            </div>
+            </sc-if>
+            <button type="button" style="{{ startStyle }}" onClick="{{ startReview }}">{{ startLabel }}</button>
+            <div style="display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:10px;background:#F7F7F5">
+              <span style="width:7px;height:7px;border-radius:50%;background:#0E8A5F;flex-shrink:0"></span>
+              <div style="font:400 12.5px/1.5 'Instrument Sans',sans-serif;color:#6E7175">Files go straight to encrypted storage — never through our API — and the review runs in the background whether or not you stay on this page.</div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- progress -->
+        <sc-if value="{{ atProgress }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow:hidden;padding:26px;display:flex;justify-content:center;animation:riseIn .3s ease both">
+          <div style="width:700px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+              <div>
+                <div style="font:600 20px/1.2 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.015em">{{ progressHeadline }}</div>
+                <div style="margin-top:6px;font:400 13px/1.5 'Instrument Sans',sans-serif;color:#6E7175">{{ progressSub }}</div>
+              </div>
+              <span style="font:500 12px/1 'IBM Plex Mono',monospace;color:#1B4DFF;flex-shrink:0">SUB-0149 · REV 0</span>
+            </div>
+            <div style="padding:18px;border:1px solid #EAEAE7;border-radius:12px;background:#FFF;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span style="font:600 13px/1 'Instrument Sans',sans-serif;color:#17181A">{{ currentStageLabel }}</span>
+                <span style="font:500 12px/1 'IBM Plex Mono',monospace;color:#8E8E93">{{ percentLabel }} · {{ etaLabel }}</span>
+              </div>
+              <div style="height:8px;border-radius:99px;background:#EDEDEA;overflow:hidden;position:relative">
+                <div style="{{ barStyle }}"></div>
+                <sc-if value="{{ running }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;width:22%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:sweep 1.8s linear infinite"></div></sc-if>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:1px">
+                <sc-for list="{{ stageList }}" as="s" hint-placeholder-count="11">
+                  <div style="display:flex;align-items:center;gap:11px;padding:7px 4px">
+                    <sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><span style="width:17px;height:17px;border-radius:50%;background:#0E8A5F;color:#fff;font:600 9px/17px 'Instrument Sans',sans-serif;text-align:center;flex-shrink:0;animation:popIn .3s ease both">✓</span></sc-if>
+                    <sc-if value="{{ s.running }}" hint-placeholder-val="{{ true }}"><span style="width:17px;height:17px;border-radius:50%;border:2px solid #1B4DFF;flex-shrink:0;animation:softPulse 1.1s ease-in-out infinite"></span></sc-if>
+                    <sc-if value="{{ s.pending }}" hint-placeholder-val="{{ false }}"><span style="width:17px;height:17px;border-radius:50%;border:1.5px solid #DCDCD8;flex-shrink:0"></span></sc-if>
+                    <span style="{{ s.labelStyle }}">{{ s.label }}</span>
+                    <span style="font:400 11px/1 'IBM Plex Mono',monospace;color:#B0B0B5">{{ s.node }}</span>
+                    <span style="font:400 11px/1 'IBM Plex Mono',monospace;color:#C9C9CE;width:38px;text-align:right">{{ s.weight }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button type="button" style="height:40px;padding:0 16px;border:1px solid #E4E4E1;border-radius:10px;background:#FFF;color:#4E5054;font:500 13px/1 'Instrument Sans',sans-serif;cursor:pointer" style-hover="background:#F4F4F2" onClick="{{ goProject }}">Leave and keep it running</button>
+              <sc-if value="{{ reviewDone }}" hint-placeholder-val="{{ false }}">
+                <button type="button" style="height:40px;padding:0 16px;border:none;border-radius:10px;background:#1B4DFF;color:#fff;font:600 13px/1 'Instrument Sans',sans-serif;cursor:pointer;animation:popIn .3s ease both" onClick="{{ goReport }}">Open findings report</button>
+              </sc-if>
+              <sc-if value="{{ running }}" hint-placeholder-val="{{ true }}">
+                <button type="button" style="height:40px;padding:0 16px;border:1px solid #F2CFCF;border-radius:10px;background:#FFF;color:#A82020;font:500 13px/1 'Instrument Sans',sans-serif;cursor:pointer" onClick="{{ cancelReview }}">Cancel review</button>
+              </sc-if>
+            </div>
+            <div style="padding:13px 15px;border-radius:10px;background:#F7F7F5;font:400 12.5px/1.5 'Instrument Sans',sans-serif;color:#6E7175">Stage 1 reads and chunks every page — on a 60-page datasheet it holds about 84% of the total wait. The remaining ten stages finish in seconds.</div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- report -->
+        <sc-if value="{{ atReport }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow:hidden;display:flex;animation:riseIn .3s ease both;min-height:0">
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:20px 24px;gap:13px;overflow:hidden">
+            <div style="{{ verdictBoxStyle }}">
+              <div style="{{ verdictBarStyle }}"></div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <span style="{{ verdictTitleStyle }}">{{ verdictTitle }}</span>
+                  <span style="{{ verdictMetaStyle }}">{{ reportRef }}</span>
+                </div>
+                <div style="{{ verdictBodyStyle }}">{{ verdictBody }}</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-shrink:0">
+                <button type="button" style="{{ exportStyle }}" onClick="{{ doExport }}">{{ exportLabel }}</button>
+                <button type="button" style="height:34px;padding:0 13px;border:none;border-radius:9px;background:#17181A;color:#fff;font:600 12px/1 'Instrument Sans',sans-serif;cursor:pointer" style-hover="background:#000">Draft transmittal</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;font:400 12px/1 'Instrument Sans',sans-serif;color:#8E8E93;flex-wrap:wrap">
+              <span>Checked against <span style="color:#17181A">ADM S-402 rev. 2024</span> · 34 requirements</span>
+              <span style="width:1px;height:11px;background:#DCDCD8"></span>
+              <span>AVL check skipped — not a TAQA project</span>
+              <span style="width:1px;height:11px;background:#DCDCD8"></span>
+              <span>{{ resolvedLabel }}</span>
+            </div>
+            <div style="flex:1;min-height:0;border:1px solid #EAEAE7;border-radius:12px;background:#FFF;display:flex;flex-direction:column;overflow:hidden">
+              <div style="display:grid;grid-template-columns:1fr 168px 168px 104px 76px;gap:12px;padding:10px 16px;background:#F7F7F5;border-bottom:1px solid #EDEDEA;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;color:#8E8E93;flex-shrink:0">
+                <div>PARAMETER</div><div>REQUIRED</div><div>SUBMITTED</div><div>STATUS</div><div>CLAUSE</div>
+              </div>
+              <div style="flex:1;min-height:0;overflow:auto">
+                <sc-for list="{{ findings }}" as="r" hint-placeholder-count="6">
+                  <div style="{{ r.rowStyle }}" onClick="{{ r.toggle }}">
+                    <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                      <span style="{{ r.caretStyle }}">›</span>
+                      <span style="{{ r.paramStyle }}">{{ r.param }}</span>
+                    </div>
+                    <div style="font:400 12px/1.4 'IBM Plex Mono',monospace;color:#5C5F63">{{ r.spec }}</div>
+                    <div style="font:400 12px/1.4 'IBM Plex Mono',monospace;color:#5C5F63">{{ r.prop }}</div>
+                    <div><span style="{{ r.statusStyle }}">{{ r.statusLabel }}</span></div>
+                    <div style="font:400 11px/1 'IBM Plex Mono',monospace;color:#1B4DFF">{{ r.clause }}</div>
+                  </div>
+                  <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:14px 16px 16px 34px;background:#FCFCFB;border-bottom:1px solid #F1F1EE;display:flex;flex-direction:column;gap:12px;animation:riseIn .25s ease both">
+                      <div style="display:flex;gap:12px">
+                        <div style="flex:1;padding:12px 14px;border-radius:9px;background:#FFF;border:1px solid #EAEAE7">
+                          <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8E8E93">SPEC · ADM S-402 CL. {{ r.clause }}, P.{{ r.page }}</div>
+                          <div style="margin-top:7px;font:400 12.5px/1.55 'Instrument Sans',sans-serif;color:#3E4145">{{ r.specText }}</div>
+                          <div style="margin-top:9px;font:500 11px/1 'Instrument Sans',sans-serif;color:#1B4DFF;cursor:pointer">Open spec at page {{ r.page }} ↗</div>
+                        </div>
+                        <div style="flex:1;padding:12px 14px;border-radius:9px;background:#FFF;border:1px solid #EAEAE7">
+                          <div style="font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8E8E93">EVIDENCE · {{ r.evidenceDoc }}</div>
+                          <div style="margin-top:7px;font:400 12.5px/1.55 'Instrument Sans',sans-serif;color:#3E4145">{{ r.evidenceText }}</div>
+                          <div style="margin-top:9px;font:500 11px/1 'Instrument Sans',sans-serif;color:#1B4DFF;cursor:pointer">Open document at page {{ r.evidencePage }} ↗</div>
+                        </div>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:9px">
+                        <span style="{{ r.confirmStyle }}" onClick="{{ r.confirm }}">{{ r.confirmLabel }}</span>
+                        <span style="{{ r.dismissStyle }}" onClick="{{ r.dismiss }}">{{ r.dismissLabel }}</span>
+                        <sc-if value="{{ r.decided }}" hint-placeholder-val="{{ false }}">
+                          <span style="font:400 11.5px/1 'Instrument Sans',sans-serif;color:#8E8E93;animation:fadeIn .25s ease both">{{ r.decidedNote }} · <span style="color:#1B4DFF;cursor:pointer" onClick="{{ r.undo }}">undo</span></span>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="width:318px;flex-shrink:0;border-left:1px solid #ECECE9;background:#F7F7F5;display:flex;flex-direction:column;min-height:0">
+            <div style="padding:16px 18px;border-bottom:1px solid #E9E9E6;display:flex;flex-direction:column;gap:9px;flex-shrink:0">
+              <div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8E8E93">MISSING DOCUMENTS · 2</div>
+              <sc-for list="{{ missing }}" as="m" hint-placeholder-count="2">
+                <div style="display:flex;gap:9px;align-items:flex-start"><span style="width:5px;height:5px;border-radius:50%;background:#C62828;margin-top:6px;flex-shrink:0"></span><span style="font:400 12.5px/1.45 'Instrument Sans',sans-serif;color:#3E4145">{{ m }}</span></div>
+              </sc-for>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+              <div style="padding:14px 18px 8px;font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8E8E93;flex-shrink:0">ASK ABOUT THIS SUBMITTAL</div>
+              <div style="flex:1;min-height:0;overflow:auto;padding:6px 18px 12px;display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ chatLog }}" as="c" hint-placeholder-count="2">
+                  <div style="{{ c.bubbleStyle }}">{{ c.text }}</div>
+                  <sc-if value="{{ c.hasSource }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:7px;margin-top:-4px"><span style="height:20px;padding:0 7px;border-radius:5px;background:#E9EDFF;color:#1B4DFF;font:600 9px/20px 'IBM Plex Mono',monospace">{{ c.source }}</span><span style="font:400 11px/1 'Instrument Sans',sans-serif;color:#8E8E93">{{ c.confidence }}</span></div>
+                  </sc-if>
+                </sc-for>
+                <sc-if value="{{ chatBusy }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:5px;padding:12px 13px;border-radius:10px 10px 3px 10px;background:#FFF;border:1px solid #E9E9E6;width:52px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#B0B0B5;animation:softPulse 1s ease-in-out infinite"></span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:#B0B0B5;animation:softPulse 1s ease-in-out .2s infinite"></span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:#B0B0B5;animation:softPulse 1s ease-in-out .4s infinite"></span>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="padding:0 18px 14px;flex-shrink:0;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="2">
+                    <span style="height:26px;padding:0 9px;border-radius:13px;background:#FFF;border:1px solid #E2E2DF;font:400 11.5px/24px 'Instrument Sans',sans-serif;color:#5C5F63;cursor:pointer" style-hover="border-color:#1B4DFF;color:#1B4DFF" onClick="{{ s.ask }}">{{ s.label }}</span>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;height:38px;padding:0 6px 0 12px;border-radius:10px;background:#FFF;border:1px solid #E2E2DF">
+                  <input value="{{ chatInput }}" onChange="{{ setChatInput }}" onKeyDown="{{ chatKey }}" placeholder="Ask a follow-up…" style="flex:1;min-width:0;border:none;background:transparent;font-size:12.5px;color:#17181A" />
+                  <span style="width:26px;height:26px;border-radius:7px;background:#1B4DFF;color:#fff;font:600 13px/26px 'Instrument Sans',sans-serif;text-align:center;cursor:pointer;flex-shrink:0" onClick="{{ sendChat }}">↑</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- spec library -->
+        <sc-if value="{{ atSpecs }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow:auto;padding:24px 26px;display:flex;flex-direction:column;gap:14px;animation:riseIn .3s ease both">
+          <div>
+            <div style="font:600 18px/1.2 'Instrument Sans',sans-serif;color:#17181A">Spec library</div>
+            <div style="margin-top:6px;font:400 13px/1.5 'Instrument Sans',sans-serif;color:#6E7175">Authority specs indexed once, reused by every project. Admin only.</div>
+          </div>
+          <div style="border:1px solid #EAEAE7;border-radius:11px;background:#FFF;overflow:hidden">
+            <div style="display:grid;grid-template-columns:120px 1fr 150px 130px 120px;gap:12px;padding:10px 16px;background:#F7F7F5;border-bottom:1px solid #EDEDEA;font:600 10px/1 'IBM Plex Mono',monospace;letter-spacing:.09em;color:#8E8E93">
+              <div>AUTHORITY</div><div>SOURCE FILE</div><div>NETWORK</div><div>CHUNKS</div><div>STATUS</div>
+            </div>
+            <sc-for list="{{ specs }}" as="s" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:120px 1fr 150px 130px 120px;gap:12px;padding:13px 16px;border-bottom:1px solid #F1F1EE;align-items:center">
+                <div style="font:600 11px/1 'IBM Plex Mono',monospace;color:#1B4DFF">{{ s.authority }}</div>
+                <div style="font:400 13px/1.3 'Instrument Sans',sans-serif;color:#17181A">{{ s.file }}</div>
+                <div style="font:400 12.5px/1 'Instrument Sans',sans-serif;color:#5C5F63">{{ s.network }}</div>
+                <div style="font:400 12px/1 'IBM Plex Mono',monospace;color:#5C5F63">{{ s.chunks }}</div>
+                <div><span style="{{ s.style }}">{{ s.status }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- new project modal -->
+    <sc-if value="{{ showNewProject }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;background:rgba(20,20,24,.42);display:flex;align-items:center;justify-content:center;animation:fadeIn .18s ease both" onClick="{{ closeNewProject }}">
+      <div style="width:420px;border-radius:14px;background:#FFF;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px -20px rgba(0,0,0,.4);animation:slideUp .22s ease both" onClick="{{ stop }}">
+        <div>
+          <div style="font:600 17px/1.2 'Instrument Sans',sans-serif;color:#17181A">New project</div>
+          <div style="margin-top:6px;font:400 12.5px/1.5 'Instrument Sans',sans-serif;color:#7C7F84">Two fields. Attach spec libraries once you're inside.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8E8E93">PROJECT NAME</label>
+          <input value="{{ npName }}" onChange="{{ setNpName }}" onKeyDown="{{ npKey }}" placeholder="e.g. Saadiyat Marina — Utilities P1" style="height:40px;padding:0 12px;border:1px solid #DDDCD8;border-radius:9px;font-size:14px;color:#17181A" />
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <label style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8E8E93">AUTHORITY</label>
+          <div style="display:flex;gap:8px">
+            <span style="{{ npAdmStyle }}" onClick="{{ pickAdm }}">ADM · Abu Dhabi Municipality</span>
+            <span style="{{ npTaqaStyle }}" onClick="{{ pickTaqa }}">TAQA</span>
+          </div>
+          <div style="font:400 11.5px/1.4 'Instrument Sans',sans-serif;color:#A9A9AE">Set once at creation — it decides which clause library and whether AVL checks run.</div>
+        </div>
+        <sc-if value="{{ npErr }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:9px 11px;border-radius:8px;background:#FBE9E9;color:#A82020;font:400 12px/1.4 'Instrument Sans',sans-serif;animation:popIn .2s ease both">{{ npErrMsg }}</div>
+        </sc-if>
+        <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:2px">
+          <button type="button" style="height:38px;padding:0 15px;border:1px solid #E4E4E1;border-radius:9px;background:#FFF;color:#4E5054;font:500 13px/1 'Instrument Sans',sans-serif;cursor:pointer" onClick="{{ closeNewProject }}">Cancel</button>
+          <button type="button" style="height:38px;padding:0 17px;border:none;border-radius:9px;background:#1B4DFF;color:#fff;font:600 13px/1 'Instrument Sans',sans-serif;cursor:pointer" onClick="{{ createProject }}">Create project</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- toast -->
+    <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:11px;padding:12px 16px;border-radius:11px;background:#17181A;box-shadow:0 12px 30px -12px rgba(0,0,0,.5);animation:slideUp .28s ease both">
+      <span style="width:7px;height:7px;border-radius:50%;background:#3DD68C"></span>
+      <span style="font:500 13px/1 'Instrument Sans',sans-serif;color:#FAFAF9">{{ toastText }}</span>
+      <sc-if value="{{ toastAction }}" hint-placeholder-val="{{ false }}">
+        <span style="font:600 13px/1 'Instrument Sans',sans-serif;color:#7FA0FF;cursor:pointer" onClick="{{ toastGo }}">{{ toastActionLabel }}</span>
+      </sc-if>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- ================= MOBILE ================= -->
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;justify-content:center;padding:8px 0 40px">
+    <div style="width:390px;height:812px;border-radius:42px;border:9px solid #17181A;background:#FAFAF9;overflow:hidden;box-shadow:0 30px 60px -24px rgba(20,20,25,.5);display:flex;flex-direction:column;position:relative">
+      <div style="height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:600 12px/1 'Instrument Sans',sans-serif;color:#17181A"><span>9:41</span><span style="letter-spacing:.1em;color:#8E8E93">▮▮▮</span></div>
+
+      <sc-if value="{{ notAuthed }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;padding:26px 22px;display:flex;flex-direction:column;gap:16px;animation:fadeIn .3s ease both">
+        <div style="width:30px;height:30px;border-radius:9px;background:#1B4DFF"></div>
+        <div style="margin-top:8px;font:600 26px/1.2 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.02em">Sign in to Clause</div>
+        <div style="font:400 13.5px/1.5 'Instrument Sans',sans-serif;color:#7C7F84">Provisioned accounts only. Use the credentials from your tenant admin.</div>
+        <input type="email" value="{{ email }}" onChange="{{ setEmail }}" placeholder="Work email" style="height:52px;padding:0 15px;border:1px solid #DDDCD8;border-radius:13px;background:#FFF;font-size:16px;color:#17181A" />
+        <input type="password" value="{{ pw }}" onChange="{{ setPw }}" onKeyDown="{{ loginKey }}" placeholder="Password" style="height:52px;padding:0 15px;border:1px solid #DDDCD8;border-radius:13px;background:#FFF;font-size:16px;color:#17181A" />
+        <sc-if value="{{ loginErr }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:11px 13px;border-radius:10px;background:#FBE9E9;color:#A82020;font:400 13px/1.4 'Instrument Sans',sans-serif">{{ loginErrMsg }}</div>
+        </sc-if>
+        <button type="button" onClick="{{ doLogin }}" style="height:54px;border:none;border-radius:14px;background:#1B4DFF;color:#fff;font:600 16px/1 'Instrument Sans',sans-serif;cursor:pointer">Continue</button>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ authed }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div style="flex-shrink:0;padding:4px 18px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="min-width:0">
+            <div style="font:600 18px/1.2 'Instrument Sans',sans-serif;color:#17181A;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ mobileTitle }}</div>
+            <div style="margin-top:5px;font:400 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#1B4DFF">{{ mobileSubtitle }}</div>
+          </div>
+          <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+            <span style="display:flex;align-items:center;gap:7px;height:32px;padding:0 11px;border-radius:16px;background:#E9EDFF;flex-shrink:0" onClick="{{ goProgress }}"><span style="width:7px;height:7px;border-radius:50%;background:#1B4DFF;animation:softPulse 1.2s ease-in-out infinite"></span><span style="font:600 11px/1 'IBM Plex Mono',monospace;color:#1B4DFF">{{ percentLabel }}</span></span>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ mProject }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;min-height:0;overflow:auto;padding:0 18px 12px;display:flex;flex-direction:column;gap:12px;animation:riseIn .3s ease both">
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
+              <div style="flex:1;padding:11px;border-radius:11px;background:#FFF;border:1px solid #EAEAE7">
+                <div style="font:600 18px/1 'Instrument Sans',sans-serif;color:#17181A">{{ s.value }}</div>
+                <div style="margin-top:4px;font:400 10px/1.25 'Instrument Sans',sans-serif;color:#8E8E93">{{ s.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+              <span style="{{ f.mStyle }}" onClick="{{ f.pick }}">{{ f.label }}</span>
+            </sc-for>
+          </div>
+          <sc-for list="{{ visibleSubs }}" as="r" hint-placeholder-count="5">
+            <div style="padding:14px;border-radius:13px;background:#FFF;border:1px solid #EAEAE7;display:flex;flex-direction:column;gap:9px" onClick="{{ r.open }}">
+              <div style="display:flex;align-items:center;justify-content:space-between"><span style="font:500 11px/1 'IBM Plex Mono',monospace;color:#8E8E93">{{ r.ref }}</span><span style="font:400 11px/1 'Instrument Sans',sans-serif;color:#A9A9AE">{{ r.when }}</span></div>
+              <div style="font:500 14.5px/1.35 'Instrument Sans',sans-serif;color:#17181A">{{ r.mat }}</div>
+              <div style="display:flex;align-items:center;gap:9px"><span style="{{ r.chipStyleM }}">{{ r.chipLabel }}</span><span style="font:400 11.5px/1 'Instrument Sans',sans-serif;color:#6E7175">{{ r.crit }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ mSubmit }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;min-height:0;overflow:auto;padding:0 18px 12px;display:flex;flex-direction:column;gap:13px;animation:riseIn .3s ease both">
+          <div style="border:1.5px dashed #C3C9DE;border-radius:15px;background:linear-gradient(#F4F6FF,#FBFCFF);padding:22px;display:flex;flex-direction:column;align-items:center;gap:12px">
+            <div style="width:34px;height:34px;border-radius:10px;background:#1B4DFF;animation:softPulse 2.6s ease-in-out infinite"></div>
+            <div style="font:600 14.5px/1 'Instrument Sans',sans-serif;color:#17181A">{{ dropHeadline }}</div>
+            <div style="display:flex;flex-direction:column;gap:9px;width:100%">
+              <button type="button" style="height:52px;border:none;border-radius:13px;background:#17181A;color:#fff;font:600 15px/1 'Instrument Sans',sans-serif;cursor:pointer" onClick="{{ addFiles }}">Scan pages with camera</button>
+              <button type="button" style="height:52px;border:1px solid #DDDCD8;border-radius:13px;background:#FFF;color:#17181A;font:600 15px/1 'Instrument Sans',sans-serif;cursor:pointer" onClick="{{ addFiles }}">Choose files</button>
+            </div>
+          </div>
+          <sc-for list="{{ uploads }}" as="f" hint-placeholder-count="0">
+            <div style="display:flex;align-items:center;gap:11px;padding:12px 13px;border:1px solid #EAEAE7;border-radius:12px;background:#FFF;animation:slideUp .3s ease both">
+              <div style="width:24px;height:30px;border-radius:4px;background:#F1F1EE;border:1px solid #E2E2DF;font:600 7px/30px 'IBM Plex Mono',monospace;color:#8E8E93;text-align:center;flex-shrink:0">PDF</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13px/1.3 'Instrument Sans',sans-serif;color:#17181A">{{ f.name }}</div>
+                <div style="font:400 11px/1.3 'Instrument Sans',sans-serif;color:#8E8E93">{{ f.sub }}</div>
+                <sc-if value="{{ f.busy }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:7px;height:4px;border-radius:99px;background:#EDEDEA;overflow:hidden"><div style="{{ f.barStyle }}"></div></div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ hasMaterial }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:13px;border:1px solid #EAEAE7;border-radius:12px;background:#FFF;animation:slideUp .3s ease both">
+            <div style="font:500 10px/1 'IBM Plex Mono',monospace;letter-spacing:.07em;color:#8E8E93">MATERIAL · AUTO-FILLED</div>
+            <input value="{{ material }}" onChange="{{ setMaterial }}" style="margin-top:8px;width:100%;box-sizing:border-box;height:46px;padding:0 12px;border:1px solid #E6E6E3;border-radius:10px;background:#FCFCFB;font-size:15px;color:#17181A" />
+          </div>
+          </sc-if>
+          <button type="button" style="{{ startStyleM }}" onClick="{{ startReview }}">{{ startLabel }}</button>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ mProgress }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;min-height:0;overflow:auto;padding:0 18px 12px;display:flex;flex-direction:column;gap:14px;animation:riseIn .3s ease both">
+          <div style="padding:16px;border-radius:13px;background:#FFF;border:1px solid #EAEAE7;display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 14px/1 'Instrument Sans',sans-serif;color:#17181A">{{ currentStageLabel }}</span><span style="font:500 11.5px/1 'IBM Plex Mono',monospace;color:#8E8E93">{{ percentLabel }}</span></div>
+            <div style="height:8px;border-radius:99px;background:#EDEDEA;overflow:hidden;position:relative">
+              <div style="{{ barStyle }}"></div>
+              <sc-if value="{{ running }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;width:22%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:sweep 1.8s linear infinite"></div></sc-if>
+            </div>
+            <div style="font:400 12px/1.5 'Instrument Sans',sans-serif;color:#6E7175">{{ etaLabel }} · stage 1 holds ~84% of the wait. Safe to lock your phone.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <sc-for list="{{ stageList }}" as="s" hint-placeholder-count="11">
+              <div style="display:flex;align-items:center;gap:11px;padding:9px 4px">
+                <sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><span style="width:18px;height:18px;border-radius:50%;background:#0E8A5F;color:#fff;font:600 10px/18px 'Instrument Sans',sans-serif;text-align:center;flex-shrink:0;animation:popIn .3s ease both">✓</span></sc-if>
+                <sc-if value="{{ s.running }}" hint-placeholder-val="{{ true }}"><span style="width:18px;height:18px;border-radius:50%;border:2px solid #1B4DFF;flex-shrink:0;animation:softPulse 1.1s ease-in-out infinite"></span></sc-if>
+                <sc-if value="{{ s.pending }}" hint-placeholder-val="{{ false }}"><span style="width:18px;height:18px;border-radius:50%;border:1.5px solid #DCDCD8;flex-shrink:0"></span></sc-if>
+                <span style="{{ s.labelStyleM }}">{{ s.label }}</span>
+                <span style="font:400 10.5px/1 'IBM Plex Mono',monospace;color:#C0C0C5">{{ s.weight }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ reviewDone }}" hint-placeholder-val="{{ false }}">
+            <button type="button" style="height:52px;border:none;border-radius:13px;background:#1B4DFF;color:#fff;font:600 15px/1 'Instrument Sans',sans-serif;animation:popIn .3s ease both" onClick="{{ goReport }}">Open findings report</button>
+          </sc-if>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ mReport }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;min-height:0;overflow:auto;padding:0 18px 12px;display:flex;flex-direction:column;gap:12px;animation:riseIn .3s ease both">
+          <div style="{{ verdictBoxStyleM }}">
+            <div style="{{ verdictTitleStyleM }}">{{ verdictTitle }}</div>
+            <div style="{{ verdictBodyStyleM }}">{{ verdictBody }}</div>
+          </div>
+          <div style="font:400 11px/1.45 'Instrument Sans',sans-serif;color:#8E8E93">ADM S-402 rev. 2024 · 34 requirements · AVL skipped (not TAQA)</div>
+          <sc-for list="{{ findings }}" as="r" hint-placeholder-count="6">
+            <div style="padding:14px;border-radius:12px;background:#FFF;border:1px solid #EAEAE7;display:flex;flex-direction:column;gap:9px" onClick="{{ r.toggle }}">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:9px">
+                <span style="{{ r.paramStyleM }}">{{ r.param }}</span>
+                <span style="{{ r.statusStyle }}">{{ r.statusLabel }}</span>
+              </div>
+              <div style="font:400 11.5px/1.6 'IBM Plex Mono',monospace;color:#6E7175">req {{ r.spec }}<br>got {{ r.prop }}</div>
+              <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px;animation:riseIn .25s ease both">
+                  <div style="padding:11px 12px;border-radius:9px;background:#F7F7F5">
+                    <div style="font:600 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8E8E93">SPEC · CL. {{ r.clause }}, P.{{ r.page }}</div>
+                    <div style="margin-top:6px;font:400 12px/1.55 'Instrument Sans',sans-serif;color:#3E4145">{{ r.specText }}</div>
+                  </div>
+                  <div style="padding:11px 12px;border-radius:9px;background:#F7F7F5">
+                    <div style="font:600 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#8E8E93">EVIDENCE · {{ r.evidenceDoc }}</div>
+                    <div style="margin-top:6px;font:400 12px/1.55 'Instrument Sans',sans-serif;color:#3E4145">{{ r.evidenceText }}</div>
+                  </div>
+                  <div style="display:flex;gap:9px">
+                    <span style="{{ r.confirmStyleM }}" onClick="{{ r.confirm }}">{{ r.confirmLabel }}</span>
+                    <span style="{{ r.dismissStyleM }}" onClick="{{ r.dismiss }}">{{ r.dismissLabel }}</span>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ r.closed }}" hint-placeholder-val="{{ true }}">
+                <div style="font:500 11px/1 'IBM Plex Mono',monospace;color:#1B4DFF">CL {{ r.clause }} · P.{{ r.page }} · TAP FOR EVIDENCE</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <div style="flex-shrink:0;height:70px;border-top:1px solid #ECECE9;background:#FFF;display:flex;align-items:center;padding:0 6px 10px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:11px;cursor:pointer;min-height:44px" onClick="{{ goProject }}"><span style="{{ navProjectDot }}"></span><span style="{{ navProjectText }}">Project</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:11px;cursor:pointer;min-height:44px" onClick="{{ goSubmit }}"><span style="{{ navSubmitDot }}"></span><span style="{{ navSubmitText }}">Submit</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:11px;cursor:pointer;min-height:44px" onClick="{{ goProgress }}"><span style="{{ navProgressDot }}"></span><span style="{{ navProgressText }}">Review</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:11px;cursor:pointer;min-height:44px" onClick="{{ goReport }}"><span style="{{ navReportDot }}"></span><span style="{{ navReportText }}">Findings</span></div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:16px;right:16px;bottom:86px;display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:13px;background:#17181A;box-shadow:0 12px 30px -12px rgba(0,0,0,.5);animation:slideUp .28s ease both">
+        <span style="width:7px;height:7px;border-radius:50%;background:#3DD68C;flex-shrink:0"></span>
+        <span style="flex:1;font:500 13px/1.35 'Instrument Sans',sans-serif;color:#FAFAF9">{{ toastText }}</span>
+        <sc-if value="{{ toastAction }}" hint-placeholder-val="{{ false }}">
+          <span style="font:600 13px/1 'Instrument Sans',sans-serif;color:#7FA0FF;cursor:pointer;flex-shrink:0" onClick="{{ toastGo }}">{{ toastActionLabel }}</span>
+        </sc-if>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+const STAGES = [
+  ['doc_processor', 'Reading and chunking documents', 84, 3200],
+  ['completeness', 'Completeness check', 2, 320],
+  ['boq_drawing', 'BOQ and drawing cross-check', 2, 320],
+  ['spec_verifier', 'Spec clause verification', 4, 460],
+  ['validity_checker', 'Certificate validity', 1, 300],
+  ['skip_avl', 'AVL check — skipped (ADM project)', 0, 220],
+  ['statement', 'Compliance statement', 1, 300],
+  ['table_auditor', 'Comparison table audit', 3, 380],
+  ['consistency', 'Cross-document consistency', 1, 300],
+  ['others', 'Other observations', 1, 260],
+  ['report_compiler', 'Compiling report', 1, 320]
+];
+
+const FILE_SEED = [
+  { name: 'ADM-S402-cover-letter.pdf', size: '1.2 MB', label: 'cover letter' },
+  { name: 'uPVC-DN300-datasheet.pdf', size: '4.8 MB', label: 'technical datasheet' },
+  { name: 'ISO9001-certificate.pdf', size: '0.6 MB', label: 'certificate' }
+];
+
+const FINDINGS = [
+  { id: 'f1', param: 'Wall thickness / SDR', spec: 'SDR 26 min', prop: 'SDR 33', sev: 'critical', clause: '4.5', page: 44,
+    specText: '“Gravity sewer pipes of nominal diameter 300 mm shall have a minimum standard dimension ratio of SDR 26.”',
+    evidenceDoc: 'uPVC-DN300-datasheet.pdf, p.12', evidencePage: 12,
+    evidenceText: '“Pipe series: SDR 33 · wall thickness 9.1 mm · PN 10.” Thinner wall than the clause allows, and no deviation was declared.' },
+  { id: 'f2', param: 'ISO 9001 certificate validity', spec: 'Valid at submission', prop: 'Expired 12 Mar 2026', sev: 'critical', clause: '2.1', page: 12,
+    specText: '“Quality management certification shall be valid on the date of submission and for the duration of supply.”',
+    evidenceDoc: 'ISO9001-certificate.pdf, p.1', evidencePage: 1,
+    evidenceText: '“Valid until: 12 March 2026.” Four months before this submittal date.' },
+  { id: 'f3', param: 'Third-party hydrostatic test report', spec: 'Required, DN ≥ 250', prop: 'Not provided', sev: 'warning', clause: '7.2', page: 61,
+    specText: '“For nominal diameters of 250 mm and above, an independent laboratory hydrostatic test report shall accompany the submittal.”',
+    evidenceDoc: 'uPVC-DN300-datasheet.pdf, p.19', evidencePage: 19,
+    evidenceText: 'Factory test data present, but no independent laboratory report was found in any uploaded document.' },
+  { id: 'f4', param: 'Pressure rating', spec: 'PN 10', prop: 'PN 10', sev: 'pass', clause: '4.3', page: 43,
+    specText: '“Pipes shall be rated PN 10 for the gravity sewer network in Zone 4.”',
+    evidenceDoc: 'uPVC-DN300-datasheet.pdf, p.12', evidencePage: 12,
+    evidenceText: '“Nominal pressure: PN 10.” Matches the specified class exactly.' },
+  { id: 'f5', param: 'Material grade', spec: 'PVC-U, K67', prop: 'PVC-U, K67', sev: 'pass', clause: '3.2', page: 38,
+    specText: '“Resin shall be unplasticised polyvinyl chloride of K-value not less than 67.”',
+    evidenceDoc: 'uPVC-DN300-datasheet.pdf, p.8', evidencePage: 8,
+    evidenceText: '“Compound: PVC-U, K-value 67.” As specified.' },
+  { id: 'f6', param: 'Jointing and gaskets', spec: 'BS EN 681-1 ring', prop: 'BS EN 681-1 ring', sev: 'pass', clause: '5.4', page: 52,
+    specText: '“Flexible joints shall use elastomeric sealing rings conforming to BS EN 681-1.”',
+    evidenceDoc: 'uPVC-DN300-datasheet.pdf, p.15', evidencePage: 15,
+    evidenceText: '“Jointing: rubber ring socket to BS EN 681-1.” Standard matches the clause.' }
+];
+
+const SUBS = [
+  { ref: 'SUB-0148', mat: 'uPVC Pipe DN300 PN10 — gravity sewer', rec: 'RESUBMIT', crit: '2 critical, 1 warning', when: 'Today 09:45', recent: true, action: true },
+  { ref: 'SUB-0147', mat: 'Ductile iron fittings DN200, flanged', rec: 'APPROVE', crit: 'No findings', when: 'Yesterday', recent: true, action: false },
+  { ref: 'SUB-0146', mat: 'HDPE duct Ø110 SDR11 — telecom', rec: 'CONDITIONAL', crit: '1 warning', when: '27 Jul', recent: true, action: true },
+  { ref: 'SUB-0145', mat: 'Precast manhole cover, class D400', rec: 'APPROVE', crit: 'No findings', when: '26 Jul', recent: true, action: false },
+  { ref: 'SUB-0144', mat: 'Pipe bedding aggregate 10–20 mm', rec: 'RESUBMIT', crit: '3 critical', when: '24 Jul', recent: true, action: true },
+  { ref: 'SUB-0143', mat: 'Geotextile separator 200 g/m²', rec: 'APPROVE', crit: 'No findings', when: '19 Jun', recent: false, action: false },
+  { ref: 'SUB-0142', mat: 'Concrete thrust block mix C32/40', rec: 'CONDITIONAL', crit: '1 warning', when: '14 Jun', recent: false, action: true }
+];
+
+class Component extends DCLogic {
+  state = {
+    device: 'desktop', authed: false, email: '', pw: '', loginErrMsg: '',
+    route: 'projects', activeProject: 0,
+    projects: [
+      { name: 'Reem Hills — Infrastructure P3', authority: 'ADM', subs: 18, action: 4, last: 'today' },
+      { name: 'Al Reem Island Ph 2 — MEP', authority: 'TAQA', subs: 7, action: 0, last: '3 days ago' },
+      { name: 'ADSSC Sewer Upgrade — Zone 4', authority: 'ADM', subs: 31, action: 2, last: 'yesterday' }
+    ],
+    showNewProject: false, npName: '', npAuthority: 'ADM', npErrMsg: '',
+    query: '', filter: 'all',
+    uploads: [], material: '',
+    stageIdx: -1, running: false, reviewDone: false,
+    openRow: 'f1', overrides: {},
+    chatLog: [], chatInput: '', chatBusy: false,
+    exportState: 'idle',
+    toast: null, toastActionLabel: '', toastTarget: ''
+  };
+
+  timers = [];
+
+  componentWillUnmount() { this.timers.forEach(clearTimeout); }
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); }
+
+  showToast(text, actionLabel, target) {
+    this.setState({ toast: text, toastActionLabel: actionLabel || '', toastTarget: target || '' });
+    this.later(() => this.setState(s => (s.toast === text ? { toast: null } : {})), 4200);
+  }
+
+  // ---------- flow ----------
+  login = () => {
+    const { email, pw } = this.state;
+    if (!email.includes('@')) return this.setState({ loginErrMsg: 'Enter the work email your admin provisioned.' });
+    if (pw.length < 4) return this.setState({ loginErrMsg: 'Password must be at least 4 characters.' });
+    this.setState({ authed: true, loginErrMsg: '', route: 'projects' });
+  };
+
+  addFiles = () => {
+    if (this.state.uploads.length) return;
+    const seed = FILE_SEED.map(f => Object.assign({}, f, { pct: 0 }));
+    this.setState({ uploads: seed });
+    seed.forEach((f, i) => {
+      [25, 55, 82, 100].forEach((pct, step) => {
+        this.later(() => this.setState(s => ({
+          uploads: s.uploads.map((u, j) => (j === i ? Object.assign({}, u, { pct }) : u))
+        })), 260 * i + 220 * (step + 1));
+      });
+    });
+    this.later(() => this.setState({ material: 'uPVC Pipe DN300 PN10 to ADM S-402 — gravity sewer, Zone 4' }), 1500);
+  };
+
+  startReview = () => {
+    if (!this.filesReady()) return;
+    this.setState({ route: 'progress', running: true, reviewDone: false, stageIdx: 0 });
+    let t = 0;
+    STAGES.forEach(([, , , ms], i) => {
+      t += ms;
+      this.later(() => {
+        if (i === STAGES.length - 1) {
+          this.setState({ stageIdx: STAGES.length, running: false, reviewDone: true });
+          this.showToast('Review complete — 2 critical findings', 'Open report', 'report');
+        } else {
+          this.setState({ stageIdx: i + 1 });
+        }
+      }, t);
+    });
+  };
+
+  cancelReview = () => {
+    this.timers.forEach(clearTimeout); this.timers = [];
+    this.setState({ running: false, reviewDone: false, stageIdx: -1, route: 'submit' });
+    this.showToast('Review cancelled — your files are still uploaded');
+  };
+
+  filesReady() {
+    const u = this.state.uploads;
+    return u.length > 0 && u.every(f => f.pct >= 100);
+  }
+
+  createProject = () => {
+    const name = this.state.npName.trim();
+    if (name.length < 3) return this.setState({ npErrMsg: 'Give the project a name you will recognise in the register.' });
+    this.setState(s => ({
+      projects: [{ name, authority: s.npAuthority, subs: 0, action: 0, last: 'just now' }].concat(s.projects),
+      showNewProject: false, npName: '', npErrMsg: '', activeProject: 0, route: 'project'
+    }));
+    this.showToast('Project created — attach a spec library next');
+  };
+
+  answerFor(q) {
+    const t = q.toLowerCase();
+    if (t.includes('sdr') || t.includes('thick') || t.includes('wall'))
+      return { text: 'No. ADM S-402 cl. 4.5 requires SDR 26 minimum for DN300 gravity sewer. The datasheet states SDR 33 at 9.1 mm wall (p.12) — thinner than the clause permits, and no deviation was declared.', source: 'FROM SPEC LIBRARY', confidence: 'high confidence' };
+    if (t.includes('cert') || t.includes('iso') || t.includes('valid'))
+      return { text: 'The attached ISO 9001 certificate expired on 12 March 2026, four months before this submittal. Cl. 2.1 requires it to be valid at submission, so a current certificate is needed before approval.', source: 'FROM YOUR DOCUMENTS', confidence: 'high confidence' };
+    if (t.includes('missing') || t.includes('need'))
+      return { text: 'Two documents are outstanding: an independent laboratory hydrostatic test report (required for DN ≥ 250, cl. 7.2) and a valid ISO 9001 certificate. Everything else declared on the cover letter was found.', source: 'FROM REVIEW FINDINGS', confidence: 'high confidence' };
+    if (t.includes('why') || t.includes('reject') || t.includes('resubmit') || t.includes('recommend'))
+      return { text: 'The recommendation is Revise & resubmit because two requirements are not met — wall thickness (cl. 4.5) and certificate validity (cl. 2.1). Either alone is a hard fail; conditional approval is not available for unmet clauses.', source: 'FROM REVIEW FINDINGS', confidence: 'high confidence' };
+    return { text: 'I can only answer from this project\'s spec library, your uploaded documents and this review. Try asking about the SDR failure, the expired certificate, the missing test report, or why the recommendation is resubmit.', source: 'FROM REVIEW FINDINGS', confidence: 'medium confidence' };
+  }
+
+  send = (text) => {
+    const q = (text || this.state.chatInput).trim();
+    if (!q) return;
+    this.setState(s => ({ chatLog: s.chatLog.concat([{ role: 'q', text: q }]), chatInput: '', chatBusy: true }));
+    this.later(() => {
+      const a = this.answerFor(q);
+      this.setState(s => ({ chatBusy: false, chatLog: s.chatLog.concat([{ role: 'a', text: a.text, source: a.source, confidence: a.confidence }]) }));
+    }, 900);
+  };
+
+  doExport = () => {
+    if (this.state.exportState !== 'idle') return;
+    this.setState({ exportState: 'working' });
+    this.later(() => {
+      this.setState({ exportState: 'ready' });
+      this.showToast('Report PDF ready', 'Download', '');
+    }, 1900);
+  };
+
+  setOverride = (id, val) => {
+    this.setState(s => {
+      const o = Object.assign({}, s.overrides);
+      if (val === null) delete o[id]; else o[id] = val;
+      return { overrides: o };
+    });
+  };
+
+  // ---------- derived ----------
+  renderVals() {
+    const s = this.state;
+    const chip = (bg, fg) => ({ display: 'inline-flex', alignItems: 'center', height: '24px', padding: '0 9px', borderRadius: '6px', background: bg, color: fg, font: "600 11px/24px 'IBM Plex Mono',monospace" });
+    const pill = (active) => ({ height: '26px', padding: '0 10px', borderRadius: '7px', cursor: 'pointer', font: active ? "500 12px/26px 'Instrument Sans',sans-serif" : "400 12px/24px 'Instrument Sans',sans-serif", background: active ? '#17181A' : '#FFF', color: active ? '#FFF' : '#5C5F63', border: active ? 'none' : '1px solid #E4E4E1' });
+    const pillM = (active) => ({ height: '34px', padding: '0 13px', borderRadius: '17px', cursor: 'pointer', font: active ? "500 12.5px/34px 'Instrument Sans',sans-serif" : "400 12.5px/32px 'Instrument Sans',sans-serif", background: active ? '#17181A' : '#FFF', color: active ? '#FFF' : '#5C5F63', border: active ? 'none' : '1px solid #E4E4E1' });
+    const tab = (active) => ({ padding: '7px 13px', borderRadius: '9px', border: 'none', cursor: 'pointer', font: "600 12.5px/1 'Instrument Sans',sans-serif", background: active ? '#FFF' : 'transparent', color: active ? '#17181A' : '#5F5E59', boxShadow: active ? '0 1px 3px rgba(0,0,0,.18)' : 'none' });
+    const act = (kind) => ({ height: '28px', padding: '0 11px', borderRadius: '8px', cursor: 'pointer', font: "600 11.5px/28px 'Instrument Sans',sans-serif", background: kind === 'on' ? '#17181A' : '#FFF', color: kind === 'on' ? '#FFF' : '#5C5F63', border: kind === 'on' ? 'none' : '1px solid #E4E4E1' });
+    const actM = (kind) => ({ flex: 1, height: '44px', borderRadius: '11px', textAlign: 'center', cursor: 'pointer', font: "600 13px/44px 'Instrument Sans',sans-serif", background: kind === 'on' ? '#17181A' : '#FFF', color: kind === 'on' ? '#FFF' : '#5C5F63', border: kind === 'on' ? 'none' : '1px solid #E4E4E1' });
+
+    const proj = s.projects[s.activeProject] || s.projects[0];
+    const done = i => s.stageIdx > i;
+    const runningStage = i => s.running && s.stageIdx === i;
+    const pct = STAGES.reduce((a, [, , w], i) => a + (done(i) ? w : 0), 0);
+    const activeStageIdx = Math.min(s.stageIdx, STAGES.length - 1);
+
+    const decidedFindings = FINDINGS.map(f => {
+      const ov = s.overrides[f.id];
+      const effective = ov === 'dismissed' ? 'pass' : f.sev;
+      return Object.assign({}, f, { ov, effective });
+    });
+    const critCount = decidedFindings.filter(f => f.effective === 'critical').length;
+    const warnCount = decidedFindings.filter(f => f.effective === 'warning').length;
+    const verdict = critCount > 0 ? 'RESUBMIT' : warnCount > 0 ? 'CONDITIONAL' : 'APPROVE';
+    const vc = verdict === 'RESUBMIT'
+      ? { bg: '#FBE9E9', bd: '#F2CFCF', bar: '#C62828', title: '#A82020', body: '#7A3232' }
+      : verdict === 'CONDITIONAL'
+        ? { bg: '#FBF3E4', bd: '#EFDDBF', bar: '#B26A00', title: '#8A5310', body: '#7A5A28' }
+        : { bg: '#E9F5EF', bd: '#CBE7DA', bar: '#0E8A5F', title: '#0E7A55', body: '#33705A' };
+    const verdictTitle = verdict === 'RESUBMIT' ? 'Revise & resubmit' : verdict === 'CONDITIONAL' ? 'Approved with comments' : 'Approved';
+    const counts = [critCount ? critCount + ' critical' : null, warnCount ? warnCount + ' warning' : null].filter(Boolean).join(', ') || 'no open findings';
+    const overrideCount = Object.keys(s.overrides).length;
+
+    const filterMatch = r => s.filter === 'all' ? true : s.filter === 'action' ? r.action : r.recent;
+    const q = s.query.trim().toLowerCase();
+    const visibleSubs = SUBS.filter(r => filterMatch(r) && (!q || r.mat.toLowerCase().includes(q) || r.ref.toLowerCase().includes(q))).map(r => ({
+      ref: r.ref, mat: r.mat, crit: r.crit, when: r.when,
+      chipLabel: r.rec,
+      chipStyle: r.rec === 'APPROVE' ? chip('#E6F4EE', '#0E7A55') : r.rec === 'CONDITIONAL' ? chip('#FBF0DF', '#96591A') : chip('#FBE9E9', '#A82020'),
+      chipStyleM: Object.assign({}, r.rec === 'APPROVE' ? chip('#E6F4EE', '#0E7A55') : r.rec === 'CONDITIONAL' ? chip('#FBF0DF', '#96591A') : chip('#FBE9E9', '#A82020'), { height: '26px', font: "600 11px/26px 'IBM Plex Mono',monospace" }),
+      open: () => this.setState({ route: 'report' })
+    }));
+
+    const out = {
+      // shell
+      isDesktop: s.device === 'desktop', isMobile: s.device === 'mobile',
+      devDesktop: tab(s.device === 'desktop'), devMobile: tab(s.device === 'mobile'),
+      goDesktop: () => this.setState({ device: 'desktop' }),
+      goMobile: () => this.setState({ device: 'mobile' }),
+      reset: () => { this.timers.forEach(clearTimeout); this.timers = []; this.setState({ authed: false, email: '', pw: '', route: 'projects', uploads: [], material: '', stageIdx: -1, running: false, reviewDone: false, overrides: {}, chatLog: [], openRow: 'f1', query: '', filter: 'all', exportState: 'idle', toast: null }); },
+
+      // auth
+      authed: s.authed, notAuthed: !s.authed,
+      email: s.email, pw: s.pw,
+      setEmail: e => this.setState({ email: e.target.value }),
+      setPw: e => this.setState({ pw: e.target.value }),
+      loginKey: e => { if (e.key === 'Enter') this.login(); },
+      doLogin: this.login,
+      logout: () => this.setState({ authed: false, pw: '' }),
+      loginErr: !!s.loginErrMsg, loginErrMsg: s.loginErrMsg,
+
+      // routes
+      atProjects: s.route === 'projects', atProject: s.route === 'project', atSubmit: s.route === 'submit',
+      atProgress: s.route === 'progress', atReport: s.route === 'report', atSpecs: s.route === 'specs',
+      showBack: s.route === 'submit' || s.route === 'progress' || s.route === 'report' || s.route === 'specs',
+      crumb: s.route === 'projects' ? 'Projects' : s.route === 'specs' ? 'Spec library' : proj.name,
+      activeAuthority: s.route === 'projects' ? String(s.projects.length) + ' PROJECTS' : proj.authority,
+      projectCountLabel: s.projects.length + ' active · tenant Trojan Group',
+      goProject: () => this.setState({ route: 'project' }),
+      goSubmit: () => this.setState({ route: 'submit' }),
+      goProgress: () => this.setState({ route: 'progress' }),
+      goReport: () => this.setState({ route: 'report' }),
+      goSpecs: () => this.setState({ route: 'specs' }),
+
+      projectList: s.projects.map((p, i) => ({
+        name: p.name, authority: p.authority, count: p.subs + ' submittals', last: p.last,
+        needsAction: p.action > 0, actionLabel: p.action + ' NEED ACTION',
+        rowStyle: i === s.activeProject && s.route !== 'projects'
+          ? { display: 'flex', flexDirection: 'column', gap: '3px', padding: '9px 10px', borderRadius: '9px', background: '#FFF', border: '1px solid #DDDCD8', boxShadow: '0 1px 2px rgba(0,0,0,.04)', cursor: 'pointer' }
+          : { display: 'flex', flexDirection: 'column', gap: '3px', padding: '9px 10px', borderRadius: '9px', cursor: 'pointer' },
+        nameStyle: { font: "500 13px/1.3 'Instrument Sans',sans-serif", color: i === s.activeProject && s.route !== 'projects' ? '#17181A' : '#4E5054' },
+        authStyle: { font: "500 10px/1 'IBM Plex Mono',monospace", color: i === s.activeProject && s.route !== 'projects' ? '#1B4DFF' : '#9A9A9F' },
+        open: () => this.setState({ activeProject: i, route: 'project' })
+      })),
+
+      showNewProject: s.showNewProject,
+      openNewProject: () => this.setState({ showNewProject: true, npName: '', npErrMsg: '' }),
+      closeNewProject: () => this.setState({ showNewProject: false }),
+      stop: e => e.stopPropagation(),
+      npName: s.npName, setNpName: e => this.setState({ npName: e.target.value }),
+      npKey: e => { if (e.key === 'Enter') this.createProject(); },
+      npErr: !!s.npErrMsg, npErrMsg: s.npErrMsg,
+      npAdmStyle: Object.assign({ flex: 1, textAlign: 'center' }, act(s.npAuthority === 'ADM' ? 'on' : 'off'), { height: '40px', font: "600 12.5px/40px 'Instrument Sans',sans-serif" }),
+      npTaqaStyle: Object.assign({ width: '96px', textAlign: 'center' }, act(s.npAuthority === 'TAQA' ? 'on' : 'off'), { height: '40px', font: "600 12.5px/40px 'Instrument Sans',sans-serif" }),
+      pickAdm: () => this.setState({ npAuthority: 'ADM' }),
+      pickTaqa: () => this.setState({ npAuthority: 'TAQA' }),
+      createProject: this.createProject,
+
+      // register
+      stats: [
+        { label: 'AWAITING YOUR ACTION', value: '4', note: 'oldest 2 days' },
+        { label: 'FIRST-PASS APPROVAL', value: '68%', note: 'up from 61% in June' },
+        { label: 'AVG FIRST REVIEW', value: '4m 12s', note: 'vs 62 min manual' }
+      ],
+      query: s.query, setQuery: e => this.setState({ query: e.target.value }),
+      filters: [
+        { key: 'all', label: 'All 7' }, { key: 'action', label: 'Needs action 4' }, { key: 'recent', label: 'Last 30 days' }
+      ].map(f => ({ label: f.label, style: pill(s.filter === f.key), mStyle: pillM(s.filter === f.key), pick: () => this.setState({ filter: f.key }) })),
+      clearFilters: () => this.setState({ query: '', filter: 'all' }),
+      visibleSubs, noResults: visibleSubs.length === 0,
+
+      // submit
+      uploads: s.uploads.map(f => ({
+        name: f.name,
+        sub: f.pct >= 100 ? f.size + ' · detected as ' + f.label : f.size + ' · uploading to encrypted storage',
+        busy: f.pct < 100, done: f.pct >= 100, pctLabel: f.pct + '%',
+        barStyle: { width: f.pct + '%', height: '100%', borderRadius: '99px', background: '#1B4DFF', transition: 'width .3s ease' }
+      })),
+      addFiles: this.addFiles,
+      dropHeadline: s.uploads.length ? (this.filesReady() ? 'All files uploaded' : 'Uploading…') : 'Drop the submittal PDFs here',
+      dropSub: s.uploads.length ? '3 files · cover letter, datasheet, certificate' : 'or click to browse · PDF only · up to 20 files',
+      hasMaterial: !!s.material, material: s.material,
+      setMaterial: e => this.setState({ material: e.target.value }),
+      startLabel: s.uploads.length === 0 ? 'Add files to continue' : (this.filesReady() ? 'Start review · ~4 min' : 'Uploading…'),
+      startStyle: { height: '44px', border: 'none', borderRadius: '10px', font: "600 14px/1 'Instrument Sans',sans-serif", cursor: this.filesReady() ? 'pointer' : 'not-allowed', background: this.filesReady() ? '#1B4DFF' : '#E6E6E3', color: this.filesReady() ? '#FFF' : '#A9A9AE', boxShadow: this.filesReady() ? '0 3px 10px rgba(27,77,255,.3)' : 'none', transition: 'background .2s ease' },
+      startStyleM: { height: '54px', border: 'none', borderRadius: '14px', font: "600 16px/1 'Instrument Sans',sans-serif", cursor: 'pointer', background: this.filesReady() ? '#1B4DFF' : '#E6E6E3', color: this.filesReady() ? '#FFF' : '#A9A9AE' },
+      startReview: this.startReview,
+      cancelReview: this.cancelReview,
+
+      // progress
+      running: s.running, reviewDone: s.reviewDone,
+      percentLabel: pct + '%',
+      barStyle: { width: Math.max(pct, s.running ? 4 : 0) + '%', height: '100%', borderRadius: '99px', background: s.reviewDone ? '#0E8A5F' : '#1B4DFF', transition: 'width .5s ease' },
+      etaLabel: s.reviewDone ? 'finished in 4m 06s' : s.stageIdx <= 0 ? '~4 min remaining' : '~1 min remaining',
+      currentStageLabel: s.reviewDone ? 'Review complete' : (STAGES[activeStageIdx] ? STAGES[activeStageIdx][1] : 'Queued'),
+      progressHeadline: s.reviewDone ? 'Review complete' : 'Reviewing your submittal',
+      progressSub: s.reviewDone ? 'Eleven stages finished. The findings report is ready with clause citations on every row.' : 'Eleven pipeline stages, weighted by how long they actually take. Nothing here blocks you.',
+      stageList: STAGES.map(([node, label, w], i) => ({
+        node, label, weight: w ? w + '%' : '—',
+        done: done(i), running: runningStage(i), pending: !done(i) && !runningStage(i),
+        labelStyle: { flex: 1, font: runningStage(i) ? "600 12.5px/1.3 'Instrument Sans',sans-serif" : "400 12.5px/1.3 'Instrument Sans',sans-serif", color: done(i) ? '#3E4145' : runningStage(i) ? '#17181A' : '#A9A9AE' },
+        labelStyleM: { flex: 1, font: runningStage(i) ? "600 13px/1.3 'Instrument Sans',sans-serif" : "400 13px/1.3 'Instrument Sans',sans-serif", color: done(i) ? '#3E4145' : runningStage(i) ? '#17181A' : '#A9A9AE' }
+      })),
+
+      // report
+      reportRef: 'SUB-0148 · REV 0',
+      verdictTitle,
+      verdictBody: counts + ' across 34 checked requirements' + (overrideCount ? ' · ' + overrideCount + ' finding' + (overrideCount > 1 ? 's' : '') + ' overridden by you' : '') + '.',
+      verdictBoxStyle: { display: 'flex', gap: '14px', padding: '15px 17px', borderRadius: '12px', background: vc.bg, border: '1px solid ' + vc.bd, alignItems: 'center', transition: 'background .3s ease' },
+      verdictBarStyle: { width: '4px', alignSelf: 'stretch', borderRadius: '99px', background: vc.bar },
+      verdictTitleStyle: { font: "700 19px/1 'Instrument Sans',sans-serif", color: vc.title, letterSpacing: '-.01em' },
+      verdictMetaStyle: { font: "500 12px/1 'IBM Plex Mono',monospace", color: vc.title },
+      verdictBodyStyle: { marginTop: '6px', font: "400 13px/1.5 'Instrument Sans',sans-serif", color: vc.body },
+      verdictBoxStyleM: { padding: '15px', borderRadius: '13px', background: vc.bg, border: '1px solid ' + vc.bd },
+      verdictTitleStyleM: { font: "700 17px/1 'Instrument Sans',sans-serif", color: vc.title },
+      verdictBodyStyleM: { marginTop: '7px', font: "400 12.5px/1.5 'Instrument Sans',sans-serif", color: vc.body },
+      resolvedLabel: overrideCount ? overrideCount + ' of 6 findings resolved by you' : 'No findings resolved yet',
+      exportLabel: s.exportState === 'idle' ? 'Export PDF' : s.exportState === 'working' ? 'Generating…' : 'Download PDF',
+      exportStyle: { height: '34px', padding: '0 13px', borderRadius: '9px', background: '#FFF', border: '1px solid ' + vc.bd, color: vc.title, font: "600 12px/1 'Instrument Sans',sans-serif", cursor: 'pointer' },
+      doExport: this.doExport,
+
+      findings: decidedFindings.map(f => {
+        const open = s.openRow === f.id;
+        const st = f.effective;
+        const statusStyle = st === 'pass' ? chip('#E6F4EE', '#0E7A55') : st === 'warning' ? chip('#FBF0DF', '#96591A') : chip('#FBE9E9', '#A82020');
+        return {
+          param: f.param, spec: f.spec, prop: f.prop, clause: f.clause, page: f.page,
+          specText: f.specText, evidenceDoc: f.evidenceDoc, evidenceText: f.evidenceText, evidencePage: f.evidencePage,
+          open, closed: !open,
+          statusLabel: f.ov === 'dismissed' ? 'DISMISSED' : st === 'pass' ? 'MET' : st === 'warning' ? 'PARTIAL' : 'NOT MET',
+          statusStyle: Object.assign({}, statusStyle, { height: '22px', font: "600 10px/22px 'IBM Plex Mono',monospace" }),
+          rowStyle: { display: 'grid', gridTemplateColumns: '1fr 168px 168px 104px 76px', gap: '12px', padding: '12px 16px', borderBottom: '1px solid #F1F1EE', alignItems: 'center', cursor: 'pointer', background: open ? '#FBFBFA' : 'transparent' },
+          caretStyle: { display: 'inline-block', font: "600 14px/1 'Instrument Sans',sans-serif", color: '#B0B0B5', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .2s ease' },
+          paramStyle: { font: "500 13px/1.3 'Instrument Sans',sans-serif", color: '#17181A', textDecoration: f.ov === 'dismissed' ? 'line-through' : 'none' },
+          paramStyleM: { font: "500 14px/1.3 'Instrument Sans',sans-serif", color: '#17181A', textDecoration: f.ov === 'dismissed' ? 'line-through' : 'none' },
+          toggle: () => this.setState({ openRow: open ? null : f.id }),
+          confirmLabel: f.ov === 'confirmed' ? 'Confirmed ✓' : 'Confirm finding',
+          dismissLabel: f.ov === 'dismissed' ? 'Dismissed ✓' : 'Dismiss with note',
+          confirmStyle: act(f.ov === 'confirmed' ? 'on' : 'off'),
+          dismissStyle: act(f.ov === 'dismissed' ? 'on' : 'off'),
+          confirmStyleM: actM(f.ov === 'confirmed' ? 'on' : 'off'),
+          dismissStyleM: actM(f.ov === 'dismissed' ? 'on' : 'off'),
+          confirm: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setOverride(f.id, f.ov === 'confirmed' ? null : 'confirmed'); },
+          dismiss: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setOverride(f.id, f.ov === 'dismissed' ? null : 'dismissed'); },
+          decided: !!f.ov,
+          decidedNote: f.ov === 'confirmed' ? 'Confirmed — carried into the transmittal' : 'Dismissed — excluded from the recommendation',
+          undo: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setOverride(f.id, null); }
+        };
+      }),
+      missing: ['Third-party hydrostatic test report (DN ≥ 250)', 'Valid ISO 9001 certificate — attached copy expired'],
+
+      chatLog: s.chatLog.map(c => ({
+        text: c.text,
+        hasSource: c.role === 'a', source: c.source, confidence: c.confidence,
+        bubbleStyle: c.role === 'q'
+          ? { padding: '11px 13px', borderRadius: '10px 10px 10px 3px', background: '#17181A', color: '#FFF', font: "400 12.5px/1.5 'Instrument Sans',sans-serif", alignSelf: 'flex-end', maxWidth: '92%' }
+          : { padding: '12px 13px', borderRadius: '10px 10px 3px 10px', background: '#FFF', border: '1px solid #E9E9E6', color: '#3E4145', font: "400 12.5px/1.55 'Instrument Sans',sans-serif" }
+      })),
+      chatBusy: s.chatBusy,
+      chatInput: s.chatInput, setChatInput: e => this.setState({ chatInput: e.target.value }),
+      chatKey: e => { if (e.key === 'Enter') this.send(); },
+      sendChat: () => this.send(),
+      suggestions: [
+        { label: 'Why resubmit?' }, { label: 'What is still missing?' }, { label: 'Is the SDR acceptable?' }
+      ].map(x => ({ label: x.label, ask: () => this.send(x.label) })),
+
+      specs: [
+        { authority: 'ADM', file: 'ADM-S402-sewerage-rev2024.pdf', network: 'Sewerage', chunks: '1 842', status: 'INDEXED', ok: true },
+        { authority: 'ADM', file: 'ADM-S118-irrigation-rev2023.pdf', network: 'Irrigation', chunks: '967', status: 'INDEXED', ok: true },
+        { authority: 'TAQA', file: 'TAQA-AVL-2026-Q2.pdf', network: 'Approved vendor list', chunks: '412', status: 'INDEXED', ok: true },
+        { authority: 'ADM', file: 'ADM-S220-potable-water.pdf', network: 'Potable water', chunks: '—', status: 'INDEXING', ok: false }
+      ].map(x => ({ authority: x.authority, file: x.file, network: x.network, chunks: x.chunks, status: x.status, style: x.ok ? chip('#E6F4EE', '#0E7A55') : chip('#EDEDEA', '#6E7175') })),
+
+      // mobile
+      mProject: s.route === 'project' || s.route === 'projects' || s.route === 'specs',
+      mSubmit: s.route === 'submit', mProgress: s.route === 'progress', mReport: s.route === 'report',
+      mobileTitle: s.route === 'submit' ? 'New submittal' : s.route === 'progress' ? 'Review running' : s.route === 'report' ? 'Findings — SUB-0148' : proj.name,
+      mobileSubtitle: s.route === 'report' ? 'ADM S-402 · REV 0' : proj.authority + ' · ' + proj.subs + ' SUBMITTALS',
+      navProjectDot: { width: '18px', height: '18px', borderRadius: '5px', background: (s.route === 'project' || s.route === 'projects') ? '#1B4DFF' : 'transparent', border: (s.route === 'project' || s.route === 'projects') ? 'none' : '2px solid #B0B0B5' },
+      navProjectText: { font: "500 10px/1 'Instrument Sans',sans-serif", color: (s.route === 'project' || s.route === 'projects') ? '#1B4DFF' : '#8E8E93' },
+      navSubmitDot: { width: '18px', height: '18px', borderRadius: '5px', background: s.route === 'submit' ? '#1B4DFF' : 'transparent', border: s.route === 'submit' ? 'none' : '2px solid #B0B0B5' },
+      navSubmitText: { font: "500 10px/1 'Instrument Sans',sans-serif", color: s.route === 'submit' ? '#1B4DFF' : '#8E8E93' },
+      navProgressDot: { width: '18px', height: '18px', borderRadius: '50%', background: s.route === 'progress' ? '#1B4DFF' : 'transparent', border: s.route === 'progress' ? 'none' : '2px solid #B0B0B5' },
+      navProgressText: { font: "500 10px/1 'Instrument Sans',sans-serif", color: s.route === 'progress' ? '#1B4DFF' : '#8E8E93' },
+      navReportDot: { width: '18px', height: '18px', borderRadius: '5px', background: s.route === 'report' ? '#1B4DFF' : 'transparent', border: s.route === 'report' ? 'none' : '2px solid #B0B0B5' },
+      navReportText: { font: "500 10px/1 'Instrument Sans',sans-serif", color: s.route === 'report' ? '#1B4DFF' : '#8E8E93' },
+
+      // toast
+      hasToast: !!s.toast, toastText: s.toast, toastAction: !!s.toastActionLabel, toastActionLabel: s.toastActionLabel,
+      toastGo: () => { if (s.toastTarget) this.setState({ route: s.toastTarget }); this.setState({ toast: null }); }
+    };
+    return out;
+  }
+}
+</script>
+</body>
+</html>

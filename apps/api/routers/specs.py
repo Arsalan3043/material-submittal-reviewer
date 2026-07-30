@@ -6,8 +6,8 @@ one, not just whoever's tenant happens to "own" it (nobody does).
 """
 from __future__ import annotations
 
+import asyncio
 import json
-import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -16,8 +16,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.dependencies import CurrentUser, get_current_user, get_db
 from apps.api.s3 import presigned_put_url
+from composition import build_job_queue
 
 router = APIRouter(prefix="/api/v1/specs", tags=["specs"])
+
+# See apps/api/routers/submittals.py for why this is built once at import time, not per-request.
+_job_queue = build_job_queue()
 
 
 def _require_tenant_admin(current_user: CurrentUser) -> None:
@@ -78,6 +82,7 @@ async def spec_index(
             },
         )
     ).fetchone()
+    assert row is not None  # ON CONFLICT DO UPDATE ... RETURNING always yields exactly one row
     spec_document_id = row[0]
 
     job_row = (
@@ -93,7 +98,10 @@ async def spec_index(
         )
     ).fetchone()
     await db.commit()
-    return {"spec_document_id": str(spec_document_id), "job_id": str(job_row[0])}
+    assert job_row is not None  # RETURNING id always yields exactly one row on a successful INSERT
+    job_id = job_row[0]
+    await asyncio.to_thread(_job_queue.send, str(job_id))
+    return {"spec_document_id": str(spec_document_id), "job_id": str(job_id)}
 
 
 @router.get("")
