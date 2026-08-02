@@ -760,6 +760,53 @@ separate, later step.
   every spec today is global/admin-ingested, visible to all tenants, matching current
   behavior exactly).
 
+### 13.12 LangSmith tracing (notes/11_pilot_bar_tickets.md Ticket 0) — done 2026-07-31
+
+- **`apps/api/main.py`** — added `load_dotenv()` before the router imports. Real gap found:
+  `apps/api/s3.py`, `apps/api/auth.py`, and `db/session.py` all read required vars via bare
+  `os.environ[...]` at import time, and nothing loaded `.env` for the API process (unlike
+  the worker, which already did in its `__main__`). Without this, LangSmith tracing for the
+  chat route (`query_agent_node`, called directly from `apps/api/routers/chat.py`, already
+  `@traceable`-instrumented inside frozen `src/agents/query_agent.py`) only fired if the
+  shell happened to have `.env` pre-exported.
+- **`adapters/pipeline/langgraph_pipeline.py`** — `graph.stream()` now passes a `config` with
+  `tags=["review", authority]`, `metadata={tenant_id, project_id, submittal_id}`, and
+  `run_name=f"review:{submittal_id}"`. This is the seam file (not frozen `src/`), so the
+  whole 11-node graph shows up as one LangSmith trace, searchable by tenant/project/submittal.
+- **`tests/unit/conftest.py`** (new) — autouse fixture forcing `LANGCHAIN_TRACING_V2=false`
+  and clearing `LANGCHAIN_API_KEY` for the whole unit suite, so a developer's own shell
+  exports can't leak tracing into test runs.
+- **`tests/unit/test_langgraph_pipeline.py`** (new, 4 tests) — against a fake compiled graph
+  (no OpenAI/AWS): confirms the correct tags/metadata/run_name reach `.stream()`, existing
+  node-callback and report-extraction behavior is unchanged, and the typed-error path still
+  fires when no report is produced.
+- **Verified against a real, paid review run** (submittal `32b79c90-3d27-4d59-b764-a12d3627ddb3`,
+  job `f895ebd0-58f5-445f-b28f-4fbea255bc76`, ~9.5 min, real `RESUBMIT` recommendation) — not
+  just the code path. Confirmed directly in the LangSmith UI: a single trace named
+  `review:32b79c90-3d27-4d59-b764-a12d3627ddb3` containing all 11 real nodes nested
+  underneath (including the correct `skip_avl` branch for this ADM submittal), with
+  `Attributes → Tags` showing `["ADM", "review"]` and `Attributes → Metadata` showing the
+  correct `tenant_id`/`project_id`/`submittal_id`.
+- **Two adjacent, pre-existing bugs found while running the verification, not fixed (out of
+  this ticket's scope)**:
+  1. `apps/worker/worker.py::run_review()`'s `submittal_events` sequence counter always
+     starts at `seq = 0` per call instead of continuing from the max existing sequence
+     number for that submittal — re-running a review against a submittal ID that already has
+     events (e.g. `scripts/dev_seed_review.py`'s fixed dev submittal ID) hits
+     `uq_submittal_events_seq` and fails the whole job with a non-retryable
+     `UniqueViolation`. Worked around during verification by manually deleting the stale
+     `submittal_events` rows before re-running; needs a real fix (query current max seq, or
+     scope the counter differently) before this can be a repeatable dev/QA flow.
+  2. `submittals.error_message` isn't cleared on a later successful run — after the above
+     failure was fixed and the submittal re-run to completion, `status` correctly shows
+     `COMPLETED` but `error_message` still holds the stale text from the earlier failed
+     attempt.
+  3. `scripts/dev_seed_review.py` predates the Phase 1 SQS migration (§13.9) — it inserts a
+     `jobs` row but never calls `queue.send()`, and the worker no longer polls Postgres
+     directly. Running the script alone no longer triggers a worker pickup; the job id must
+     be manually sent to SQS afterward (`build_job_queue().send(job_id)`). The script's
+     docstring/instructions are now stale relative to how the worker actually dispatches.
+
 ---
 
 ## What's next

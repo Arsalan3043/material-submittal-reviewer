@@ -6,6 +6,15 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
+
+# Must run before any of the imports below: apps/api/s3.py, apps/api/auth.py, and
+# db/session.py all read required vars via bare os.environ[...] at import time (unlike
+# apps/worker/worker.py, which already calls load_dotenv() in its __main__ block). Without
+# this, LangSmith tracing for the chat route's query_agent_node call — and everything else
+# read from .env — silently only works if the shell happened to export .env first.
+load_dotenv()
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

@@ -37,10 +37,24 @@ class LangGraphReviewPipeline(ReviewPipelinePort):
             "review_date": request.review_date,
         }
 
+        # LangSmith tags/metadata on the run config — not a change to the graph itself,
+        # just how this call is traced. Lets a support question ("what happened on
+        # submittal X") be answered by searching LangSmith for the submittal_id tag,
+        # instead of needing to reproduce the run.
+        trace_config = {
+            "run_name": f"review:{request.submittal_id}",
+            "tags": ["review", request.authority],
+            "metadata": {
+                "tenant_id": request.tenant_id,
+                "project_id": request.project_id,
+                "submittal_id": request.submittal_id,
+            },
+        }
+
         try:
             graph = compile_review_graph()
             final_state: dict = {}
-            for event in graph.stream(initial_state, stream_mode="updates"):
+            for event in graph.stream(initial_state, config=trace_config, stream_mode="updates"):
                 node_name, node_state = next(iter(event.items()))
                 # Each node returns the full spread state (project convention — see
                 # PROJECT_STATE.md §2), so this merge is a superset, kept defensive
