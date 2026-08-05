@@ -948,6 +948,42 @@ Full detail, design rationale, and testing steps in `notes/tickets/ticket3.md`. 
   `GET /findings/{id}/decisions`'s full history (only the current decision is shown);
   `corrected_fields` still has no server-side key-allowlist validation (Ticket 2's gap,
   now known to only ever receive `severity`/`clause_reference`/`description` in practice).
+- **Post-session fix, worth recording**: `buildKeyToFindingId()`'s generic-category
+  positional matching had a real bug at ship time — it only advanced its per-category
+  finding-id queue for items that passed the `.filter(f => f.description)` check, while
+  `apps/worker/findings.py::extract_findings()` inserts one row per item *unconditionally*.
+  The two queues drift out of alignment the moment a single empty-description item appears
+  in a category, silently misattributing every later item in that category to the wrong
+  finding id — worse than the intended "unavailable" degradation, not just an edge case of
+  it. Fixed by always shifting the queue per source item and only skipping the *map write*
+  for filtered-out items, so queue and item positions stay 1:1 regardless of filtering.
+
+### 13.16 Report ordering: group by category (notes/11_pilot_bar_tickets.md Ticket 17) — done 2026-08-05
+
+Full detail in `notes/tickets/ticket17.md`. Frontend-only, small. Summary:
+
+- `frontend/src/components/report-view.tsx`'s findings matrix previously sorted purely by
+  severity across all 9 categories — a critical `table_audit` row and a critical
+  `spec_verification` row could land adjacent while two same-category findings ended up
+  pages apart. Real feedback from Arsalan (`notes/MeetingBhaiya .md`, 2026-07-31 meeting):
+  group by category first, severity only within each group.
+- **The one open design question the ticket itself flagged** (fixed pipeline order vs. the
+  order documents were actually uploaded in) was put to the user rather than guessed —
+  answered: **fixed pipeline order**. Upload order has no well-defined meaning today
+  (bundled PDFs, a single category spanning multiple documents), so this reuses the exact
+  same order `src/models/findings.py::ReviewReport`'s fields and
+  `apps/worker/findings.py::_STANDARD_REPORT_KEYS` already use elsewhere in this codebase —
+  not a new invented ordering.
+- Two-key sort: `CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category] ||
+  SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]`. The old single-key sort's
+  rationale comment (quoting the original design README: "don't show a flat undifferentiated
+  list") was replaced, not left stale, since it now describes the opposite of what the code
+  does.
+- **Verified**: `tsc --noEmit`/`eslint`/`next build` all clean. Not re-verified against a
+  real running stack in-browser this session (no functional/data-shape risk — pure
+  client-side sort comparator over data already fetched and rendering correctly per Ticket
+  3's verification) — worth a quick visual confirmation next time the report page is open
+  for another reason, not treated as a blocking gap.
 
 ---
 
@@ -963,6 +999,12 @@ against real backfilled data. Decision event log + reason codes (§13.14, Ticket
 complete and verified against real decisions on real findings. Confirm/Dismiss/Edit wired
 into the UI (§13.15, Ticket 3) — complete and verified by the user against a real running
 stack, closing out the entire "persisted findings + human decisions" arc (Tickets 1–3).
+Report findings grouped by category (§13.16, Ticket 17) — complete.
+
+**Note**: `notes/11_pilot_bar_tickets.md` grew Tickets 13–19 on 2026-07-31, from a real
+requirements meeting with Arsalan (`notes/MeetingBhaiya .md`) — not internal engineering
+cleanup. Tickets 14 and 18 each contain their own open design question flagged inline,
+same as Ticket 17 did; resolve those with the user before implementing, don't guess.
 
 **Pending, in no particular committed order:**
 

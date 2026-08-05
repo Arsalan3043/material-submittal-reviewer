@@ -28,6 +28,29 @@ import { useToast } from "@/components/toast";
 
 const SEVERITY_ORDER: Record<Severity, number> = { critical: 0, warning: 1, pass: 2 };
 
+/**
+ * notes/11_pilot_bar_tickets.md Ticket 17 — Arsalan wants findings grouped by category
+ * (all spec-verification together, then all table-audit together, ...), not interleaved by
+ * severity across categories. Fixed pipeline order, not upload/document order — resolved
+ * explicitly rather than guessed (the ticket flagged this as an open question): upload
+ * order has no well-defined meaning today (bundled PDFs, categories spanning multiple
+ * documents), so this mirrors src/models/findings.py::ReviewReport's own field order
+ * (also apps/worker/findings.py's _STANDARD_REPORT_KEYS iteration order, with table_audit
+ * in its existing slot between statement and consistency) — the same fixed order already
+ * used elsewhere in this codebase, not a new invented one.
+ */
+const CATEGORY_ORDER: Record<string, number> = {
+  COMPLETENESS: 0,
+  "BOQ/DRAWING": 1,
+  SPEC: 2,
+  VALIDITY: 3,
+  AVL: 4,
+  STATEMENT: 5,
+  "TABLE AUDIT": 6,
+  CONSISTENCY: 7,
+  OTHER: 8,
+};
+
 const ACTION_LABEL: Record<DecisionAction, string> = {
   confirm: "CONFIRMED",
   dismiss: "DISMISSED",
@@ -130,8 +153,12 @@ const GENERIC_CATEGORY_TO_FINDING_CATEGORY: Record<string, PersistedFinding["cat
  * - table_audit and the 7 generic categories: positional. Both this array and
  *   apps/worker/findings.py::extract_findings() walk the exact same report lists in the
  *   exact same order — there's no shared id field, so position is the only correlation key
- *   available. The generic-category filter (`.filter(f => f.description)`) below MUST
- *   match the one used when building genericRows, or positions drift.
+ *   available. extract_findings() inserts one row per item UNFILTERED, so `queue` always
+ *   has the same length/order as `items` — the loop below must shift `queue` for every item,
+ *   including ones with an empty description, and only skip RECORDING the mapping for those
+ *   (matching genericRows' `.filter(f => f.description)` key numbering). Shifting only on
+ *   the filtered branch would silently misattribute every later item in the category to the
+ *   wrong finding id instead of degrading to "unavailable."
  * - spec_verification: matched via the "[REQ-xxx]" id spec_verifier.py already embeds at
  *   the front of each finding's description, against citations[].requirement_id — position
  *   isn't trustworthy here since citations and findings are built by separate code paths.
@@ -175,8 +202,15 @@ function buildKeyToFindingId(
     const items = (report[reportKey as keyof ReviewReport] as unknown as Finding[]) ?? [];
     let filteredIndex = 0;
     for (const item of items) {
-      if (!item.description) continue;
+      // queue was built from `findings`, which extract_findings() (apps/worker/findings.py)
+      // inserts unconditionally — one row per item, filtered or not. So queue and items stay
+      // 1:1 aligned only if EVERY item shifts the queue, including skipped ones. Shifting
+      // only on the description check (the earlier version) would silently misattribute
+      // every subsequent item in this category to the wrong finding id the moment a single
+      // empty-description item appeared, rather than degrading to "unavailable" — worse than
+      // the documented failure mode, not just an edge case of it.
       const f = queue.shift();
+      if (!item.description) continue;
       if (f) map.set(`g-${reportKey}-${filteredIndex}`, f.id);
       filteredIndex += 1;
     }
@@ -341,10 +375,17 @@ export function ReportView({
         });
     });
 
-    // Lead with the highest severity across ALL categories (README: "don't show a flat
-    // undifferentiated list") rather than grouping citations-then-table-then-generic.
+    // Group by category first (Ticket 17 — every finding from a given category renders
+    // contiguously, matching how a reviewer scans a report), severity-sorted only within
+    // each group. Previously a severity-only sort across ALL categories, which the original
+    // README asked for ("don't show a flat undifferentiated list") but Arsalan's real usage
+    // feedback reversed: a critical table_audit row and a critical spec_verification row
+    // ending up adjacent, while two same-category findings landed pages apart, actively
+    // hurt reviewing — see notes/MeetingBhaiya .md.
     return [...citationRows, ...tableRows, ...genericRows].sort(
-      (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
+      (a, b) =>
+        CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category] ||
+        SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
     );
   }, [citations, report]);
 
