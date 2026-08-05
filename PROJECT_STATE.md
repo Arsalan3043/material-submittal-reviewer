@@ -807,6 +807,148 @@ separate, later step.
      be manually sent to SQS afterward (`build_job_queue().send(job_id)`). The script's
      docstring/instructions are now stale relative to how the worker actually dispatches.
 
+### 13.13 Persist findings with stable IDs (notes/11_pilot_bar_tickets.md Ticket 1) — done 2026-08-05
+
+Full detail, design rationale, and testing steps in `notes/tickets/ticket1.md`. Summary:
+
+- New `findings` table (migration `006_findings.py`, `db/models.py::Finding`), RLS-enabled
+  (`ENABLE`/`FORCE ROW LEVEL SECURITY` + `tenant_isolation` policy, identical pattern to
+  migration 001). Rows are immutable — nothing ever `UPDATE`s a finding after insert; human
+  decisions are Ticket 2's separate append-only table.
+- **`src/` untouched.** `apps/worker/findings.py::extract_findings()` (new, pure, zero DB/
+  network) flattens the pipeline's already-computed `report` dict into findings rows —
+  it never imports from `src/agents/` or `src/models/`.
+- `apps/worker/worker.py::run_review()` inserts findings in the **same transaction** as the
+  completion `UPDATE` — both succeed or both roll back together.
+- New `GET /api/v1/submittals/{submittal_id}/findings`
+  (`apps/api/routers/submittals.py`), RLS-scoped via the existing `get_db(tenant_id)`
+  pattern. Not yet called by the frontend — that's Ticket 3's job (confirm/dismiss/edit
+  needs a `finding_id` to act against).
+- **Five columns are real NULL for every finding in this ticket, by design, not a gap
+  discovered later**: `clause_reference`, `spec_document_id`, `spec_page`,
+  `source_document_id`, `source_page`. The frozen `Finding`/`TableRowFinding` models only
+  carry per-finding citation data for the `spec_verification` category (and even there,
+  it's in a separate `verification_artifact` JSONB keyed by `requirement_id`, not
+  `finding_id`, with no clean 1:1 join). Real per-finding citations across all 9 categories
+  need the underlying agents themselves to produce and attach that provenance — that's
+  **Ticket 11**'s job, and will very likely need its own narrow, explicitly-authorized
+  exception to touch specific `src/agents/` files (same pattern as the Qdrant migration,
+  §13.11, and Ticket 5's three placeholder nodes). `confidence`/`model_version`/
+  `prompt_version` are NULL too — `confidence` is explicitly Ticket 8's job; no ticket yet
+  owns real per-model/per-prompt versioning (only the coarser `pipeline_version` exists).
+- **Backfill run for real against this dev DB**, not just designed: `scripts/
+  backfill_findings.py` (new) derives findings from the `submittals.report` JSONB every
+  `COMPLETED` submittal already has — no re-running real reviews needed. Result: **9 real
+  submittals backfilled, 298 real findings**. Confirmed idempotent — re-running the script
+  inserted 0 new rows.
+- **Verified against real data, not just unit tests**: migration round-tripped
+  (`upgrade → downgrade → upgrade`) clean; the real backfilled findings spot-checked
+  correct (categories, severities including the `pass → observation` mapping, real
+  descriptions); the new endpoint's exact query/RLS path executed directly against the
+  real dev DB via `db.session.get_db(tenant_id=...)` and returned correct tenant-scoped data.
+- 20 new/extended tests (120 total passing, ruff/mypy clean on every CI-linted path):
+  pure `extract_findings()` tests, an extended `test_worker_run_review.py` proving stable
+  IDs survive a simulated restart (new DB session, re-read, identical IDs — the literal
+  acceptance criterion), and a real cross-tenant RLS test
+  (`tests/unit/test_findings_rls.py`) proving tenant A cannot read tenant B's findings even
+  with no `WHERE tenant_id` clause, nor fetch it by exact primary key.
+- **Known gap, explicit**: no FastAPI `TestClient` test for the new endpoint — no existing
+  test in this codebase exercises a route end-to-end yet (auth needs a real Cognito JWT, no
+  mock-auth fixture exists). Verified the underlying query/RLS path directly instead.
+
+### 13.14 Decision event log + reason codes (notes/11_pilot_bar_tickets.md Ticket 2) — done 2026-08-05
+
+Full detail, design rationale, and testing steps in `notes/tickets/ticket2.md`. Summary:
+
+- Two new tables (migration `007_finding_decisions.py`):
+  - `reason_codes` — global, shared taxonomy (no `tenant_id`/`project_id`, same rationale
+    as `spec_documents`), seeded in the migration with the 10-code starting set from
+    notes/10_stage1_product_and_data_spec.md §A3 (5 dismiss, 3 edit, 2 confirm). No RLS,
+    matching `spec_documents`' precedent.
+  - `finding_decisions` — append-only, RLS-enabled (same `tenant_isolation` pattern as
+    `findings`/migration 001). One row per human action (`confirm`/`dismiss`/`edit`) on a
+    finding (migration 006, Ticket 1); nothing ever `UPDATE`s or deletes a row.
+  - **Composite FK `(reason_code, action) → reason_codes(code, action)`** — a real
+    DB-level guarantee, not just an API-layer check, that a `dismiss`-only reason code
+    can't be attached to a `confirm`/`edit` decision. Proven with a real `IntegrityError`
+    test, not just written and assumed to hold.
+  - `CHECK (action = 'edit' OR corrected_fields IS NULL)` — non-edit decisions can't carry
+    a correction diff.
+- New `apps/api/routers/findings.py`: `POST /api/v1/findings/{finding_id}/decisions`,
+  `GET /api/v1/findings/{finding_id}/decisions` (full ordered history — added beyond the
+  ticket's literal API list because the acceptance criterion explicitly requires "the full
+  history is queryable"), `GET /api/v1/reason-codes?action=...`.
+- `GET /api/v1/submittals/{submittal_id}/findings` (Ticket 1's endpoint,
+  `apps/api/routers/submittals.py`) now `LEFT JOIN LATERAL`s each finding's *latest*
+  decision (`ORDER BY created_at DESC LIMIT 1`) as `current_decision` — computed at read
+  time on every request, never stored as a mutable status column anywhere, per the
+  ticket's explicit instruction.
+- **Verified against real data, not just unit tests**: recorded a real `confirm` then a
+  real `edit` decision against one of Ticket 1's real backfilled findings
+  (`1a1bef2d-e4e4-435a-a841-5bf6e2d6c879`), ran the exact joined query the route uses,
+  confirmed `edit` correctly won as `current_decision` while both rows remained queryable
+  in the full history — then cleaned up the scratch rows afterward.
+- 7 new tests (127 total passing, ruff/mypy clean including the new router and
+  `apps/api/main.py`, which — like Ticket 0's finding — aren't in CI's current lint scope;
+  pre-existing gap, not introduced here, flagged not fixed): decision recording,
+  latest-wins-while-history-survives, `reason_code` required, `reason_code` must match the
+  decision's `action` (real DB constraint violation), `corrected_fields` rejected for
+  non-edit actions, and real cross-tenant RLS isolation on `finding_decisions`.
+- **Known gap, explicit**: same as Ticket 1 — no FastAPI `TestClient` test for the new
+  routes; verified the underlying query/RLS path directly instead, consistent with every
+  other route in this codebase (none are tested end-to-end over HTTP yet).
+
+### 13.15 Wire Confirm/Dismiss/Edit in the UI (notes/11_pilot_bar_tickets.md Ticket 3) — done 2026-08-05
+
+Full detail, design rationale, and testing steps in `notes/tickets/ticket3.md`. Frontend-only
+— no backend changes; everything it needed already existed from Tickets 1–2. Summary:
+
+- `frontend/src/components/report-view.tsx`'s findings report now records real decisions
+  against the persisted `findings`/`finding_decisions` tables instead of local-only state
+  that reset on refresh. Confirm/Dismiss/Edit all open a reason picker (`GET /reason-codes`,
+  human-readable labels, never raw codes) with an optional note; Edit additionally lets the
+  reviewer change severity/clause_reference/description, showing the untouched original
+  ("AI ORIGINAL") beneath. Optimistic updates with rollback-and-toast on failure — the UI
+  never shows a decision that didn't actually save.
+- **The hard part**: the rich report/citations JSON (no stable id) and the persisted
+  `findings` table (stable id, but 5 columns intentionally NULL per Ticket 1) had to be
+  overlaid, not swapped — a new `buildKeyToFindingId()` matching layer attaches a real
+  finding id to each existing row via positional correlation (8 of 9 categories) or the
+  embedded `[REQ-xxx]` requirement id (`spec_verification`, matched against `citations[]`).
+  This is inherently fragile (no shared join key exists) and is a direct, foreseeable
+  consequence of Ticket 1's honest NULL-citation-columns decision — real evidence for why
+  Ticket 11 (citations attached at the source, in `src/agents/`) matters, not just a nicer
+  UI. Degrades gracefully (a row that can't be matched shows "Decision not available" rather
+  than crashing) but that path wasn't exercised against real mismatched data during testing.
+- Keyboard shortcuts (`c`/`d` on an expanded row) **open** the reason picker rather than
+  blind-submitting — a reason is required at the DB level for every action including edit
+  (confirmed correct behavior during testing, not a bug), so a one-keystroke auto-submit
+  would have meant silently picking an arbitrary reason code.
+- **Real correction made mid-session, worth remembering**: the first implementation synced
+  the whole `findings` prop into local state via a plain `useEffect`, which this repo's
+  `eslint-config-next` flagged as `react-hooks/set-state-in-effect` (a rule not in most
+  training data — cascading-render risk). Fixed by keeping only a small
+  `{findingId: decision}` overrides map in state, merged with the `findings` prop via
+  `useMemo` at render time instead. Documented in `frontend/AGENTS.md`'s new "Lessons from
+  real sessions" section (added below the pre-existing, seemingly tool-managed
+  `<!-- BEGIN/END:nextjs-agent-rules -->` block, left untouched), along with a note that no
+  frontend test framework exists in this repo (`tsc`/`eslint`/`build` + manual browser
+  testing is the only verification available) and that no backend route-testing harness
+  exists either (new frontend API calls must be cross-checked against real router source,
+  not just the hand-written TypeScript types in `lib/api.ts`, which can drift).
+- **Verified**: `tsc --noEmit`/`eslint`/`next build` all clean, plus real manual testing
+  against a real running stack (Postgres/Qdrant/uvicorn/`next dev`) and one of Ticket 1's
+  real backfilled submittals (`32b79c90-3d27-4d59-b764-a12d3627ddb3`) — confirmed directly
+  by the user: confirm/dismiss/edit all persist correctly through a hard refresh (the
+  literal acceptance criterion), rollback-on-failure works, keyboard shortcuts work and
+  don't hijack normal typing, and reason-required-on-edit behaves as designed.
+- **Known gaps, explicit**: no automated frontend tests (no framework exists, none added
+  without asking first); actor display is "you"/"another reviewer" only — no user-directory
+  endpoint exists to show a real name; no frontend UI yet for
+  `GET /findings/{id}/decisions`'s full history (only the current decision is shown);
+  `corrected_fields` still has no server-side key-allowlist validation (Ticket 2's gap,
+  now known to only ever receive `severity`/`clause_reference`/`description` in practice).
+
 ---
 
 ## What's next
@@ -814,7 +956,13 @@ separate, later step.
 **Done:** Phase 0 (§13.6-13.8) — foundation. Phase 1 **partial** (§13.9) — SQS migration
 real and verified; IAM roles, `/health`/`/ready`, and systemd deployment still pending, all
 by explicit deferral, not oversight. Frontend desktop redesign (§13.10) — complete. Qdrant
-spec-library migration (§13.11) — complete and verified.
+spec-library migration (§13.11) — complete and verified. LangSmith tracing (§13.12,
+notes/11_pilot_bar_tickets.md Ticket 0) — complete and verified against a real traced
+review. Findings persisted with stable IDs (§13.13, Ticket 1) — complete and verified
+against real backfilled data. Decision event log + reason codes (§13.14, Ticket 2) —
+complete and verified against real decisions on real findings. Confirm/Dismiss/Edit wired
+into the UI (§13.15, Ticket 3) — complete and verified by the user against a real running
+stack, closing out the entire "persisted findings + human decisions" arc (Tickets 1–3).
 
 **Pending, in no particular committed order:**
 
@@ -832,8 +980,11 @@ spec-library migration (§13.11) — complete and verified.
 7. **Phase 6** — actual deployment (Terraform, EC2, ALB, HTTPS) — nothing is on AWS yet
    beyond S3/Cognito/SQS; everything else still runs locally.
 8. **Phase 7 / product-completeness routes** — see `notes/api.md` §3-4 for the full gap
-   list: finding override (persisted, not just local UI state), PDF export, cancel/retry,
-   tenant/user admin screens.
+   list: PDF export, cancel/retry, tenant/user admin screens. The persisted-findings +
+   human-decisions arc (Tickets 1–3, §13.13-13.15) is now fully done, backend and frontend.
+   Remaining in that area: a user-directory lookup so decision captions can show a real
+   name instead of "you"/"another reviewer" (no ticket owns this yet), and a frontend UI
+   for the full decision history (`GET /findings/{id}/decisions` has no consumer yet).
 9. **Mobile responsiveness** — the frontend (§13.10) is desktop/laptop only right now.
 10. **Custom/private per-project specs** — discussed and explicitly shelved; every spec
     today is global, admin-ingested, visible to all tenants.

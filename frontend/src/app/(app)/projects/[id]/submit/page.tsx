@@ -1,15 +1,23 @@
 "use client";
 
-import { use, useCallback, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
-import { createSubmittal, startSubmittal, uploadToS3, type UploadTarget } from "@/lib/api";
+import {
+  createSubmittal,
+  getProjectSections,
+  startSubmittal,
+  uploadToS3,
+  type UploadTarget,
+} from "@/lib/api";
 import { PageHeader } from "@/components/page-header";
-import { Button, MonoLabel, TextInput } from "@/components/ui";
+import { Button, MonoLabel, Select, TextInput } from "@/components/ui";
 
 interface FileRow {
   file: File;
   pct: number;
+  /** Declared section. "" means auto-detect — the API infers from the filename. */
+  label: string;
 }
 
 /**
@@ -21,6 +29,14 @@ interface FileRow {
  *
  * Cover-page auto-fill (the design's "AUTO-FILLED FROM COVER PAGE" badge) is not a real API
  * feature today — the material field below is a plain editable input, not faked.
+ *
+ * Per-file section labels restore what the old Streamlit upload page did (app/pages/upload.py,
+ * removed in 92edd21). They matter more than they look: submittals are scanned, every document
+ * in a package opens with the same letterhead, and the classifier reads only the first two
+ * pages — so an unlabelled package classifies as others/low across the board and comes back as
+ * a confident "every document missing / RESUBMIT". Leaving a row on Auto-detect is safe because
+ * the API infers from the filename (apps/api/section_labels.py); the picker exists so the
+ * uploader can correct it, which also re-enables mislabelled-document detection.
  */
 export default function SubmitSubmittalPage({
   params,
@@ -42,14 +58,29 @@ export default function SubmitSubmittalPage({
   const inFlight = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [sections, setSections] = useState<string[]>([]);
+
+  // Section vocabulary comes from the project's authority profile, not a frontend constant,
+  // so a new authority never needs a frontend change. A failure here is non-blocking: the
+  // picker degrades to auto-detect only, and the API still infers from filenames.
+  useEffect(() => {
+    getProjectSections(projectId)
+      .then((res) => setSections(res.sections))
+      .catch(() => setSections([]));
+  }, [projectId]);
+
   const addFiles = useCallback((incoming: FileList | null) => {
     if (!incoming) return;
     const pdfs = Array.from(incoming).filter((f) => f.type === "application/pdf");
-    setRows((prev) => [...prev, ...pdfs.map((file) => ({ file, pct: 0 }))]);
+    setRows((prev) => [...prev, ...pdfs.map((file) => ({ file, pct: 0, label: "" }))]);
   }, []);
 
   function removeFile(name: string) {
     setRows((prev) => prev.filter((r) => r.file.name !== name));
+  }
+
+  function setLabel(name: string, label: string) {
+    setRows((prev) => prev.map((r) => (r.file.name === name ? { ...r, label } : r)));
   }
 
   const uploadDone = rows.length > 0 && rows.every((r) => r.pct >= 100);
@@ -68,7 +99,11 @@ export default function SubmitSubmittalPage({
         setStage("creating");
         const created = await createSubmittal(projectId, {
           material_desc: materialDesc || undefined,
-          files: rows.map((r) => ({ filename: r.file.name })),
+          // undefined, not "", so the API applies its filename inference for auto-detect rows.
+          files: rows.map((r) => ({
+            filename: r.file.name,
+            declared_label: r.label || undefined,
+          })),
         });
         submittalId = created.submittal_id;
         uploads = created.uploads;
@@ -172,6 +207,13 @@ export default function SubmitSubmittalPage({
             />
           </div>
 
+          {rows.length > 0 && sections.length > 0 && (
+            <p className="text-[11.5px] leading-relaxed text-text-faint">
+              Declare what each file contains. Leave on auto-detect if unsure — filenames are
+              read automatically. Declaring also lets the review flag mislabelled documents.
+            </p>
+          )}
+
           {rows.map((r) => (
             <div
               key={r.file.name}
@@ -186,6 +228,22 @@ export default function SubmitSubmittalPage({
                   {(r.file.size / (1024 * 1024)).toFixed(1)} MB ·{" "}
                   {r.pct >= 100 ? "uploaded" : r.pct > 0 ? "uploading to encrypted storage" : "ready to upload"}
                 </div>
+                {sections.length > 0 && (
+                  <Select
+                    value={r.label}
+                    disabled={busy || hasPendingSubmittal}
+                    onChange={(e) => setLabel(r.file.name, e.target.value)}
+                    className="mt-1.5 w-full max-w-[320px]"
+                    aria-label={`Section for ${r.file.name}`}
+                  >
+                    <option value="">Auto-detect from filename</option>
+                    {sections.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </Select>
+                )}
                 {r.pct > 0 && r.pct < 100 && (
                   <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[#EDEDEA]">
                     <div

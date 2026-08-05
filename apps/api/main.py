@@ -19,7 +19,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.dependencies import CurrentUser, get_current_user
-from apps.api.routers import chat, projects, specs, submittals
+from apps.api.routers import chat, findings, projects, specs, submittals
 
 app = FastAPI(title="Material Submittal Reviewer API")
 
@@ -40,6 +40,7 @@ app.include_router(projects.router)
 app.include_router(submittals.router)
 app.include_router(specs.router)
 app.include_router(chat.router)
+app.include_router(findings.router)
 
 
 @app.get("/api/v1/me")

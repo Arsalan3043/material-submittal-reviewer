@@ -14,6 +14,7 @@ from sqlalchemy.exc import OperationalError
 from adapters.pipeline.fake_pipeline import FakeReviewPipeline
 from apps.worker import worker as worker_module
 from core.errors import PipelineTransientError
+from core.models import ReviewResult
 from db.session import SyncSessionLocal
 
 pytestmark = pytest.mark.integration
@@ -76,6 +77,7 @@ def seeded_submittal(monkeypatch: pytest.MonkeyPatch):
     yield submittal_id
 
     with SyncSessionLocal() as db:
+        db.execute(text("DELETE FROM findings WHERE submittal_id=:id"), {"id": submittal_id})
         db.execute(text("DELETE FROM submittal_events WHERE submittal_id=:id"), {"id": submittal_id})
         db.execute(text("DELETE FROM submittal_files WHERE submittal_id=:id"), {"id": submittal_id})
         db.execute(text("DELETE FROM submittals WHERE id=:id"), {"id": submittal_id})
@@ -131,3 +133,120 @@ def test_run_review_propagates_pipeline_error_without_marking_completed(
         # (apps/worker/worker.py::run_worker's except block). Here we're only proving
         # run_review leaves the row at RUNNING, not silently COMPLETED, on failure.
         assert status == "RUNNING"
+
+
+def _report_with_findings() -> dict:
+    return {
+        "submittal_id": "irrelevant",
+        "authority": "ADM",
+        "material_description": "HDPE pipe",
+        "spec_clause": "10.2.2",
+        "review_date": "2026-08-05",
+        "completeness_findings": [
+            {
+                "stage": "completeness",
+                "document": "Submittal package",
+                "description": "Missing required document: MSDF.",
+                "severity": "critical",
+                "action_required": "Include MSDF in resubmission.",
+            }
+        ],
+        "boq_drawing_findings": [],
+        "spec_verification_findings": [
+            {
+                "stage": "spec_verifier",
+                "document": "submittal_package",
+                "description": "[REQ-1] PN rating — matches spec.",
+                "severity": "pass",
+                "action_required": "No action required.",
+            }
+        ],
+        "validity_findings": [],
+        "avl_findings": [],
+        "statement_findings": [],
+        "table_audit_findings": [
+            {
+                "parameter": "PN rating",
+                "specified_value": "PN16",
+                "proposed_value": "PN10",
+                "deviation_declared": "none",
+                "measured_value": "PN10",
+                "specified_correct": True,
+                "proposed_verified": True,
+                "measured_verified": True,
+                "deviation_accurate": False,
+                "missing_from_spec": False,
+                "finding": "Proposed PN rating below spec requirement.",
+                "severity": "warning",
+            }
+        ],
+        "consistency_findings": [],
+        "others_findings": [],
+        "critical_count": 1,
+        "warning_count": 1,
+        "missing_documents": ["MSDF"],
+        "overall_recommendation": "RESUBMIT",
+        "summary_comments": "Test report with real findings.",
+    }
+
+
+def test_run_review_persists_findings_with_stable_ids_in_the_same_transaction(
+    seeded_submittal: uuid.UUID,
+) -> None:
+    submittal_id = seeded_submittal
+    pipeline = FakeReviewPipeline(result=ReviewResult(report=_report_with_findings()))
+
+    with SyncSessionLocal() as db:
+        worker_module.run_review(db, submittal_id, TEST_S3_BUCKET, pipeline)
+
+    with SyncSessionLocal() as db:
+        rows = (
+            db.execute(
+                text(
+                    "SELECT id, category, severity, description, pipeline_node, "
+                    "pipeline_version, tenant_id, project_id, submittal_id "
+                    "FROM findings WHERE submittal_id=:id ORDER BY category"
+                ),
+                {"id": submittal_id},
+            )
+            .mappings()
+            .fetchall()
+        )
+
+    assert len(rows) == 3  # 1 completeness + 1 spec_verification + 1 table_audit
+    by_category = {r["category"]: r for r in rows}
+
+    assert by_category["completeness"]["severity"] == "critical"
+    assert by_category["completeness"]["pipeline_node"] == "completeness"
+    assert by_category["spec_verification"]["severity"] == "observation"
+    assert by_category["table_audit"]["severity"] == "warning"
+    assert by_category["table_audit"]["description"] == "Proposed PN rating below spec requirement."
+
+    for row in rows:
+        assert row["submittal_id"] == submittal_id
+        assert row["pipeline_version"] == worker_module.PIPELINE_VERSION
+
+    # Restart-and-reload: re-fetching by the same IDs returns identical rows — the
+    # acceptance criterion from notes/11_pilot_bar_tickets.md Ticket 1.
+    first_ids = sorted(str(r["id"]) for r in rows)
+    with SyncSessionLocal() as db:
+        reread = (
+            db.execute(
+                text("SELECT id FROM findings WHERE submittal_id=:id"), {"id": submittal_id}
+            )
+            .mappings()
+            .fetchall()
+        )
+    assert sorted(str(r["id"]) for r in reread) == first_ids
+
+
+def test_run_review_with_no_findings_inserts_nothing(seeded_submittal: uuid.UUID) -> None:
+    submittal_id = seeded_submittal
+    with SyncSessionLocal() as db:
+        worker_module.run_review(db, submittal_id, TEST_S3_BUCKET, FakeReviewPipeline())
+
+    with SyncSessionLocal() as db:
+        count = db.execute(
+            text("SELECT count(*) FROM findings WHERE submittal_id=:id"), {"id": submittal_id}
+        ).scalar()
+    assert count == 0

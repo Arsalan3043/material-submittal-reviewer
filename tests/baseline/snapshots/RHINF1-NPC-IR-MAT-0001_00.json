@@ -1,0 +1,797 @@
+{
+  "authority": "ADM",
+  "captured_at": "2026-08-05T05:14:47.226930+00:00",
+  "git_commit": "379c032",
+  "prose": {
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      "Missing required document: Material Source Declaration Form (MSDF). || Include Material Source Declaration Form (MSDF) in resubmission.",
+      "Wrong document type in section 'Material Source Declaration Form': expected section content but found cover_page. || Move 1. Material Source Declaration Form ( MSDF ).pdf to the correct section."
+    ],
+    "consistency_findings": [
+      "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '1. Material Source Declaration Form ( MSDF ).pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '4. Manufacturer's Technical Data Original Catalogues.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '5. Recent Test Reports Certificates.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '6. Department of Economic Development ( Registration ).pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '7. Manufacturer Suppliers Guarantee ( as per Contract ).pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '8. Previous Approvals.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Supplier name not found on cover page. Cannot perform consistency check. || Ensure supplier name is clearly stated on the cover page."
+    ],
+    "others_findings": [],
+    "spec_verification_findings": [
+      "[R-001] Water stops shall be extruded from high grade elastomeric polyvinylchloride compound \u2014 'high' found in submitted documents (deterministic string match). || No action required.",
+      "[R-002] Water stops shall be at least 230 mm wide \u2014 250.0 mm >= 230.0 mm \u2192 PASS (deterministic) || No action required.",
+      "[R-003] Tensile strength \u2265 12 N/mm\u00b2 \u2014 15.5 N/mm\u00b2 >= 12.0 N/mm\u00b2 \u2192 PASS (deterministic) || No action required.",
+      "[R-004] Ultimate elongation \u2265 250% \u2014 326.9 % >= 250.0 % \u2192 PASS (deterministic) || No action required.",
+      "[R-005] Tear resistance \u2265 50 KN/m \u2014 55.51 KN/m >= 50.0 KN/m \u2192 PASS (deterministic) || No action required.",
+      "[R-006] Stiffness in flexure \u2265 4 N/mm\u00b2 \u2014 5.0 N/mm\u00b2 >= 4.0 N/mm\u00b2 \u2192 PASS (deterministic) || No action required.",
+      "[R-007] Hardness (shore A/15) in range 70 to 80 \u2014 78.0  in_range 70.0  \u2192 PASS (deterministic) || No action required."
+    ],
+    "statement_findings": [],
+    "summary_comments": [
+      "The overall recommendation is to RESUBMIT the internal water stopper material submittal. The most significant issues identified include the absence of the Material Source Declaration Form (MSDF), an outdated test report, and an expired DED registration. The contractor must address these critical deficiencies and ensure that the mandatory requirement for width is included in the comparison table."
+    ],
+    "validity_findings": [
+      "Test report dated 2022-12-13 is 3 year(s) old (maximum allowed: 3 years). || Submit test reports issued within the last 3 years.",
+      "DED registration expired on 2026-01-08. || Submit a current, valid DED registration certificate."
+    ]
+  },
+  "report": {
+    "authority": "ADM",
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      {
+        "action_required": "Include Material Source Declaration Form (MSDF) in resubmission.",
+        "description": "Missing required document: Material Source Declaration Form (MSDF).",
+        "document": "Submittal package",
+        "severity": "critical",
+        "stage": "completeness_check"
+      },
+      {
+        "action_required": "Move 1. Material Source Declaration Form ( MSDF ).pdf to the correct section.",
+        "description": "Wrong document type in section 'Material Source Declaration Form': expected section content but found cover_page.",
+        "document": "1. Material Source Declaration Form ( MSDF ).pdf",
+        "severity": "warning",
+        "stage": "completeness_check"
+      }
+    ],
+    "consistency_findings": [
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '1. Material Source Declaration Form ( MSDF ).pdf'.",
+        "document": "1. Material Source Declaration Form ( MSDF ).pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '4. Manufacturer's Technical Data Original Catalogues.pdf'.",
+        "document": "4. Manufacturer's Technical Data Original Catalogues.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '5. Recent Test Reports Certificates.pdf'.",
+        "document": "5. Recent Test Reports Certificates.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '6. Department of Economic Development ( Registration ).pdf'.",
+        "document": "6. Department of Economic Development ( Registration ).pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '7. Manufacturer Suppliers Guarantee ( as per Contract ).pdf'.",
+        "document": "7. Manufacturer Suppliers Guarantee ( as per Contract ).pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '8. Previous Approvals.pdf'.",
+        "document": "8. Previous Approvals.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Ensure supplier name is clearly stated on the cover page.",
+        "description": "Supplier name not found on cover page. Cannot perform consistency check.",
+        "document": "cover_page",
+        "severity": "warning",
+        "stage": "consistency_check"
+      }
+    ],
+    "critical_count": 4,
+    "material_description": "Internal Water Stopper (250mm X 4mm X 15mm) for Irrigation Network",
+    "missing_documents": [
+      "Material Source Declaration Form (MSDF)"
+    ],
+    "others_findings": [],
+    "overall_recommendation": "RESUBMIT",
+    "review_date": "2026-08-05",
+    "spec_clause": "ADM Specs Div-03 -Section 03700",
+    "spec_verification_findings": [
+      {
+        "action_required": "No action required.",
+        "description": "[R-001] Water stops shall be extruded from high grade elastomeric polyvinylchloride compound \u2014 'high' found in submitted documents (deterministic string match).",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-002] Water stops shall be at least 230 mm wide \u2014 250.0 mm >= 230.0 mm \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-003] Tensile strength \u2265 12 N/mm\u00b2 \u2014 15.5 N/mm\u00b2 >= 12.0 N/mm\u00b2 \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-004] Ultimate elongation \u2265 250% \u2014 326.9 % >= 250.0 % \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-005] Tear resistance \u2265 50 KN/m \u2014 55.51 KN/m >= 50.0 KN/m \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-006] Stiffness in flexure \u2265 4 N/mm\u00b2 \u2014 5.0 N/mm\u00b2 >= 4.0 N/mm\u00b2 \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-007] Hardness (shore A/15) in range 70 to 80 \u2014 78.0  in_range 70.0  \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      }
+    ],
+    "statement_findings": [],
+    "submittal_id": "RHINF1-NPC-IR-MAT-0001_00",
+    "summary_comments": "The overall recommendation is to RESUBMIT the internal water stopper material submittal. The most significant issues identified include the absence of the Material Source Declaration Form (MSDF), an outdated test report, and an expired DED registration. The contractor must address these critical deficiencies and ensure that the mandatory requirement for width is included in the comparison table.",
+    "table_audit_findings": [
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Materials shall be a proprietary type and be sourced and supplied by a single manufacturer",
+        "proposed_value": "ACE Guard",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "Materials is from single source"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Type and configuration shall be shown on drawings",
+        "proposed_value": "",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "Noted"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Suitable for storage, handling, installation and service within arrange of 15\u00b0C to 50\u00b0C.",
+        "proposed_value": "Water stop is suitable for storage, handling, installation and service within arrange of 15\u00b0C to 50\u00b0C.",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "1. Water stop is suitable for storage, handling, installation and service within arrange of 15\u00b0C to 50\u00b0C."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "All water stop intersections and joints shall be factory made.",
+        "proposed_value": "Water stop intersection and joints are factory made.",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "2. Water stop intersection and joints are factory made."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Site jointing shall be limited to butt joints, heat sealed using equipment and instructions as provided by the manufacturer.",
+        "proposed_value": "",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "As per manufacturer recommendation."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Water stops fixing",
+        "proposed_value": "Water stops will have reinforced fixing eyes or clips for fixing in place.",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "All water stops shall have reinforced fixing"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Fabrication length",
+        "proposed_value": "",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "Water stops shall be fabricated into the longest practical units at the manufacturer\u2019s works."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 15.5 N/mm\u00b2 satisfies >= 12.0 N/mm\u00b2. Proposed tensile strength exceeds the specified requirement.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Tensile Strength",
+        "proposed_value": "15.50",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "12 N/mm2"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 326.9 % satisfies >= 250.0 %. Proposed ultimate elongation exceeds the specified requirement.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Ultimate elongation",
+        "proposed_value": "326.9",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "250 %"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 55.51 KN/m satisfies >= 50.0 KN/m. Proposed tear resistance exceeds the specified requirement.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Tear resistance",
+        "proposed_value": "55.51",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "50 KN/m"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 5 N/mm\u00b2 satisfies >= 4.0 N/mm\u00b2. Proposed stiffness in flexure exceeds the specified requirement.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Stiffness in flexure",
+        "proposed_value": "5",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "4 N/mm2"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 78  satisfies in_range 70.0 \u2013 80.0. Proposed hardness is within the specified range.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Hardness, shore A",
+        "proposed_value": "78",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "70-80"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Internal water stops",
+        "proposed_value": "",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "The internal water stop will incorporate 250mm wide and 4mm thickness with four ribs, 2 ribs will be in the base of concrete and 2 ribs will be in wall of concrete."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Water stops shall have the physical properties given in Type Table 10.2-1",
+        "proposed_value": "Water stops have the physical properties given in Table 10.2-1",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "properties given in Table 10.2-1 as per specs."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Tensile strength, N/mm\u00b2",
+        "proposed_value": "15.50",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "12"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Ultimate elongation, %",
+        "proposed_value": "326.9",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "250"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter is not specified in the requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Tear resistance, kN/m",
+        "proposed_value": "55.51",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "50"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Audit result unavailable.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Stiffness in flexure, N/mm\u00b2",
+        "proposed_value": "5",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "4"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Audit result unavailable.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Hardness, Shore A/15",
+        "proposed_value": "8",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "70-80"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "Mandatory requirement 'Water stops shall be at least 230 mm wide' is absent from the comparison table. Contractor must include this parameter.",
+        "measured_value": "",
+        "measured_verified": false,
+        "missing_from_spec": false,
+        "parameter": "Water stops shall be at least 230 mm wide",
+        "proposed_value": "(not included in comparison table)",
+        "proposed_verified": false,
+        "severity": "critical",
+        "specified_correct": true,
+        "specified_value": "230 mm"
+      }
+    ],
+    "validity_findings": [
+      {
+        "action_required": "Submit test reports issued within the last 3 years.",
+        "description": "Test report dated 2022-12-13 is 3 year(s) old (maximum allowed: 3 years).",
+        "document": "5. Recent Test Reports Certificates.pdf",
+        "severity": "critical",
+        "stage": "validity_check"
+      },
+      {
+        "action_required": "Submit a current, valid DED registration certificate.",
+        "description": "DED registration expired on 2026-01-08.",
+        "document": "6. Department of Economic Development ( Registration ).pdf",
+        "severity": "critical",
+        "stage": "validity_check"
+      }
+    ],
+    "warning_count": 22
+  },
+  "review_date": "2026-01-15",
+  "signature": {
+    "categories": {
+      "avl_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "boq_drawing_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "completeness_findings": {
+        "count": 2,
+        "findings": [
+          {
+            "document": "1. Material Source Declaration Form ( MSDF ).pdf",
+            "severity": "warning",
+            "stage": "completeness_check"
+          },
+          {
+            "document": "Submittal package",
+            "severity": "critical",
+            "stage": "completeness_check"
+          }
+        ]
+      },
+      "consistency_findings": {
+        "count": 7,
+        "findings": [
+          {
+            "document": "1. Material Source Declaration Form ( MSDF ).pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "4. Manufacturer's Technical Data Original Catalogues.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "5. Recent Test Reports Certificates.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "6. Department of Economic Development ( Registration ).pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "7. Manufacturer Suppliers Guarantee ( as per Contract ).pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "8. Previous Approvals.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "cover_page",
+            "severity": "warning",
+            "stage": "consistency_check"
+          }
+        ]
+      },
+      "others_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "spec_verification_findings": {
+        "count": 7,
+        "findings": [
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          }
+        ]
+      },
+      "statement_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "table_audit_findings": {
+        "count": 20,
+        "findings": [
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "All water stop intersections and joints shall be factory made.",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Fabrication length",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Hardness, Shore A/15",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Hardness, shore A",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Internal water stops",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Materials shall be a proprietary type and be sourced and supplied by a single manufacturer",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Site jointing shall be limited to butt joints, heat sealed using equipment and instructions as provided by the manufacturer.",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Stiffness in flexure",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Stiffness in flexure, N/mm\u00b2",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Suitable for storage, handling, installation and service within arrange of 15\u00b0C to 50\u00b0C.",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Tear resistance",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Tear resistance, kN/m",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Tensile Strength",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Tensile strength, N/mm\u00b2",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Type and configuration shall be shown on drawings",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Ultimate elongation",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Ultimate elongation, %",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Water stops fixing",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": false,
+            "missing_from_spec": false,
+            "parameter": "Water stops shall be at least 230 mm wide",
+            "proposed_verified": false,
+            "severity": "critical",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Water stops shall have the physical properties given in Type Table 10.2-1",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          }
+        ]
+      },
+      "validity_findings": {
+        "count": 2,
+        "findings": [
+          {
+            "document": "5. Recent Test Reports Certificates.pdf",
+            "severity": "critical",
+            "stage": "validity_check"
+          },
+          {
+            "document": "6. Department of Economic Development ( Registration ).pdf",
+            "severity": "critical",
+            "stage": "validity_check"
+          }
+        ]
+      }
+    },
+    "critical_count": 4,
+    "missing_documents": [
+      "Material Source Declaration Form (MSDF)"
+    ],
+    "overall_recommendation": "RESUBMIT",
+    "warning_count": 22
+  },
+  "submittal": "RHINF1-NPC-IR-MAT-0001_00"
+}

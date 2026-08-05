@@ -2,10 +2,13 @@
 
 import { use, useEffect, useState } from "react";
 import {
+  getMe,
   getProject,
   getSubmittal,
   getSubmittalCitations,
+  getSubmittalFindings,
   subscribeToSubmittalProgress,
+  type PersistedFinding,
   type Project,
   type RequirementCitation,
   type SubmittalDetail,
@@ -32,6 +35,8 @@ export default function SubmittalDetailPage({
   const [project, setProject] = useState<Project | null>(null);
   const [events, setEvents] = useState<SubmittalEvent[]>([]);
   const [citations, setCitations] = useState<RequirementCitation[] | null>(null);
+  const [findings, setFindings] = useState<PersistedFinding[] | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [streamError, setStreamError] = useState(false);
 
   useEffect(() => {
@@ -80,7 +85,21 @@ export default function SubmittalDetailPage({
     getSubmittalCitations(submittal.id)
       .then(setCitations)
       .catch(() => setCitations([]));
+    // Ticket 3: the persisted, stable-id findings (migration 006/007) that
+    // Confirm/Dismiss/Edit actually write against — separate call since it's a different
+    // resource, not part of submittals.report.
+    getSubmittalFindings(submittal.id)
+      .then(setFindings)
+      .catch(() => setFindings([]));
   }, [submittal?.status, submittal?.id]);
+
+  useEffect(() => {
+    // Only used to distinguish "you" vs "another reviewer" on a finding's decision caption
+    // (report-view.tsx) — not gated on submittal status, fetched once per page load.
+    getMe()
+      .then((me) => setCurrentUserId(me.user_id))
+      .catch(() => setCurrentUserId(null));
+  }, []);
 
   if (!submittal) {
     return (
@@ -134,7 +153,13 @@ export default function SubmittalDetailPage({
         authority={project?.authority}
         backHref={`/projects/${submittal.project_id}`}
       />
-      <ReportView submittal={submittal} report={submittal.report} citations={citations} />
+      <ReportView
+        submittal={submittal}
+        report={submittal.report}
+        citations={citations}
+        findings={findings}
+        currentUserId={currentUserId}
+      />
     </div>
   );
 }

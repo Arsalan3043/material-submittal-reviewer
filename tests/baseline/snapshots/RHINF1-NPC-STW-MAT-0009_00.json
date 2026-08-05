@@ -1,0 +1,620 @@
+{
+  "authority": "ADM",
+  "captured_at": "2026-08-05T05:27:14.234320+00:00",
+  "git_commit": "379c032",
+  "prose": {
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      "Missing required document: Material Source Declaration Form (MSDF). || Include Material Source Declaration Form (MSDF) in resubmission.",
+      "Wrong document type in section 'Material Source Declaration Form': expected section content but found cover_page. || Move 1_Material Source declaration form (MSDF).pdf to the correct section."
+    ],
+    "consistency_findings": [
+      "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '0_Cover page.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '1_Material Source declaration form (MSDF).pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '4_Manufacturer's technical data - Original Catalogues.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '5_Recent test reports - Certificates.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '7_Manufacturer - Suppliers Guarantee.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '8_Previous Approvals.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Supplier name not found on cover page. Cannot perform consistency check. || Ensure supplier name is clearly stated on the cover page."
+    ],
+    "others_findings": [],
+    "spec_verification_findings": [
+      "[R-001] Material shall be laminated polyethylene and aluminium foil or similar construction \u2014 The submitted documents confirm that the tape is made of laminated polyethylene and aluminum foil, satisfying the material requirement. || No action required.",
+      "[R-002] Tape width \u2265 150 mm \u2014 150.0 mm >= 150.0 mm \u2192 PASS (deterministic) || No action required.",
+      "[R-003] Tape shall be laid 300 mm above pipeline \u2014 No method statement was provided in the submitted documents, which is required to verify the installation requirement. || Provide evidence from: method_statement.",
+      "[R-004] Tape shall remain legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive \u2014 150.0 pH None 2.5 pH \u2192 FAIL (deterministic) || Resubmit with compliant material or provide evidence of compliance.",
+      "[R-005] Comply with BS EN 752, BS 9295, BS EN 1295, BS EN 1610, BS 8010, BS EN 476, BS EN 805, ISO 9635-2,3&4 \u2014 The technical datasheet states that the products conform to BS standards, but specific compliance with the listed standards (BS EN 752, BS 9295, etc.) is not explicitly confirmed, leading to a partial verification. || Provide evidence from: relevant documents."
+    ],
+    "statement_findings": [],
+    "summary_comments": [
+      "The overall recommendation is to RESUBMIT the detectable underground warning tape material submittal. The most significant issues identified include the failure to provide the Material Source Declaration Form (MSDF) and the non-compliance with pH requirements, where the tape did not remain legible and color fast in soil conditions at pH values of 2.5 to 11.0. The contractor must address these critical issues, ensure all required documentation is included, and rectify the discrepancies in test reports before resubmission."
+    ],
+    "validity_findings": [
+      "Test report dated 2022-02-18 is 3 year(s) old (maximum allowed: 3 years). || Submit test reports issued within the last 3 years."
+    ]
+  },
+  "report": {
+    "authority": "ADM",
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      {
+        "action_required": "Include Material Source Declaration Form (MSDF) in resubmission.",
+        "description": "Missing required document: Material Source Declaration Form (MSDF).",
+        "document": "Submittal package",
+        "severity": "critical",
+        "stage": "completeness_check"
+      },
+      {
+        "action_required": "Move 1_Material Source declaration form (MSDF).pdf to the correct section.",
+        "description": "Wrong document type in section 'Material Source Declaration Form': expected section content but found cover_page.",
+        "document": "1_Material Source declaration form (MSDF).pdf",
+        "severity": "warning",
+        "stage": "completeness_check"
+      }
+    ],
+    "consistency_findings": [
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '0_Cover page.pdf'.",
+        "document": "0_Cover page.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '1_Material Source declaration form (MSDF).pdf'.",
+        "document": "1_Material Source declaration form (MSDF).pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '4_Manufacturer's technical data - Original Catalogues.pdf'.",
+        "document": "4_Manufacturer's technical data - Original Catalogues.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '5_Recent test reports - Certificates.pdf'.",
+        "document": "5_Recent test reports - Certificates.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '7_Manufacturer - Suppliers Guarantee.pdf'.",
+        "document": "7_Manufacturer - Suppliers Guarantee.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Kangaroo Plastics Middle East' (from cover page) may not match what appears in '8_Previous Approvals.pdf'.",
+        "document": "8_Previous Approvals.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Ensure supplier name is clearly stated on the cover page.",
+        "description": "Supplier name not found on cover page. Cannot perform consistency check.",
+        "document": "cover_page",
+        "severity": "warning",
+        "stage": "consistency_check"
+      }
+    ],
+    "critical_count": 7,
+    "material_description": "Detectable underground warning Tape",
+    "missing_documents": [
+      "Material Source Declaration Form (MSDF)"
+    ],
+    "others_findings": [],
+    "overall_recommendation": "RESUBMIT",
+    "review_date": "2026-08-05",
+    "spec_clause": "ADM Specs Div-02-Section 02810",
+    "spec_verification_findings": [
+      {
+        "action_required": "No action required.",
+        "description": "[R-001] Material shall be laminated polyethylene and aluminium foil or similar construction \u2014 The submitted documents confirm that the tape is made of laminated polyethylene and aluminum foil, satisfying the material requirement.",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-002] Tape width \u2265 150 mm \u2014 150.0 mm >= 150.0 mm \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "Provide evidence from: method_statement.",
+        "description": "[R-003] Tape shall be laid 300 mm above pipeline \u2014 No method statement was provided in the submitted documents, which is required to verify the installation requirement.",
+        "document": "submittal_package",
+        "severity": "warning",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "Resubmit with compliant material or provide evidence of compliance.",
+        "description": "[R-004] Tape shall remain legible and colour fast in soil conditions at pH values of 2.5 to 11.0 inclusive \u2014 150.0 pH None 2.5 pH \u2192 FAIL (deterministic)",
+        "document": "submittal_package",
+        "severity": "critical",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "Provide evidence from: relevant documents.",
+        "description": "[R-005] Comply with BS EN 752, BS 9295, BS EN 1295, BS EN 1610, BS 8010, BS EN 476, BS EN 805, ISO 9635-2,3&4 \u2014 The technical datasheet states that the products conform to BS standards, but specific compliance with the listed standards (BS EN 752, BS 9295, etc.) is not explicitly confirmed, leading to a partial verification.",
+        "document": "submittal_package",
+        "severity": "warning",
+        "stage": "spec_verification"
+      }
+    ],
+    "statement_findings": [],
+    "submittal_id": "RHINF1-NPC-STW-MAT-0009_00",
+    "summary_comments": "The overall recommendation is to RESUBMIT the detectable underground warning tape material submittal. The most significant issues identified include the failure to provide the Material Source Declaration Form (MSDF) and the non-compliance with pH requirements, where the tape did not remain legible and color fast in soil conditions at pH values of 2.5 to 11.0. The contractor must address these critical issues, ensure all required documentation is included, and rectify the discrepancies in test reports before resubmission.",
+    "table_audit_findings": [
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 150.0 mm satisfies >= 150.0 mm. Width parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Width",
+        "proposed_value": "150MM",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "150MM"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "CONTRADICTION: datasheet/table shows 120.0, test report shows 39.7 (67% difference). Proposed tensile strength is below the specified requirement, leading to a contradiction with the measured value.",
+        "measured_value": "397Kg/cm\u00b2 (S9N/mm\u00b2)",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Tensile Strength Longitudinal",
+        "proposed_value": "120kg/cm\u00b2",
+        "proposed_verified": false,
+        "severity": "critical",
+        "specified_correct": false,
+        "specified_value": "125 kg/cm\u00b2"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Proposed elongation exceeds the specified requirement but is not validated by the datasheet.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Elongation at break (PE Longitudinal)",
+        "proposed_value": "Longitudinal Elongation 706 %",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": false,
+        "specified_value": "400%"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Proposed transverse elongation exceeds the specified requirement but is not validated by the datasheet.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Elongation at break (Transverse)",
+        "proposed_value": "Transverse Elongation 840 %",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": false,
+        "specified_value": "300%"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Proposed tensile strength is significantly higher than the measured value, indicating a contradiction.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Tensile Strength Transverse",
+        "proposed_value": "Transverse 2090g (205N)",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": false,
+        "specified_value": "260 gf"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Thickness parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Thickness",
+        "proposed_value": "150 microns",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "150 microns"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Length of roll parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Length of Roll",
+        "proposed_value": "250meter",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "250meter"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Color parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Color",
+        "proposed_value": "Yellow",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "Yellow"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Installation scope parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Underground Warning Tape",
+        "proposed_value": "Installation on Contractors scope.",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "Installation on Contractors scope."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "FAIL (deterministic): proposed 2.5 pH does not satisfy None 2.5 \u2013 11.0 pH. Legibility and color fastness parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Legibility and Color Fastness",
+        "proposed_value": "Tapes are remained legible and colour fast in soil conditions at PH values of 2.5 to 11.0, inclusive.",
+        "proposed_verified": true,
+        "severity": "critical",
+        "specified_correct": false,
+        "specified_value": "Tapes shall remain legible and colour fast in soil conditions at PH values of 2.5 to 11.0 inclusive."
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 150.0 mm satisfies >= 150.0 mm. Width of tape parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Width of Tape",
+        "proposed_value": "not less than 150mm",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "not less than 150mm"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Stamping parameter meets the specification requirements.",
+        "measured_value": "",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Stamping",
+        "proposed_value": "indelibly stamped in black letters",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "indelibly stamped in black letters"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "Mandatory requirement 'Material shall be laminated polyethylene and aluminium foil or similar construction' is absent from the comparison table. Contractor must include this parameter.",
+        "measured_value": "",
+        "measured_verified": false,
+        "missing_from_spec": false,
+        "parameter": "Material shall be laminated polyethylene and aluminium foil or similar construction",
+        "proposed_value": "(not included in comparison table)",
+        "proposed_verified": false,
+        "severity": "critical",
+        "specified_correct": true,
+        "specified_value": "Material shall be laminated polyethylene and aluminium foil or similar construction"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "Mandatory requirement 'Comply with BS EN 752, BS 9295, BS EN 1295, BS EN 1610, BS 8010, BS EN 476, BS EN 805, ISO 9635-2,3&4' is absent from the comparison table. Contractor must include this parameter.",
+        "measured_value": "",
+        "measured_verified": false,
+        "missing_from_spec": false,
+        "parameter": "Comply with BS EN 752, BS 9295, BS EN 1295, BS EN 1610, BS 8010, BS EN 476, BS EN 805, ISO 9635-2,3&4",
+        "proposed_value": "(not included in comparison table)",
+        "proposed_verified": false,
+        "severity": "critical",
+        "specified_correct": true,
+        "specified_value": "Comply with BS EN 752, BS 9295, BS EN 1295, BS EN 1610, BS 8010, BS EN 476, BS EN 805, ISO 9635-2,3&4"
+      }
+    ],
+    "validity_findings": [
+      {
+        "action_required": "Submit test reports issued within the last 3 years.",
+        "description": "Test report dated 2022-02-18 is 3 year(s) old (maximum allowed: 3 years).",
+        "document": "5_Recent test reports - Certificates.pdf",
+        "severity": "critical",
+        "stage": "validity_check"
+      }
+    ],
+    "warning_count": 13
+  },
+  "review_date": "2026-01-15",
+  "signature": {
+    "categories": {
+      "avl_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "boq_drawing_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "completeness_findings": {
+        "count": 2,
+        "findings": [
+          {
+            "document": "1_Material Source declaration form (MSDF).pdf",
+            "severity": "warning",
+            "stage": "completeness_check"
+          },
+          {
+            "document": "Submittal package",
+            "severity": "critical",
+            "stage": "completeness_check"
+          }
+        ]
+      },
+      "consistency_findings": {
+        "count": 7,
+        "findings": [
+          {
+            "document": "0_Cover page.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "1_Material Source declaration form (MSDF).pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "4_Manufacturer's technical data - Original Catalogues.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "5_Recent test reports - Certificates.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "7_Manufacturer - Suppliers Guarantee.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "8_Previous Approvals.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "cover_page",
+            "severity": "warning",
+            "stage": "consistency_check"
+          }
+        ]
+      },
+      "others_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "spec_verification_findings": {
+        "count": 5,
+        "findings": [
+          {
+            "document": "submittal_package",
+            "severity": "critical",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "warning",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "warning",
+            "stage": "spec_verification"
+          }
+        ]
+      },
+      "statement_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "table_audit_findings": {
+        "count": 14,
+        "findings": [
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Color",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": false,
+            "missing_from_spec": false,
+            "parameter": "Comply with BS EN 752, BS 9295, BS EN 1295, BS EN 1610, BS 8010, BS EN 476, BS EN 805, ISO 9635-2,3&4",
+            "proposed_verified": false,
+            "severity": "critical",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Elongation at break (PE Longitudinal)",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": false
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Elongation at break (Transverse)",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": false
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Legibility and Color Fastness",
+            "proposed_verified": true,
+            "severity": "critical",
+            "specified_correct": false
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Length of Roll",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": false,
+            "missing_from_spec": false,
+            "parameter": "Material shall be laminated polyethylene and aluminium foil or similar construction",
+            "proposed_verified": false,
+            "severity": "critical",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Stamping",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Tensile Strength Longitudinal",
+            "proposed_verified": false,
+            "severity": "critical",
+            "specified_correct": false
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Tensile Strength Transverse",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": false
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Thickness",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Underground Warning Tape",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Width",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Width of Tape",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          }
+        ]
+      },
+      "validity_findings": {
+        "count": 1,
+        "findings": [
+          {
+            "document": "5_Recent test reports - Certificates.pdf",
+            "severity": "critical",
+            "stage": "validity_check"
+          }
+        ]
+      }
+    },
+    "critical_count": 7,
+    "missing_documents": [
+      "Material Source Declaration Form (MSDF)"
+    ],
+    "overall_recommendation": "RESUBMIT",
+    "warning_count": 13
+  },
+  "submittal": "RHINF1-NPC-STW-MAT-0009_00"
+}

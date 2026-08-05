@@ -9,6 +9,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.dependencies import CurrentUser, get_current_user, get_db
+from apps.api.section_labels import SECTION_LABELS
+from src.config import get_authority_profile
 
 router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
 
@@ -91,6 +93,32 @@ async def get_project(
         # same here — that's correct: never confirm another tenant's UUID is real.
         raise HTTPException(status.HTTP_404_NOT_FOUND, "project not found")
     return dict(row)
+
+
+@router.get("/{project_id}/sections")
+async def get_project_sections(
+    project_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Section labels the upload picker offers for this project's authority.
+
+    Served per-project rather than per-authority so the client needs only the project id,
+    and so adding an authority never touches the frontend. Both profiles share the same
+    10-item index today (TAQAProfile inherits ADMProfile's), but that's a fact about the
+    profiles, not an assumption made here.
+    """
+    row = (
+        await db.execute(
+            text("SELECT authority FROM projects WHERE id = :id"), {"id": project_id}
+        )
+    ).fetchone()
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "project not found")
+
+    get_authority_profile(row[0])  # 400s on an authority with no profile, rather than
+    # returning labels the pipeline can't act on.
+    return {"authority": row[0], "sections": SECTION_LABELS}
 
 
 @router.post("/{project_id}/specs")

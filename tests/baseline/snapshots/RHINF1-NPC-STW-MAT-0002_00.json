@@ -1,0 +1,495 @@
+{
+  "authority": "ADM",
+  "captured_at": "2026-08-05T05:24:12.379151+00:00",
+  "git_commit": "379c032",
+  "prose": {
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      "Missing required document: Material Source Declaration Form (MSDF). || Include Material Source Declaration Form (MSDF) in resubmission.",
+      "Wrong document type in section 'Material Source Declaration Form': expected section content but found cover_page. || Move 01_Material Source Declaration Form (MSDF).pdf to the correct section."
+    ],
+    "consistency_findings": [
+      "Manufacturer name not found on cover page. Cannot perform consistency check. || Ensure manufacturer name is clearly stated on the cover page.",
+      "Supplier name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '01_Material Source Declaration Form (MSDF).pdf'. || Verify supplier name is consistent across all documents.",
+      "Supplier name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '08_Previous Approvals.pdf'. || Verify supplier name is consistent across all documents."
+    ],
+    "others_findings": [],
+    "spec_verification_findings": [
+      "[R-001] Proven track record of waterproof membrane system \u2265 5 years in Abu Dhabi or similar conditions \u2014 There is no evidence provided in the submitted documents to confirm a proven track record of the waterproof membrane system for at least 5 years in Abu Dhabi or similar conditions. || Provide evidence from: previous_approval, others.",
+      "[R-002] Waterproof membrane shall be modified bituminous membrane with APP bitumen \u2014 'modified' found in submitted documents (deterministic string match). || No action required.",
+      "[R-003] Nominal thickness of waterproof membrane \u2265 4 mm (single layer) or \u2265 6 mm (double layer) \u2014 4.03 mm in_range 4.0 mm \u2192 PASS (deterministic) || No action required.",
+      "[R-004] Tensile strength of waterproof membrane \u2265 500 N/50mm \u2014 1130.0 N/50mm >= 500.0 N/50mm \u2192 PASS (deterministic) || No action required.",
+      "[R-005] Elongation at break of waterproof membrane \u2265 40% \u2014 52.0 % >= 40.0 % \u2192 PASS (deterministic) || No action required.",
+      "[R-006] Tear resistance of waterproof membrane \u2265 440 N (transverse) and \u2265 550 N (longitudinal) \u2014 683.0 N in_range 440.0 N \u2192 FAIL (deterministic) || Resubmit with compliant material or provide evidence of compliance.",
+      "[R-007] Softening point of waterproof membrane \u2265 110\u00b0C \u2014 151.0 \u00b0C >= 110.0 \u00b0C \u2192 PASS (deterministic) || No action required.",
+      "[R-008] Protection board minimum thickness \u2265 6 mm \u2014 4.03 mm >= 6.0 mm \u2192 FAIL (deterministic) || Resubmit with compliant material or provide evidence of compliance."
+    ],
+    "statement_findings": [],
+    "summary_comments": [
+      "The overall recommendation is to RESUBMIT the waterproofing system submittal due to critical issues identified. The most significant issues include the failure to meet the required tear resistance of the waterproof membrane and the insufficient thickness of the protection board. Additionally, the contractor must provide the missing Material Source Declaration Form (MSDF) and ensure that all compliance data is updated, including the inclusion of the protection board thickness in the comparison table."
+    ],
+    "validity_findings": [
+      "Test report dated 2022-11-01 is 3 year(s) old (maximum allowed: 3 years). || Submit test reports issued within the last 3 years.",
+      "DED registration expired on 2025-06-12. || Submit a current, valid DED registration certificate.",
+      "Guarantee document: could not determine guarantee period. || Verify guarantee period meets specification requirements."
+    ]
+  },
+  "report": {
+    "authority": "ADM",
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      {
+        "action_required": "Include Material Source Declaration Form (MSDF) in resubmission.",
+        "description": "Missing required document: Material Source Declaration Form (MSDF).",
+        "document": "Submittal package",
+        "severity": "critical",
+        "stage": "completeness_check"
+      },
+      {
+        "action_required": "Move 01_Material Source Declaration Form (MSDF).pdf to the correct section.",
+        "description": "Wrong document type in section 'Material Source Declaration Form': expected section content but found cover_page.",
+        "document": "01_Material Source Declaration Form (MSDF).pdf",
+        "severity": "warning",
+        "stage": "completeness_check"
+      }
+    ],
+    "consistency_findings": [
+      {
+        "action_required": "Ensure manufacturer name is clearly stated on the cover page.",
+        "description": "Manufacturer name not found on cover page. Cannot perform consistency check.",
+        "document": "cover_page",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify supplier name is consistent across all documents.",
+        "description": "Supplier name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '01_Material Source Declaration Form (MSDF).pdf'.",
+        "document": "01_Material Source Declaration Form (MSDF).pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify supplier name is consistent across all documents.",
+        "description": "Supplier name 'Reem Hills Sole-Proprietorship LLC' (from cover page) may not match what appears in '08_Previous Approvals.pdf'.",
+        "document": "08_Previous Approvals.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      }
+    ],
+    "critical_count": 6,
+    "material_description": "Waterproofing System Torch Applied ( Primer + 4mm Waterproof +6mm Protection board) for Stormwater Network",
+    "missing_documents": [
+      "Material Source Declaration Form (MSDF)"
+    ],
+    "others_findings": [],
+    "overall_recommendation": "RESUBMIT",
+    "review_date": "2026-08-05",
+    "spec_clause": "ADM Specs Div -03 -Section 03600",
+    "spec_verification_findings": [
+      {
+        "action_required": "Provide evidence from: previous_approval, others.",
+        "description": "[R-001] Proven track record of waterproof membrane system \u2265 5 years in Abu Dhabi or similar conditions \u2014 There is no evidence provided in the submitted documents to confirm a proven track record of the waterproof membrane system for at least 5 years in Abu Dhabi or similar conditions.",
+        "document": "submittal_package",
+        "severity": "warning",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-002] Waterproof membrane shall be modified bituminous membrane with APP bitumen \u2014 'modified' found in submitted documents (deterministic string match).",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-003] Nominal thickness of waterproof membrane \u2265 4 mm (single layer) or \u2265 6 mm (double layer) \u2014 4.03 mm in_range 4.0 mm \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-004] Tensile strength of waterproof membrane \u2265 500 N/50mm \u2014 1130.0 N/50mm >= 500.0 N/50mm \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-005] Elongation at break of waterproof membrane \u2265 40% \u2014 52.0 % >= 40.0 % \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "Resubmit with compliant material or provide evidence of compliance.",
+        "description": "[R-006] Tear resistance of waterproof membrane \u2265 440 N (transverse) and \u2265 550 N (longitudinal) \u2014 683.0 N in_range 440.0 N \u2192 FAIL (deterministic)",
+        "document": "submittal_package",
+        "severity": "critical",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-007] Softening point of waterproof membrane \u2265 110\u00b0C \u2014 151.0 \u00b0C >= 110.0 \u00b0C \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "Resubmit with compliant material or provide evidence of compliance.",
+        "description": "[R-008] Protection board minimum thickness \u2265 6 mm \u2014 4.03 mm >= 6.0 mm \u2192 FAIL (deterministic)",
+        "document": "submittal_package",
+        "severity": "critical",
+        "stage": "spec_verification"
+      }
+    ],
+    "statement_findings": [],
+    "submittal_id": "RHINF1-NPC-STW-MAT-0002_00",
+    "summary_comments": "The overall recommendation is to RESUBMIT the waterproofing system submittal due to critical issues identified. The most significant issues include the failure to meet the required tear resistance of the waterproof membrane and the insufficient thickness of the protection board. Additionally, the contractor must provide the missing Material Source Declaration Form (MSDF) and ensure that all compliance data is updated, including the inclusion of the protection board thickness in the comparison table.",
+    "table_audit_findings": [
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 4.0 mm satisfies in_range 4.0 \u2013 6.0 mm. Nominal thickness meets the specification requirements.",
+        "measured_value": "4.03",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Nominal Thickness",
+        "proposed_value": "4mm",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "4mm"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Parameter 'Weight of reinforcing' is not specified in the requirements.",
+        "measured_value": "212 gim2",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Weight of reinforcing",
+        "proposed_value": "200 gim2",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": false,
+        "specified_value": "200 gim2"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 1000.0 N/50mm satisfies >= 500.0 N/50mm. Tensile strength exceeds the minimum requirement.",
+        "measured_value": "1130N /50mm",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Tensile Strength",
+        "proposed_value": "1000N /50mm",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "500 N/ SOmm"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 50.0 % satisfies >= 40.0 %. Elongation at break meets the specification requirements.",
+        "measured_value": "52 157.9%",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Elongation break",
+        "proposed_value": "50 /55%",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "40%"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "CONTRADICTION: datasheet/table shows 440.0, test report shows 683.0 (55% difference). PASS (deterministic): proposed 440.0 N satisfies in_range 440.0 \u2013 550.0 N. Tear resistance (transverse) meets the specification requirements.",
+        "measured_value": "683 N",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Tear resistance transverse",
+        "proposed_value": "440N",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "440N"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "CONTRADICTION: datasheet/table shows 550.0, test report shows 747.0 (36% difference). PASS (deterministic): proposed 550.0 N satisfies in_range 440.0 \u2013 550.0 N. Tear resistance (longitudinal) meets the specification requirements.",
+        "measured_value": "747 N",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Tear resistance Longitudinal",
+        "proposed_value": "550N",
+        "proposed_verified": true,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "550N"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 150.0 \u00b0C satisfies >= 110.0 \u00b0C. Softening point exceeds the minimum requirement.",
+        "measured_value": "151",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Softening point",
+        "proposed_value": "150",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "110"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "Mandatory requirement 'Protection board minimum thickness \u2265 6 mm' is absent from the comparison table. Contractor must include this parameter.",
+        "measured_value": "",
+        "measured_verified": false,
+        "missing_from_spec": false,
+        "parameter": "Protection board minimum thickness \u2265 6 mm",
+        "proposed_value": "(not included in comparison table)",
+        "proposed_verified": false,
+        "severity": "critical",
+        "specified_correct": true,
+        "specified_value": "6 mm"
+      }
+    ],
+    "validity_findings": [
+      {
+        "action_required": "Submit test reports issued within the last 3 years.",
+        "description": "Test report dated 2022-11-01 is 3 year(s) old (maximum allowed: 3 years).",
+        "document": "05_Recent Test Reports - Certificates.pdf",
+        "severity": "critical",
+        "stage": "validity_check"
+      },
+      {
+        "action_required": "Submit a current, valid DED registration certificate.",
+        "description": "DED registration expired on 2025-06-12.",
+        "document": "06_Department of Economic Development (Registration).pdf",
+        "severity": "critical",
+        "stage": "validity_check"
+      },
+      {
+        "action_required": "Verify guarantee period meets specification requirements.",
+        "description": "Guarantee document: could not determine guarantee period.",
+        "document": "07_Manufacturer - Supplier Guarantee (as per contract).pdf",
+        "severity": "warning",
+        "stage": "validity_check"
+      }
+    ],
+    "warning_count": 9
+  },
+  "review_date": "2026-01-15",
+  "signature": {
+    "categories": {
+      "avl_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "boq_drawing_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "completeness_findings": {
+        "count": 2,
+        "findings": [
+          {
+            "document": "01_Material Source Declaration Form (MSDF).pdf",
+            "severity": "warning",
+            "stage": "completeness_check"
+          },
+          {
+            "document": "Submittal package",
+            "severity": "critical",
+            "stage": "completeness_check"
+          }
+        ]
+      },
+      "consistency_findings": {
+        "count": 3,
+        "findings": [
+          {
+            "document": "01_Material Source Declaration Form (MSDF).pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "08_Previous Approvals.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "cover_page",
+            "severity": "warning",
+            "stage": "consistency_check"
+          }
+        ]
+      },
+      "others_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "spec_verification_findings": {
+        "count": 8,
+        "findings": [
+          {
+            "document": "submittal_package",
+            "severity": "critical",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "critical",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "warning",
+            "stage": "spec_verification"
+          }
+        ]
+      },
+      "statement_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "table_audit_findings": {
+        "count": 8,
+        "findings": [
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Elongation break",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Nominal Thickness",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": false,
+            "missing_from_spec": false,
+            "parameter": "Protection board minimum thickness \u2265 6 mm",
+            "proposed_verified": false,
+            "severity": "critical",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Softening point",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Tear resistance Longitudinal",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Tear resistance transverse",
+            "proposed_verified": true,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Tensile Strength",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Weight of reinforcing",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": false
+          }
+        ]
+      },
+      "validity_findings": {
+        "count": 3,
+        "findings": [
+          {
+            "document": "05_Recent Test Reports - Certificates.pdf",
+            "severity": "critical",
+            "stage": "validity_check"
+          },
+          {
+            "document": "06_Department of Economic Development (Registration).pdf",
+            "severity": "critical",
+            "stage": "validity_check"
+          },
+          {
+            "document": "07_Manufacturer - Supplier Guarantee (as per contract).pdf",
+            "severity": "warning",
+            "stage": "validity_check"
+          }
+        ]
+      }
+    },
+    "critical_count": 6,
+    "missing_documents": [
+      "Material Source Declaration Form (MSDF)"
+    ],
+    "overall_recommendation": "RESUBMIT",
+    "warning_count": 9
+  },
+  "submittal": "RHINF1-NPC-STW-MAT-0002_00"
+}

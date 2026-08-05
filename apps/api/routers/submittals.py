@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.dependencies import CurrentUser, get_current_user, get_db
 from apps.api.s3 import presigned_get_url, presigned_put_url
+from apps.api.section_labels import infer_declared_label
 from composition import build_job_queue
 from db.session import get_db as db_session_scope
 from src.rag.query.query_constructor import build_query
@@ -84,6 +85,11 @@ async def create_submittal(
 
     uploads = []
     for f in body.files:
+        # Fall back to the filename when the client sends no label. An unlabelled scanned
+        # package classifies as others/low across the board and produces a confidently wrong
+        # all-documents-missing review, so this must not depend on the UI asking — see
+        # apps/api/section_labels.py for the full failure mode.
+        declared_label = f.declared_label or infer_declared_label(f.filename)
         s3_key = f"{current_user.tenant_id}/{project_id}/{submittal_id}/{f.filename}"
         await db.execute(
             text(
@@ -97,7 +103,7 @@ async def create_submittal(
                 "submittal_id": submittal_id,
                 "tenant_id": current_user.tenant_id,
                 "original_name": f.filename,
-                "declared_label": f.declared_label,
+                "declared_label": declared_label,
                 "s3_key": s3_key,
             },
         )
@@ -212,6 +218,86 @@ async def get_submittal_events(
         )
     ).mappings().fetchall()
     return [dict(r) for r in rows]
+
+
+@router.get("/submittals/{submittal_id}/findings")
+async def get_submittal_findings(
+    submittal_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Reads the findings table (migration 006) — the persisted, stable-ID source of truth
+    for individual findings, written by the worker in the same transaction as review
+    completion — rather than submittals.report JSONB, which has no per-finding identity
+    for a later human decision (Ticket 2) to reference. RLS-scoped via the standard
+    get_db(tenant_id) pattern, same as every other route here.
+
+    Each finding's current_decision is derived from the LATEST row in finding_decisions
+    (DISTINCT ON ... ORDER BY created_at DESC) at read time, per Ticket 2's explicit
+    instruction — findings.py's `decisions` table is append-only, and no mutable status
+    column exists anywhere to go stale.
+    """
+    submittal = (
+        await db.execute(text("SELECT id FROM submittals WHERE id = :id"), {"id": submittal_id})
+    ).fetchone()
+    if submittal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "submittal not found")
+
+    rows = (
+        await db.execute(
+            text(
+                """
+                SELECT f.id, f.category, f.severity, f.description, f.action_required,
+                       f.clause_reference, f.spec_document_id, f.spec_page,
+                       f.source_document_id, f.source_page, f.confidence, f.pipeline_node,
+                       f.model_version, f.prompt_version, f.pipeline_version, f.created_at,
+                       d.id AS decision_id, d.actor_user_id AS decision_actor_user_id,
+                       d.action AS decision_action, d.reason_code AS decision_reason_code,
+                       d.note AS decision_note, d.corrected_fields AS decision_corrected_fields,
+                       d.created_at AS decision_created_at
+                FROM findings f
+                LEFT JOIN LATERAL (
+                    SELECT id, actor_user_id, action, reason_code, note, corrected_fields, created_at
+                    FROM finding_decisions
+                    WHERE finding_id = f.id
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                ) d ON true
+                WHERE f.submittal_id = :id
+                ORDER BY f.created_at
+                """
+            ),
+            {"id": submittal_id},
+        )
+    ).mappings().fetchall()
+
+    findings_out = []
+    for r in rows:
+        row = dict(r)
+        current_decision = None
+        if row.pop("decision_id") is not None:
+            current_decision = {
+                "actor_user_id": str(row.pop("decision_actor_user_id")),
+                "action": row.pop("decision_action"),
+                "reason_code": row.pop("decision_reason_code"),
+                "note": row.pop("decision_note"),
+                "corrected_fields": _maybe_parse(row.pop("decision_corrected_fields")),
+                "created_at": row.pop("decision_created_at"),
+            }
+        else:
+            for key in (
+                "decision_actor_user_id",
+                "decision_action",
+                "decision_reason_code",
+                "decision_note",
+                "decision_corrected_fields",
+                "decision_created_at",
+            ):
+                row.pop(key, None)
+        row["current_decision"] = current_decision
+        findings_out.append(row)
+    return findings_out
 
 
 @router.get("/submittals/{submittal_id}/stream")

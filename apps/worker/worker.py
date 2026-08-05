@@ -24,6 +24,7 @@ import botocore.exceptions
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from apps.worker.findings import extract_findings
 from apps.worker.jobs import mark_done, mark_failed, requeue_job, try_claim_job
 from apps.worker.version import PIPELINE_VERSION
 from composition import build_job_queue, build_review_pipeline
@@ -154,6 +155,36 @@ def run_review(
         seq += 1
 
     result = pipeline.run(request, on_stage_complete=on_stage_complete)
+
+    # Findings are inserted in the SAME transaction as the completion UPDATE below (no
+    # commit in between) — if either half fails, both roll back. A submittal never ends
+    # up COMPLETED with its findings missing, or vice versa. Rows are immutable from here:
+    # nothing else in the system ever UPDATEs a findings row (see db/models.py::Finding).
+    findings_rows = extract_findings(
+        result.report,
+        tenant_id=str(submittal["tenant_id"]),
+        project_id=str(submittal["project_id"]),
+        submittal_id=str(submittal_id),
+        pipeline_version=PIPELINE_VERSION,
+    )
+    if findings_rows:
+        db.execute(
+            text(
+                """
+                INSERT INTO findings
+                    (id, tenant_id, project_id, submittal_id, category, severity,
+                     description, action_required, clause_reference, spec_document_id,
+                     spec_page, source_document_id, source_page, confidence,
+                     pipeline_node, model_version, prompt_version, pipeline_version)
+                VALUES
+                    (:id, :tenant_id, :project_id, :submittal_id, :category, :severity,
+                     :description, :action_required, :clause_reference, :spec_document_id,
+                     :spec_page, :source_document_id, :source_page, :confidence,
+                     :pipeline_node, :model_version, :prompt_version, :pipeline_version)
+                """
+            ),
+            findings_rows,
+        )
 
     db.execute(
         text(

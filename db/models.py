@@ -20,7 +20,9 @@ from datetime import datetime
 
 from sqlalchemy import (
     CheckConstraint,
+    Float,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Text,
@@ -210,6 +212,7 @@ class Submittal(Base):
     files: Mapped[list[SubmittalFile]] = relationship(back_populates="submittal")
     events: Mapped[list[SubmittalEvent]] = relationship(back_populates="submittal")
     chat_turns: Mapped[list[ChatTurn]] = relationship(back_populates="submittal")
+    findings: Mapped[list[Finding]] = relationship(back_populates="submittal")
 
 
 class SubmittalFile(Base):
@@ -275,6 +278,154 @@ class ChatTurn(Base):
     )
 
     submittal: Mapped[Submittal] = relationship(back_populates="chat_turns")
+
+
+class Finding(Base):
+    """
+    Persisted, stable-ID findings (notes/10_stage1_product_and_data_spec.md §A1,
+    notes/11_pilot_bar_tickets.md Ticket 1) — before this table, findings only existed as
+    submittals.report JSONB, with no per-finding identity to attach a human decision
+    (Ticket 2) to. Rows are immutable: nothing in the system ever UPDATEs a finding after
+    insert; human input goes in a separate append-only table (Ticket 2).
+
+    clause_reference/spec_document_id/spec_page/source_document_id/source_page are real
+    NULLs for now, not placeholders — the frozen Finding/TableRowFinding models
+    (src/models/findings.py) only carry stage/document/description/severity/action_required
+    (or the table-row equivalent), with no per-finding citation provenance. Only the
+    spec_verification category has ANY clause/page data today, and it lives in a separate
+    verification_artifact JSONB keyed by requirement_id, not finding_id, with no clean 1:1
+    join — populating these columns for real needs either a frozen-src/ change or a proper
+    join layer (Ticket 11), not a regex scrape of description text here.
+
+    model_version/prompt_version are similarly NULL — nothing in this codebase versions
+    individual models/prompts today, only the single PIPELINE_VERSION constant
+    (apps/worker/version.py), already carried on pipeline_version below.
+    """
+
+    __tablename__ = "findings"
+    __table_args__ = (
+        CheckConstraint(
+            "category IN ('completeness','boq_drawing','spec_verification','validity',"
+            "'avl','statement','table_audit','consistency','others')",
+            name="ck_findings_category",
+        ),
+        CheckConstraint(
+            "severity IN ('critical','warning','observation')", name="ck_findings_severity"
+        ),
+        Index("idx_findings_submittal", "submittal_id"),
+        Index("idx_findings_tenant_project", "tenant_id", "project_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False
+    )
+    submittal_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("submittals.id"), nullable=False
+    )
+    category: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    action_required: Mapped[str | None] = mapped_column(Text, nullable=True)
+    clause_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    spec_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("spec_documents.id"), nullable=True
+    )
+    spec_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("submittal_files.id"), nullable=True
+    )
+    source_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    pipeline_node: Mapped[str] = mapped_column(Text, nullable=False)
+    model_version: Mapped[str | None] = mapped_column(Text, nullable=True)
+    prompt_version: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pipeline_version: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    submittal: Mapped[Submittal] = relationship(back_populates="findings")
+    decisions: Mapped[list[FindingDecision]] = relationship(back_populates="finding")
+
+
+class ReasonCode(Base):
+    """
+    Global, shared taxonomy (notes/10_stage1_product_and_data_spec.md §A3) — no
+    tenant_id/project_id, same rationale as SpecDocument: this is reference data Arsalan
+    manages centrally, not something each tenant customizes. No RLS, same precedent.
+    Deliberately a DB table, not a Python enum, so new codes can be added by SQL alone as
+    real usage reveals gaps — see migration 007 for the seeded starting set.
+    """
+
+    __tablename__ = "reason_codes"
+    __table_args__ = (
+        CheckConstraint("action IN ('confirm','dismiss','edit')", name="ck_reason_codes_action"),
+        UniqueConstraint("code", "action", name="uq_reason_codes_code_action"),
+    )
+
+    code: Mapped[str] = mapped_column(Text, primary_key=True)
+    action: Mapped[str] = mapped_column(Text, primary_key=True, nullable=False)
+    label: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class FindingDecision(Base):
+    """
+    Append-only human-decision event log (notes/10_stage1_product_and_data_spec.md §A2,
+    notes/11_pilot_bar_tickets.md Ticket 2). One row per action — NEVER updated or deleted.
+    A finding's "current" decision state is derived by reading the latest row for that
+    finding_id (see apps/api/routers/submittals.py's findings query), never stored as a
+    mutable status column here or on Finding.
+
+    The composite FK on (reason_code, action) — rather than a plain FK on reason_code
+    alone — is a real DB-level guarantee that a `confirm` action can't be recorded with a
+    `dismiss`-only reason code, not just an API-layer convention.
+    """
+
+    __tablename__ = "finding_decisions"
+    __table_args__ = (
+        CheckConstraint("action IN ('confirm','dismiss','edit')", name="ck_finding_decisions_action"),
+        CheckConstraint(
+            "action = 'edit' OR corrected_fields IS NULL",
+            name="ck_finding_decisions_corrected_fields_only_on_edit",
+        ),
+        ForeignKeyConstraint(
+            ["reason_code", "action"],
+            ["reason_codes.code", "reason_codes.action"],
+            name="fk_finding_decisions_reason_code_action",
+        ),
+        Index("idx_finding_decisions_finding", "finding_id"),
+        Index("idx_finding_decisions_tenant_project", "tenant_id", "project_id"),
+    )
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    finding_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("findings.id"), nullable=False
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False
+    )
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False
+    )
+    submittal_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("submittals.id"), nullable=False
+    )
+    actor_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    reason_code: Mapped[str] = mapped_column(Text, nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    corrected_fields: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    finding: Mapped[Finding] = relationship(back_populates="decisions")
 
 
 class Job(Base):

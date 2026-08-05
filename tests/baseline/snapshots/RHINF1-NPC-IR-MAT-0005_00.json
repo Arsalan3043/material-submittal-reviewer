@@ -1,0 +1,459 @@
+{
+  "authority": "ADM",
+  "captured_at": "2026-08-05T05:19:11.745241+00:00",
+  "git_commit": "379c032",
+  "prose": {
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      "Missing required document: Engineering drawings. || Include Engineering drawings in resubmission."
+    ],
+    "consistency_findings": [
+      "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '0. Cover Page.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '1. Material Source Declaration Form ( MSDF ).pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '4. Manufacturer's Technical Data.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '8. Previous Approvals.pdf'. || Verify manufacturer name is consistent across all documents.",
+      "Supplier name not found on cover page. Cannot perform consistency check. || Ensure supplier name is clearly stated on the cover page."
+    ],
+    "others_findings": [],
+    "spec_verification_findings": [
+      "[R-001] Waterproof membrane system shall have a proven track record of not less than 5 years in Abu Dhabi or in similar environmental conditions \u2014 There is no evidence provided in the submitted documents to confirm the waterproof membrane system has a proven track record of not less than 5 years in Abu Dhabi or similar environmental conditions. || Provide evidence from: previous_approval, others.",
+      "[R-002] Minimum nominal thickness of waterproof membrane \u2265 4 mm (single layer) or \u2265 6 mm (double layer) \u2014 4.04 mm in_range 4.0 mm \u2192 PASS (deterministic) || No action required.",
+      "[R-003] Tensile strength of waterproof membrane \u2265 500 N/50mm in either direction \u2014 613.0 N/50mm >= 500.0 N/50mm \u2192 PASS (deterministic) || No action required.",
+      "[R-004] Elongation at break of waterproof membrane \u2265 40% in either direction \u2014 43.7 % >= 40.0 % \u2192 PASS (deterministic) || No action required.",
+      "[R-005] Tear resistance of waterproof membrane \u2265 440 N in transverse direction and \u2265 550 N in longitudinal direction \u2014 558.0 N in_range 440.0 N \u2192 FAIL (deterministic) || Resubmit with compliant material or provide evidence of compliance.",
+      "[R-006] Softening point of waterproof membrane \u2265 110\u00b0C \u2014 153.0 \u00b0C >= 110.0 \u00b0C \u2192 PASS (deterministic) || No action required.",
+      "[R-007] Waterproof membrane shall be an impervious torch applied purpose formulated modified bituminous membrane consisting of an atactic polypropylene (APP) bitumen \u2014 'modified' found in submitted documents (deterministic string match). || No action required."
+    ],
+    "statement_findings": [],
+    "summary_comments": [
+      "The overall recommendation is to RESUBMIT the external waterproofing system materials. The most significant issues identified include the absence of engineering drawings, failure to meet the tear resistance requirement for the waterproof membrane, and expired DED registration. The contractor must provide the missing documents, ensure compliance with the specified tear resistance, and include the mandatory waterproof membrane formulation in the comparison table."
+    ],
+    "validity_findings": [
+      "DED registration expired on 2023-09-19. || Submit a current, valid DED registration certificate.",
+      "Guarantee document: could not determine guarantee period. || Verify guarantee period meets specification requirements."
+    ]
+  },
+  "report": {
+    "authority": "ADM",
+    "avl_findings": [],
+    "boq_drawing_findings": [],
+    "completeness_findings": [
+      {
+        "action_required": "Include Engineering drawings in resubmission.",
+        "description": "Missing required document: Engineering drawings.",
+        "document": "Submittal package",
+        "severity": "critical",
+        "stage": "completeness_check"
+      }
+    ],
+    "consistency_findings": [
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '0. Cover Page.pdf'.",
+        "document": "0. Cover Page.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '1. Material Source Declaration Form ( MSDF ).pdf'.",
+        "document": "1. Material Source Declaration Form ( MSDF ).pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '4. Manufacturer's Technical Data.pdf'.",
+        "document": "4. Manufacturer's Technical Data.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Verify manufacturer name is consistent across all documents.",
+        "description": "Manufacturer name 'Innobit Industries LLC' (from cover page) may not match what appears in '8. Previous Approvals.pdf'.",
+        "document": "8. Previous Approvals.pdf",
+        "severity": "warning",
+        "stage": "consistency_check"
+      },
+      {
+        "action_required": "Ensure supplier name is clearly stated on the cover page.",
+        "description": "Supplier name not found on cover page. Cannot perform consistency check.",
+        "document": "cover_page",
+        "severity": "warning",
+        "stage": "consistency_check"
+      }
+    ],
+    "critical_count": 4,
+    "material_description": "External Waterproofing System (ikote $8.41 Primer, iPlus 4P Bitumen Membrane, ishield Protection Board) for Irrigation Network",
+    "missing_documents": [
+      "Engineering drawings"
+    ],
+    "others_findings": [],
+    "overall_recommendation": "RESUBMIT",
+    "review_date": "2026-08-05",
+    "spec_clause": "Irrigation Systems - Technical Specs Volume Ill Div -03 -Section 03600",
+    "spec_verification_findings": [
+      {
+        "action_required": "Provide evidence from: previous_approval, others.",
+        "description": "[R-001] Waterproof membrane system shall have a proven track record of not less than 5 years in Abu Dhabi or in similar environmental conditions \u2014 There is no evidence provided in the submitted documents to confirm the waterproof membrane system has a proven track record of not less than 5 years in Abu Dhabi or similar environmental conditions.",
+        "document": "submittal_package",
+        "severity": "warning",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-002] Minimum nominal thickness of waterproof membrane \u2265 4 mm (single layer) or \u2265 6 mm (double layer) \u2014 4.04 mm in_range 4.0 mm \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-003] Tensile strength of waterproof membrane \u2265 500 N/50mm in either direction \u2014 613.0 N/50mm >= 500.0 N/50mm \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-004] Elongation at break of waterproof membrane \u2265 40% in either direction \u2014 43.7 % >= 40.0 % \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "Resubmit with compliant material or provide evidence of compliance.",
+        "description": "[R-005] Tear resistance of waterproof membrane \u2265 440 N in transverse direction and \u2265 550 N in longitudinal direction \u2014 558.0 N in_range 440.0 N \u2192 FAIL (deterministic)",
+        "document": "submittal_package",
+        "severity": "critical",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-006] Softening point of waterproof membrane \u2265 110\u00b0C \u2014 153.0 \u00b0C >= 110.0 \u00b0C \u2192 PASS (deterministic)",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      },
+      {
+        "action_required": "No action required.",
+        "description": "[R-007] Waterproof membrane shall be an impervious torch applied purpose formulated modified bituminous membrane consisting of an atactic polypropylene (APP) bitumen \u2014 'modified' found in submitted documents (deterministic string match).",
+        "document": "submittal_package",
+        "severity": "pass",
+        "stage": "spec_verification"
+      }
+    ],
+    "statement_findings": [],
+    "submittal_id": "RHINF1-NPC-IR-MAT-0005_00",
+    "summary_comments": "The overall recommendation is to RESUBMIT the external waterproofing system materials. The most significant issues identified include the absence of engineering drawings, failure to meet the tear resistance requirement for the waterproof membrane, and expired DED registration. The contractor must provide the missing documents, ensure compliance with the specified tear resistance, and include the mandatory waterproof membrane formulation in the comparison table.",
+    "table_audit_findings": [
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 4.0 mm satisfies in_range 4.0 \u2013 6.0 mm. Nominal thickness meets the specification requirements.",
+        "measured_value": "4.04",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Nominal thickness, mm",
+        "proposed_value": "4",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "4"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "Weight of reinforcing fabric is compliant but not specified in the requirements.",
+        "measured_value": "204",
+        "measured_verified": true,
+        "missing_from_spec": true,
+        "parameter": "Weight of reinforcing fabric, lgim2",
+        "proposed_value": "200",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "200"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 600.0 N/50mm satisfies >= 500.0 N/50mm. Tensile strength exceeds the minimum requirement.",
+        "measured_value": "613/651",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Tensile Strength (LT), N/SOmm",
+        "proposed_value": "600/650",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "500/500"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 40.0 % satisfies >= 40.0 %. Elongation at break meets the specification requirements.",
+        "measured_value": "43.7/42.7",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Elongation at break (LIT) %",
+        "proposed_value": "40/40",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "40/40"
+      },
+      {
+        "deviation_accurate": true,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 450.0 N satisfies in_range 440.0 \u2013 550.0 N. Tear resistance meets the specification requirements.",
+        "measured_value": "558/442",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Tear Resistance (L/T), N",
+        "proposed_value": "550/450",
+        "proposed_verified": true,
+        "severity": "pass",
+        "specified_correct": true,
+        "specified_value": "550/440"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "PASS (deterministic): proposed 150.0 \u00b0C satisfies >= 110.0 \u00b0C. Proposed softening point fails to meet the minimum requirement.",
+        "measured_value": "153",
+        "measured_verified": true,
+        "missing_from_spec": false,
+        "parameter": "Softening Point, deg C",
+        "proposed_value": "150",
+        "proposed_verified": false,
+        "severity": "warning",
+        "specified_correct": true,
+        "specified_value": "440"
+      },
+      {
+        "deviation_accurate": false,
+        "deviation_declared": "",
+        "finding": "Mandatory requirement 'Waterproof membrane shall be an impervious torch applied purpose formulated modified bituminous membrane consisting of an atactic polypropylene (APP) bitumen' is absent from the comparison table. Contractor must include this parameter.",
+        "measured_value": "",
+        "measured_verified": false,
+        "missing_from_spec": false,
+        "parameter": "Waterproof membrane shall be an impervious torch applied purpose formulated modified bituminous membrane consisting of an atactic polypropylene (APP) bitumen",
+        "proposed_value": "(not included in comparison table)",
+        "proposed_verified": false,
+        "severity": "critical",
+        "specified_correct": true,
+        "specified_value": "modified bituminous membrane consisting of an atactic polypropylene (APP) bitumen"
+      }
+    ],
+    "validity_findings": [
+      {
+        "action_required": "Submit a current, valid DED registration certificate.",
+        "description": "DED registration expired on 2023-09-19.",
+        "document": "6, Department of Economic Development (Registration).pdf",
+        "severity": "critical",
+        "stage": "validity_check"
+      },
+      {
+        "action_required": "Verify guarantee period meets specification requirements.",
+        "description": "Guarantee document: could not determine guarantee period.",
+        "document": "7. Manufacturer Suppliers Guarantee (as per Contract).pdf",
+        "severity": "warning",
+        "stage": "validity_check"
+      }
+    ],
+    "warning_count": 8
+  },
+  "review_date": "2026-01-15",
+  "signature": {
+    "categories": {
+      "avl_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "boq_drawing_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "completeness_findings": {
+        "count": 1,
+        "findings": [
+          {
+            "document": "Submittal package",
+            "severity": "critical",
+            "stage": "completeness_check"
+          }
+        ]
+      },
+      "consistency_findings": {
+        "count": 5,
+        "findings": [
+          {
+            "document": "0. Cover Page.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "1. Material Source Declaration Form ( MSDF ).pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "4. Manufacturer's Technical Data.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "8. Previous Approvals.pdf",
+            "severity": "warning",
+            "stage": "consistency_check"
+          },
+          {
+            "document": "cover_page",
+            "severity": "warning",
+            "stage": "consistency_check"
+          }
+        ]
+      },
+      "others_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "spec_verification_findings": {
+        "count": 7,
+        "findings": [
+          {
+            "document": "submittal_package",
+            "severity": "critical",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "pass",
+            "stage": "spec_verification"
+          },
+          {
+            "document": "submittal_package",
+            "severity": "warning",
+            "stage": "spec_verification"
+          }
+        ]
+      },
+      "statement_findings": {
+        "count": 0,
+        "findings": []
+      },
+      "table_audit_findings": {
+        "count": 7,
+        "findings": [
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Elongation at break (LIT) %",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Nominal thickness, mm",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Softening Point, deg C",
+            "proposed_verified": false,
+            "severity": "warning",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Tear Resistance (L/T), N",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": false,
+            "parameter": "Tensile Strength (LT), N/SOmm",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": false,
+            "measured_verified": false,
+            "missing_from_spec": false,
+            "parameter": "Waterproof membrane shall be an impervious torch applied purpose formulated modified bituminous membrane consisting of an atactic polypropylene (APP) bitumen",
+            "proposed_verified": false,
+            "severity": "critical",
+            "specified_correct": true
+          },
+          {
+            "deviation_accurate": true,
+            "measured_verified": true,
+            "missing_from_spec": true,
+            "parameter": "Weight of reinforcing fabric, lgim2",
+            "proposed_verified": true,
+            "severity": "pass",
+            "specified_correct": true
+          }
+        ]
+      },
+      "validity_findings": {
+        "count": 2,
+        "findings": [
+          {
+            "document": "6, Department of Economic Development (Registration).pdf",
+            "severity": "critical",
+            "stage": "validity_check"
+          },
+          {
+            "document": "7. Manufacturer Suppliers Guarantee (as per Contract).pdf",
+            "severity": "warning",
+            "stage": "validity_check"
+          }
+        ]
+      }
+    },
+    "critical_count": 4,
+    "missing_documents": [
+      "Engineering drawings"
+    ],
+    "overall_recommendation": "RESUBMIT",
+    "warning_count": 8
+  },
+  "submittal": "RHINF1-NPC-IR-MAT-0005_00"
+}

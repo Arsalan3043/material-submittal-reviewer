@@ -81,11 +81,31 @@ export function MonoLabel({
   );
 }
 
+export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  const { className = "", ...rest } = props;
+  return (
+    <select
+      className={`h-[34px] rounded-[8px] border border-border-input bg-panel px-2 text-[12px] text-ink focus:border-accent focus:outline-none disabled:text-text-faint ${className}`}
+      {...rest}
+    />
+  );
+}
+
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
   return (
     <input
       className={`h-[42px] rounded-[10px] border border-border-input bg-panel px-[13px] text-sm text-ink placeholder:text-text-faint focus:border-accent focus:outline-none ${className}`}
+      {...rest}
+    />
+  );
+}
+
+export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const { className = "", ...rest } = props;
+  return (
+    <textarea
+      className={`rounded-[10px] border border-border-input bg-panel px-[13px] py-2.5 text-sm text-ink placeholder:text-text-faint focus:border-accent focus:outline-none ${className}`}
       {...rest}
     />
   );
